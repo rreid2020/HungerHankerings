@@ -1,0 +1,28 @@
+# Migrate local Saleor data to DO – commands only
+# Replace 142.93.146.26 with your Droplet IP. For SSH key: add -i "C:\path\to\key" to scp/ssh.
+
+# ========== ON YOUR PC (PowerShell) ==========
+
+cd C:\Users\Roger\HungerHankerings
+
+docker compose --profile local up -d postgres
+
+docker compose --profile local run --rm -e PGPASSWORD=saleor -v "${PWD}/deploy:/out" postgres pg_dump -h postgres -p 5432 -U saleor -d saleor -Fc --data-only -f /out/saleor_data.dump
+
+dir deploy\saleor_data.dump
+
+scp deploy/saleor_data.dump root@142.93.146.26:/root/HungerHankerings/deploy/
+
+scp deploy/restore-saleor-data-on-do.sh root@142.93.146.26:/root/HungerHankerings/deploy/
+
+# ========== ON THE DROPLET (after: ssh root@142.93.146.26) ==========
+
+cd /root/HungerHankerings
+
+chmod +x deploy/restore-saleor-data-on-do.sh
+
+./deploy/restore-saleor-data-on-do.sh
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.jwt.yml up -d --force-recreate saleor-api saleor-worker
+
+# Then open http://142.93.146.26:9000 and check your data.

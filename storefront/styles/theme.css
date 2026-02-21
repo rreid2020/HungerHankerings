@@ -1,0 +1,126 @@
+/**
+ * Site theme – restored from pre-change build (Hunger Hankerings palette).
+ * Magenta primary (330), green secondary (88), orange accent (28), white bg, dark footer.
+ * All values are HSL space-separated (H S% L%) for Tailwind opacity support.
+ */
+
+:root {
+  color-scheme: light;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 12%;
+  --primary: 330 65% 55%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 330 65% 48%;
+  --secondary: 88 38% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 28 85% 55%;
+  --accent-foreground: 0 0% 12%;
+  --muted: 330 25% 96%;
+  --muted-foreground: 0 0% 35%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 12%;
+  --border: 330 15% 88%;
+  --input: 330 15% 88%;
+  --ring: 330 65% 55%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --brand-1: 330 65% 55%;
+  --brand-2: 28 85% 55%;
+  --brand-3: 88 38% 52%;
+  --brand-4: 330 50% 75%;
+  --brand-5: 0 0% 12%;
+  --brand-50: 330 50% 97%;
+  --brand-100: 330 55% 92%;
+  --brand-200: 330 60% 85%;
+  --brand-300: 330 65% 72%;
+  --brand-400: 330 65% 62%;
+  --brand-500: 330 65% 55%;
+  --brand-600: 330 65% 48%;
+  --brand-700: 330 60% 42%;
+  --brand-800: 330 55% 35%;
+  --brand-900: 330 50% 28%;
+  --footer-bg: 0 0% 9%;
+  --footer-foreground: 0 0% 100%;
+}
+
+[data-theme="coolors-soft"] {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 12%;
+  --primary: 330 65% 55%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 330 65% 48%;
+  --secondary: 88 38% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 28 85% 55%;
+  --accent-foreground: 0 0% 12%;
+  --muted: 330 25% 96%;
+  --muted-foreground: 0 0% 35%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 12%;
+  --border: 330 15% 88%;
+  --input: 330 15% 88%;
+  --ring: 330 65% 55%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --brand-1: 330 65% 55%;
+  --brand-2: 28 85% 55%;
+  --brand-3: 88 38% 52%;
+  --brand-4: 330 50% 75%;
+  --brand-5: 0 0% 12%;
+  --brand-50: 330 50% 97%;
+  --brand-100: 330 55% 92%;
+  --brand-200: 330 60% 85%;
+  --brand-300: 330 65% 72%;
+  --brand-400: 330 65% 62%;
+  --brand-500: 330 65% 55%;
+  --brand-600: 330 65% 48%;
+  --brand-700: 330 60% 42%;
+  --brand-800: 330 55% 35%;
+  --brand-900: 330 50% 28%;
+  --footer-bg: 0 0% 9%;
+  --footer-foreground: 0 0% 100%;
+}
+
+[data-theme="alt"] {
+  --background: 0 0% 100%;
+  --foreground: 220 18% 18%;
+  --primary: 172 52% 42%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 172 52% 36%;
+  --secondary: 210 18% 92%;
+  --secondary-foreground: 220 18% 18%;
+  --accent: 210 25% 94%;
+  --accent-foreground: 220 18% 18%;
+  --muted: 210 15% 94%;
+  --muted-foreground: 220 12% 42%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 18% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 18% 18%;
+  --border: 220 14% 88%;
+  --input: 220 14% 88%;
+  --ring: 172 52% 42%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --brand-1: 172 52% 42%;
+  --brand-2: 210 25% 94%;
+  --brand-3: 210 20% 98%;
+  --brand-4: 210 18% 92%;
+  --brand-5: 220 18% 18%;
+  --brand-50: 172 45% 95%;
+  --brand-100: 172 45% 88%;
+  --brand-200: 172 45% 78%;
+  --brand-300: 172 48% 62%;
+  --brand-400: 172 52% 50%;
+  --brand-500: 172 52% 42%;
+  --brand-600: 172 52% 36%;
+  --brand-700: 172 52% 30%;
+  --brand-800: 172 48% 24%;
+  --brand-900: 172 45% 18%;
+  --footer-bg: 192 9% 32%;
+  --footer-foreground: 0 0% 100%;
+}

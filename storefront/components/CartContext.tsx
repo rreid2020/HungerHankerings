@@ -1,0 +1,341 @@
+"use client"
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from "react"
+import {
+  checkoutLineDelete,
+  checkoutLineUpdate,
+  checkoutLinesAdd,
+  createCheckout,
+  getCheckout
+} from "../lib/saleor"
+
+type CartItem = {
+  id: string
+  title: string
+  quantity: number
+  unitPrice: number
+  lineId: string
+  image?: string | null
+}
+
+type Cart = {
+  items: CartItem[]
+  subtotal: number
+  total: number
+  shippingTotal: number
+}
+
+export type AddressFields = {
+  first_name: string
+  last_name: string
+  email: string
+  address_1: string
+  city: string
+  province: string
+  postal_code: string
+  country: string
+}
+
+/** Per unit: key = `${lineId}-${unitIndex}` -> gift card message (only when gift selected for that box) */
+export type GiftByLineUnit = Record<string, { giftMessage: string }>
+
+/** Per unit: key = `${lineId}-${unitIndex}` -> custom shipping address; null/missing = use main shipping */
+export type ShippingOverridesByUnit = Record<string, AddressFields | null>
+
+export type CheckoutOptions = {
+  giftByLineUnit?: GiftByLineUnit
+  giftFee?: number
+  shippingAmount?: number
+  taxAmount?: number
+  billing?: AddressFields
+  shipping?: AddressFields
+  shippingOverridesByUnit?: ShippingOverridesByUnit
+  createAccount?: { password: string }
+  shippingLabel?: string
+  /** Stripe payment method id (pm_xxx); required when Stripe is enabled. Guest and logged-in users can both pass this. */
+  paymentMethodId?: string
+}
+
+type CartContextValue = {
+  cart: Cart | null
+  loading: boolean
+  updating: boolean
+  addItem: (variantId: string, quantity?: number) => Promise<void>
+  updateItem: (lineId: string, quantity: number) => Promise<void>
+  removeItem: (lineId: string) => Promise<void>
+  clearCart: () => void
+  completeCart: (
+    options?: CheckoutOptions
+  ) => Promise<string | { confirmationNeeded: true; clientSecret: string } | null>
+}
+
+const CartContext = createContext<CartContextValue | undefined>(undefined)
+
+const CHECKOUT_STORAGE_KEY = "saleor_checkout_id"
+const ORDER_STORAGE_KEY = "saleor_last_order_v1"
+
+const buildCart = (items: CartItem[], totals?: { subtotal?: number; shipping?: number; total?: number }): Cart => {
+  const subtotal = totals?.subtotal ?? items.reduce(
+      (sum, item) => sum + item.unitPrice * item.quantity,
+      0
+    )
+  const shippingTotal = totals?.shipping ?? 0
+  const total = totals?.total ?? subtotal + shippingTotal
+
+  return {
+    items,
+    subtotal,
+    shippingTotal,
+    total
+  }
+}
+
+const getStoredCheckoutId = () => {
+  if (typeof window === "undefined") return null
+  return window.localStorage.getItem(CHECKOUT_STORAGE_KEY)
+}
+
+const setStoredCheckoutId = (id: string | null) => {
+  if (typeof window === "undefined") return
+  if (!id) {
+    window.localStorage.removeItem(CHECKOUT_STORAGE_KEY)
+    return
+  }
+  window.localStorage.setItem(CHECKOUT_STORAGE_KEY, id)
+}
+
+const mapCheckoutToCart = (checkout: Awaited<ReturnType<typeof getCheckout>>): Cart => {
+  if (!checkout) return buildCart([])
+  const items = checkout.lines.map((line) => {
+    const price = line.variant.pricing?.price?.gross?.amount ?? 0
+    return {
+      id: line.variant.id,
+      lineId: line.id,
+      title: `${line.variant.product.name}${
+        line.variant.name ? ` - ${line.variant.name}` : ""
+      }`,
+      quantity: line.quantity,
+      unitPrice: price,
+      image: line.variant.media?.[0]?.url ?? line.variant.product?.thumbnail?.url ?? null
+    }
+  })
+  return buildCart(items, {
+    subtotal: checkout.subtotalPrice?.gross?.amount ?? undefined,
+    shipping: checkout.shippingPrice?.gross?.amount ?? undefined,
+    total: checkout.totalPrice?.gross?.amount ?? undefined
+  })
+}
+
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const [cart, setCart] = useState<Cart | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState(false)
+  const [checkoutId, setCheckoutId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const storedId = getStoredCheckoutId()
+    if (!storedId) {
+      setCart(buildCart([]))
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+    const safetyTimeout = setTimeout(() => {
+      if (cancelled) return
+      cancelled = true
+      setStoredCheckoutId(null)
+      setCheckoutId(null)
+      setCart(buildCart([]))
+      setLoading(false)
+    }, 12_000)
+
+    const init = async () => {
+      try {
+        const checkout = await getCheckout(storedId)
+        if (cancelled) return
+        clearTimeout(safetyTimeout)
+        if (!checkout) {
+          setStoredCheckoutId(null)
+          setCheckoutId(null)
+          setCart(buildCart([]))
+        } else {
+          setCheckoutId(storedId)
+          setCart(mapCheckoutToCart(checkout))
+        }
+      } catch {
+        if (cancelled) return
+        cancelled = true
+        clearTimeout(safetyTimeout)
+        setStoredCheckoutId(null)
+        setCheckoutId(null)
+        setCart(buildCart([]))
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void init()
+    return () => {
+      cancelled = true
+      clearTimeout(safetyTimeout)
+    }
+  }, [])
+
+  const addItem = async (variantId: string, quantity = 1) => {
+    setUpdating(true)
+    try {
+      let checkout = null
+      if (!checkoutId) {
+        checkout = await createCheckout({
+          lines: [{ variantId, quantity }]
+        })
+        setCheckoutId(checkout.id)
+        setStoredCheckoutId(checkout.id)
+      } else {
+        checkout = await checkoutLinesAdd(checkoutId, [
+          { variantId, quantity }
+        ])
+      }
+      setCart(mapCheckoutToCart(checkout))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const updateItem = async (lineId: string, quantity: number) => {
+    if (!checkoutId) return
+    const qty = Math.max(1, Math.floor(Number(quantity)) || 1)
+    setUpdating(true)
+    try {
+      const checkout = await checkoutLineUpdate(checkoutId, lineId, qty)
+      setCart(mapCheckoutToCart(checkout))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const removeItem = async (lineId: string) => {
+    if (!checkoutId) return
+    setUpdating(true)
+    try {
+      const checkout = await checkoutLineDelete(checkoutId, lineId)
+      setCart(mapCheckoutToCart(checkout))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const clearCart = () => {
+    const cleared = buildCart([])
+    setCart(cleared)
+    setStoredCheckoutId(null)
+    setCheckoutId(null)
+  }
+
+  const completeCart = async (options?: CheckoutOptions): Promise<string | null> => {
+    if (!cart || !checkoutId) return null
+
+    const email = options?.billing?.email?.trim() ?? options?.shipping?.email?.trim()
+    const billing = options?.billing
+    const shipping = options?.shipping
+
+    if (!email || !billing || !shipping) {
+      throw new Error("Email and billing/shipping addresses are required")
+    }
+
+    try {
+      const res = await fetch("/api/checkout/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          checkoutId,
+          email,
+          billing: {
+            first_name: billing.first_name,
+            last_name: billing.last_name,
+            address_1: billing.address_1,
+            city: billing.city,
+            province: billing.province,
+            postal_code: billing.postal_code,
+            country: billing.country
+          },
+          shipping: {
+            first_name: shipping.first_name,
+            last_name: shipping.last_name,
+            address_1: shipping.address_1,
+            city: shipping.city,
+            province: shipping.province,
+            postal_code: shipping.postal_code,
+            country: shipping.country
+          },
+          createAccount: options?.createAccount,
+          storefrontShippingAmount: options?.shippingAmount,
+          storefrontShippingLabel: options?.shippingLabel,
+          paymentMethodId: options?.paymentMethodId
+        })
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.error ?? `Checkout failed (${res.status})`)
+      }
+
+      if (data.confirmationNeeded && data.clientSecret) {
+        return { confirmationNeeded: true as const, clientSecret: data.clientSecret }
+      }
+
+      const orderToken = data?.orderToken
+      if (!orderToken) {
+        throw new Error("No order token returned")
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          ORDER_STORAGE_KEY,
+          JSON.stringify({
+            orderToken,
+            orderNumber: data?.orderNumber,
+            createdAccount: data?.createdAccount
+          })
+        )
+      }
+
+      clearCart()
+      return orderToken
+    } catch (err) {
+      throw err
+    }
+  }
+
+  const value = useMemo(
+    () => ({
+      cart,
+      loading,
+      updating,
+      addItem,
+      updateItem,
+      removeItem,
+      clearCart,
+      completeCart
+    }),
+    [cart, loading, updating]
+  )
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+
+export const useCart = () => {
+  const context = useContext(CartContext)
+  if (!context) {
+    throw new Error("useCart must be used within CartProvider")
+  }
+  return context
+}

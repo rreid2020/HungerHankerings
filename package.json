@@ -1,0 +1,12 @@
+{
+  "name": "hungerhankerings",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "workspaces": [
+    "storefront"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter ./storefront dev",
+    "docker:up": "docker compose up --build"
+  }
+}

@@ -1,0 +1,71 @@
+Replace 68.183.199.85 with your new Droplet IP if different.
+
+============================================
+POWERSHELL (on your PC) – run in this order
+============================================
+At "continue connecting?" type: yes
+At "passphrase" prompt: enter your key passphrase
+
+ssh -i "C:\Users\Roger\HungerHankerings\hungerhankerings" root@68.183.199.85 "mkdir -p /root/HungerHankerings"
+
+cd C:\Users\Roger\HungerHankerings
+
+scp -i "C:\Users\Roger\HungerHankerings\hungerhankerings" ./docker-compose.yml ./docker-compose.prod.yml root@68.183.199.85:/root/HungerHankerings/
+
+# Storefront without node_modules and .next (faster)
+robocopy .\storefront .\storefront-copy /E /XD node_modules .next /NFL /NDL /NJH /NJS
+scp -i "C:\Users\Roger\HungerHankerings\hungerhankerings" -r ./storefront-copy root@68.183.199.85:/root/HungerHankerings/storefront-temp
+scp -i "C:\Users\Roger\HungerHankerings\hungerhankerings" -r ./deploy root@68.183.199.85:/root/HungerHankerings/
+# On NEW DROPLET run once: rm -rf /root/HungerHankerings/storefront; mv /root/HungerHankerings/storefront-temp /root/HungerHankerings/storefront
+# Then remove local temp: Remove-Item -Recurse -Force .\storefront-copy
+
+============================================
+OLD DROPLET CONSOLE (DO → old Droplet 142.93.146.26 → Access → Launch Console)
+============================================
+Run one at a time. Copy each command’s full output into Notepad.
+
+cd /root/HungerHankerings
+
+cat .env
+
+cat jwt_key.pem
+
+============================================
+NEW DROPLET CONSOLE (DO → new Droplet 68.183.199.85 → Access → Launch Console)
+============================================
+Run these in order. For nano: paste, edit, then Ctrl+O Enter Ctrl+X to save.
+
+cd /root/HungerHankerings
+
+nano .env
+# paste .env, replace 142.93.146.26 with 68.183.199.85, add PUBLIC_URL=http://68.183.199.85:8000, then Ctrl+O Enter Ctrl+X
+
+nano jwt_key.pem
+# paste key, then Ctrl+O Enter Ctrl+X
+
+chmod 600 jwt_key.pem
+
+# Generate docker-compose.jwt.yml from jwt_key.pem (not in repo)
+cd /root/HungerHankerings && { echo "services:"; echo "  saleor-api:"; echo "    environment:"; echo "      RSA_PRIVATE_KEY: |"; sed 's/^/        /' jwt_key.pem; echo "  saleor-worker:"; echo "    environment:"; echo "      RSA_PRIVATE_KEY: |"; sed 's/^/        /' jwt_key.pem; } > docker-compose.jwt.yml
+
+apt update
+
+apt install -y docker.io docker-compose-v2
+
+systemctl enable --now docker
+
+docker --version
+
+docker compose version
+
+# In DO: Databases → your Postgres → Trusted Sources → add 68.183.199.85. Then run:
+
+cd /root/HungerHankerings
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.jwt.yml up -d
+
+docker ps
+
+curl -v --connect-timeout 10 https://api.stripe.com
+
+Done. Open http://68.183.199.85:9000 and http://68.183.199.85:3000 . Configure Stripe in dashboard.

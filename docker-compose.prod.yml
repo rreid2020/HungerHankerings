@@ -1,0 +1,61 @@
+# Use with managed Postgres (e.g. DigitalOcean). Set DATABASE_URL and other prod vars in .env.
+# Run: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Do not use --profile local so the local postgres service is not started.
+
+services:
+  saleor-api:
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG:-0}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      ALLOWED_CLIENT_HOSTS: ${ALLOWED_CLIENT_HOSTS:-${ALLOWED_HOSTS}}
+      # Stripe plugin needs this to register webhooks (public API URL). Use https:// if you have SSL.
+      PUBLIC_URL: ${PUBLIC_URL:-http://142.93.146.26:8000}
+      # Set ENABLE_SSL=true if your API is served over HTTPS (required for Stripe live keys).
+      ENABLE_SSL: ${ENABLE_SSL:-false}
+      EMAIL_URL: ${EMAIL_URL:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-hello@hungerhankerings.com}
+    depends_on:
+      - redis
+
+  saleor-worker:
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG:-0}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      ALLOWED_CLIENT_HOSTS: ${ALLOWED_CLIENT_HOSTS:-${ALLOWED_HOSTS}}
+      EMAIL_URL: ${EMAIL_URL:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-hello@hungerhankerings.com}
+    depends_on:
+      - saleor-api
+      - redis
+
+  # Dashboard runs in the browser and must call the API at a URL your browser can reach.
+  # Set PUBLIC_API_URL in .env to your Droplet IP or domain (e.g. http://142.93.146.26:8000/graphql/)
+  saleor-dashboard:
+    environment:
+      API_URL: ${PUBLIC_API_URL:-http://142.93.146.26:8000/graphql/}
+
+  # Storefront: listen on 0.0.0.0 so it's reachable from other PCs.
+  # SALEOR_API_URL is used server-side (product listing, etc.). NEXT_PUBLIC_* are for client/build.
+  storefront:
+    build:
+      context: ./storefront
+      args:
+        NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:-http://142.93.146.26:8000/graphql/}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+        # Same as SALEOR_CHANNEL so client-side checkout uses your channel (required for Add to Cart).
+        NEXT_PUBLIC_SALEOR_CHANNEL: ${SALEOR_CHANNEL:-default-channel}
+    command: ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
+    environment:
+      HOSTNAME: 0.0.0.0
+      # Server-side API URL (product listing runs on server). Internal hostname so it works in Docker.
+      SALEOR_API_URL: http://saleor-api:8000/graphql/
+      # Channel slug from Saleor (e.g. canada-international). Must match the channel your products use.
+      SALEOR_CHANNEL: ${SALEOR_CHANNEL:-default-channel}

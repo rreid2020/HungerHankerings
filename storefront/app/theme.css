@@ -1,0 +1,5 @@
+/**
+ * Site theme: re-exports styles/theme.css so that globals.css can use ./theme.css.
+ * Edit styles/theme.css to change site colors; this file is just for the import path.
+ */
+@import "../styles/theme.css";

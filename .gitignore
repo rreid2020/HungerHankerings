@@ -1,0 +1,20 @@
+node_modules
+.pnpm-store
+.env
+.env.local
+.env.*.local
+.DS_Store
+.next
+.dist
+.dist/*
+coverage
+
+# Secrets (do not commit)
+jwt_key.pem
+docker-compose.jwt.yml
+recovered
+
+# Archives (may contain secrets)
+*.tar
+*.tar.gz
+*.zip

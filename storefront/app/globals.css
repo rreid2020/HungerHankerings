@@ -1,0 +1,21 @@
+@import "./theme.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-background text-foreground antialiased;
+}
+
+.container-page {
+  @apply mx-auto w-full max-w-6xl px-4;
+}
+
+.section-title {
+  @apply text-2xl font-semibold text-foreground md:text-3xl;
+}
+
+.section-subtitle {
+  @apply text-sm font-medium uppercase tracking-[0.2em] text-iron_grey;
+}
