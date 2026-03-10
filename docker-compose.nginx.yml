@@ -1,0 +1,15 @@
+# Nginx reverse proxy with rate limiting. Single entry point on port 80.
+# Run: docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.jwt.yml -f docker-compose.nginx.yml up -d
+# Then allow only ports 22 and 80 in the firewall; no need to expose 3000, 8000, 9000.
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - storefront
+      - saleor-api
+      - saleor-dashboard

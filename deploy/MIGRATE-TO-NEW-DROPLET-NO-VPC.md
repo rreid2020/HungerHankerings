@@ -31,11 +31,25 @@ Move everything from your current Droplet (in VPC, no outbound) to a **new Dropl
    - Avoid selecting the `default-tor1` VPC.
 8. Create the Droplet and note the **new public IP** (e.g. `NEW_IP`).
 
+**Right after first login**, harden the droplet: see **[DROPLET-SECURITY.md](DROPLET-SECURITY.md)** (SSH key-only, firewall, updates, fail2ban). Then continue with Step 2.
+
 ---
 
-## Step 2: Copy the project to the new Droplet (from your PC)
+## Step 2: Get the project onto the new Droplet
 
-Same process as when you set up the original droplet: use SCP from your PC.
+### Option A: Clone from GitHub (recommended now that the repo is on GitHub)
+
+On the **new Droplet** (SSH in first), install Git if needed, then clone:
+
+```bash
+apt-get update && apt-get install -y git
+git clone https://github.com/rreid2020/HungerHankerings.git /root/HungerHankerings
+cd /root/HungerHankerings
+```
+
+You still need to add **secrets on the droplet** (they are not in the repo): create `.env` and `jwt_key.pem` in `/root/HungerHankerings/` (see Step 3 and Step 4). Then install Docker and run the stack (Step 4).
+
+### Option B: Copy from your PC via SCP
 
 From your PC (PowerShell), with the new Droplet IP (replace `NEW_IP` and the key path):
 
