@@ -37,10 +37,10 @@ services:
       - redis
 
   # Dashboard runs in the browser and must call the API at a URL your browser can reach.
-  # Set PUBLIC_API_URL in .env to your Droplet IP or domain (e.g. http://142.93.146.26:8000/graphql/)
+  # Set PUBLIC_API_URL in .env (e.g. http://YOUR_IP/graphql/ when using Nginx on port 80).
   saleor-dashboard:
     environment:
-      API_URL: ${PUBLIC_API_URL:-http://142.93.146.26:8000/graphql/}
+      API_URL: ${PUBLIC_API_URL:-http://143.110.221.220/graphql/}
 
   # Storefront: listen on 0.0.0.0 so it's reachable from other PCs.
   # SALEOR_API_URL is used server-side (product listing, etc.). NEXT_PUBLIC_* are for client/build.
