@@ -75,8 +75,7 @@ services:
       args:
         # So client-side code works from any device (not just localhost).
         NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:-http://localhost:8000/graphql/}
-    env_file:
-      - ./storefront/.env
+    # env_file omitted so prod/droplet does not require storefront/.env; use root .env in prod override
     environment:
       SALEOR_API_URL: http://saleor-api:8000/graphql/
       # Listen on all interfaces so the app is reachable from other PCs.
