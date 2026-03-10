@@ -44,7 +44,10 @@ services:
 
   # Storefront: listen on 0.0.0.0 so it's reachable from other PCs.
   # SALEOR_API_URL is used server-side (product listing, etc.). NEXT_PUBLIC_* are for client/build.
+  # Use root .env on droplet (no storefront/.env in repo or on server).
   storefront:
+    env_file:
+      - .env
     build:
       context: ./storefront
       args:
