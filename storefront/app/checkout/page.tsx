@@ -695,7 +695,7 @@ const CheckoutPage = () => {
       if (STRIPE_PUBLISHABLE_KEY && stripeRef.current && cardElementRef.current) {
         const { paymentMethod, error } = await stripeRef.current.createPaymentMethod({
           type: "card",
-          card: cardElementRef.current
+          card: cardElementRef.current as any
         })
         if (error) throw new Error(error.message ?? "Payment method failed")
         if (paymentMethod?.id) paymentMethodId = paymentMethod.id
