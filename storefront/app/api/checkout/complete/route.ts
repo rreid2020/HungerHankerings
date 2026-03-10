@@ -104,21 +104,21 @@ export async function POST(request: NextRequest) {
     }
 
     await checkoutEmailUpdate(checkoutId, email.trim())
-    await checkoutShippingAddressUpdate(checkoutId, toSaleorAddress(shipping))
+    try {
+      await checkoutShippingAddressUpdate(checkoutId, toSaleorAddress(shipping))
+    } catch (shippingErr) {
+      const msg = shippingErr instanceof Error ? shippingErr.message : ""
+      if (!msg.includes("doesn't need shipping")) throw shippingErr
+      // Checkout has no shippable lines; skip shipping address
+    }
     await checkoutBillingAddressUpdate(checkoutId, toSaleorAddress(billing))
 
     const shippingMethods = await getCheckoutShippingMethods(checkoutId)
     const firstMethod = shippingMethods[0]
-    if (!firstMethod) {
-      return NextResponse.json(
-        {
-          error:
-            "Saleor requires at least one shipping method to complete checkout. Add a single shipping method in Saleor Dashboard (e.g. Shipping → Add zone → Add rate: name \"Standard\", price 0). Your real shipping rates (by province/international) stay in the storefront only; this method is just a placeholder so checkout can complete."
-        },
-        { status: 400 }
-      )
+    if (firstMethod) {
+      await checkoutDeliveryMethodUpdate(checkoutId, firstMethod.id)
     }
-    await checkoutDeliveryMethodUpdate(checkoutId, firstMethod.id)
+    // If no shipping methods (e.g. checkout doesn't need shipping), skip delivery method and continue
 
     const metadata: { key: string; value: string }[] = []
     if (typeof storefrontShippingAmount === "number") {
