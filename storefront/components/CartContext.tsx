@@ -239,7 +239,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCheckoutId(null)
   }
 
-  const completeCart = async (options?: CheckoutOptions): Promise<string | null> => {
+  const completeCart = async (
+    options?: CheckoutOptions
+  ): Promise<string | { confirmationNeeded: true; clientSecret: string } | null> => {
     if (!cart || !checkoutId) return null
 
     const email = options?.billing?.email?.trim() ?? options?.shipping?.email?.trim()
