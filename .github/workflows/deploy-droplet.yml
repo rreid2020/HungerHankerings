@@ -1,5 +1,6 @@
 # Deploy to DigitalOcean Droplet on push to main.
 # Requires GitHub secrets: DROPLET_IP, DROPLET_SSH_KEY (private key contents).
+# If the key is passphrase-protected, add DROPLET_SSH_KEY_PASSPHRASE.
 name: Deploy to Droplet
 
 on:
@@ -16,6 +17,7 @@ jobs:
           host: ${{ secrets.DROPLET_IP }}
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}
           script: |
             set -e
             cd /root/HungerHankerings
