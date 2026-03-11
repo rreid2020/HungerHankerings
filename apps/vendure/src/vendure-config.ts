@@ -31,14 +31,15 @@ const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path.join(__dirname, "../assets");
 const isProduction = process.env.NODE_ENV === "production";
 // In production restrict CORS to APP_URL; in dev allow all (localhost)
-const corsOrigin = isProduction && process.env.APP_URL ? [process.env.APP_URL] : true;
+const corsOptions =
+  isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
 
 const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   apiOptions: {
     port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
-    cors: corsOrigin,
+    cors: corsOptions,
   },
   dbConnectionOptions: {
     type: "postgres",
