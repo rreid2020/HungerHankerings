@@ -65,6 +65,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
       port: 3002,
     }),
     EmailPlugin.init({
+      templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
       devMode: true,
       outputPath: path.join(assetDir, "test-emails"),
       route: "mailbox",
