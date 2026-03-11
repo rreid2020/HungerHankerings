@@ -461,15 +461,9 @@ export async function createCheckout(params: {
   email?: string;
   lines: { variantId: string; quantity: number }[];
 }): Promise<SaleorCheckout> {
+  type AddItemResult = { addItemToOrder: unknown };
   for (const line of params.lines) {
-    const result = await fetchVendure<{
-      addItemToOrder?: {
-        __typename: string;
-        ...Order;
-        message?: string;
-        errorCode?: string;
-      };
-    }>(`
+    const result = await fetchVendure<AddItemResult>(`
       mutation AddItemToOrder($variantId: ID!, $quantity: Int!) {
       addItemToOrder(productVariantId: $variantId, quantity: $quantity) {
         ... on Order {
@@ -482,7 +476,7 @@ export async function createCheckout(params: {
       }
     }
     `, { variantId: line.variantId, quantity: line.quantity });
-    const addResult = (result as { addItemToOrder?: unknown }).addItemToOrder;
+    const addResult = result.addItemToOrder;
     if (addResult && typeof addResult === "object" && "message" in addResult && (addResult as { errorCode?: string }).errorCode) {
       throw new Error((addResult as { message?: string }).message || "Failed to add item");
     }
@@ -496,9 +490,7 @@ export async function addItemToOrder(
   variantId: string,
   quantity: number
 ): Promise<SaleorCheckout> {
-  const data = await fetchVendure<{
-    addItemToOrder?: { __typename: string; id?: string } & Record<string, unknown>;
-  }>(`
+  const data = await fetchVendure<{ addItemToOrder: unknown }>(`
     mutation AddItemToOrder($variantId: ID!, $quantity: Int!) {
       addItemToOrder(productVariantId: $variantId, quantity: $quantity) {
         ... on Order {
@@ -511,7 +503,7 @@ export async function addItemToOrder(
       }
     }
   `, { variantId, quantity });
-  const result = (data as { addItemToOrder?: unknown }).addItemToOrder;
+  const result = data.addItemToOrder;
   if (result && typeof result === "object" && "errorCode" in result) {
     throw new Error((result as { message?: string }).message || "Failed to add item");
   }
