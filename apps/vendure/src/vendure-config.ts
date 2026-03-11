@@ -16,15 +16,29 @@ import {
 
 require("dotenv").config();
 
+if (process.env.NODE_ENV === "production") {
+  const warn = (name: string, defaultVal: string) => {
+    if (!process.env[name] || process.env[name] === defaultVal) {
+      console.warn(`[vendure] Security: set ${name} in production (currently using default).`);
+    }
+  };
+  warn("COOKIE_SECRET", "dev-cookie-secret");
+  warn("SUPERADMIN_USERNAME", "superadmin");
+  warn("SUPERADMIN_PASSWORD", "superadmin");
+}
+
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path.join(__dirname, "../assets");
+const isProduction = process.env.NODE_ENV === "production";
+// In production restrict CORS to APP_URL; in dev allow all (localhost)
+const corsOrigin = isProduction && process.env.APP_URL ? [process.env.APP_URL] : true;
 
 const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   apiOptions: {
     port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
-    cors: true,
+    cors: corsOrigin,
   },
   dbConnectionOptions: {
     type: "postgres",
@@ -34,8 +48,11 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     password: process.env.DB_PASSWORD ?? "vendure",
     database: process.env.DB_NAME ?? "vendure",
     synchronize: process.env.NODE_ENV !== "production",
-    // DigitalOcean and most managed Postgres require SSL
-    ssl: process.env.DB_SSL !== "false" ? { rejectUnauthorized: true } : false,
+    // SSL: set DB_SSL=false to disable. For self-signed certs set DB_SSL_REJECT_UNAUTHORIZED=false
+    ssl:
+      process.env.DB_SSL === "false"
+        ? false
+        : { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" },
   },
   authOptions: {
     tokenMethod: "cookie",
