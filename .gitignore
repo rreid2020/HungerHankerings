@@ -13,6 +13,8 @@ coverage
 jwt_key.pem
 docker-compose.jwt.yml
 recovered
+deploy_key
+deploy_key.pub
 
 # Archives (may contain secrets)
 *.tar
