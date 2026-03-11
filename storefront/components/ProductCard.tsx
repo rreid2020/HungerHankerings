@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useCart } from "./CartContext"
-import type { SaleorProduct } from "../lib/saleor"
+import type { SaleorProduct } from "../lib/vendure"
 
 const formatPrice = (amount?: number) => {
   if (amount === undefined || amount === null) return ""

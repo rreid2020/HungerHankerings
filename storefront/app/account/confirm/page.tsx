@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import Button from "../../../components/Button"
-import { confirmAccount } from "../../../lib/saleor"
+import { confirmAccount } from "../../../lib/vendure"
 
 export default async function ConfirmAccountPage({
   searchParams

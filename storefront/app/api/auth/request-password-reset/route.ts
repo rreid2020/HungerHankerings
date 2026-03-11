@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requestPasswordReset } from "../../../../lib/saleor"
+import { requestPasswordReset } from "../../../../lib/vendure"
 
 export async function POST(request: NextRequest) {
   try {

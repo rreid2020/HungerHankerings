@@ -39,20 +39,19 @@ sudo sshd -t && sudo systemctl reload sshd
 
 Allow only what the world needs; block everything else.
 
-**If you access the app by IP and port** (e.g. `http://IP:3000` for storefront, `http://IP:8000` for API):
+**If you access the app by IP and port** (e.g. `http://IP:3001` for storefront when not using Nginx):
 
 ```bash
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp    # SSH
-sudo ufw allow 3000/tcp # Storefront
-sudo ufw allow 8000/tcp  # Saleor API (if needed from browser/dashboard)
-sudo ufw allow 9000/tcp  # Saleor Dashboard (if you use it)
+sudo ufw allow 3001/tcp  # Storefront (when not behind Nginx)
+sudo ufw allow 3000/tcp  # Vendure (only if not behind Nginx)
 sudo ufw --force enable
 sudo ufw status
 ```
 
-**Better long-term:** Expose only SSH and HTTP/HTTPS, and put Nginx or Caddy in front of the app (reverse proxy to 3000, 8000, 9000). Then:
+**Better long-term:** Expose only SSH and HTTP/HTTPS, and put Nginx in front (reverse proxy to storefront and Vendure). Then:
 
 ```bash
 sudo ufw allow 22/tcp

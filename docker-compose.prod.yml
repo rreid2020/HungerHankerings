@@ -1,64 +1,70 @@
-# Use with managed Postgres (e.g. DigitalOcean). Set DATABASE_URL and other prod vars in .env.
-# Run: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# Do not use --profile local so the local postgres service is not started.
+# Production: use with managed Postgres. Set DB_*, REDIS_*, etc. in .env.
+# Run with docker-compose.nginx.yml. Vendure services are in this file; add vendure to base compose for local.
+# Run: docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d
 
 services:
-  saleor-api:
+  vendure:
+    build:
+      context: ./apps/vendure
+      dockerfile: Dockerfile
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      SECRET_KEY: ${SECRET_KEY}
-      DEBUG: ${DEBUG:-0}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
-      ALLOWED_CLIENT_HOSTS: ${ALLOWED_CLIENT_HOSTS:-${ALLOWED_HOSTS}}
-      # Stripe plugin needs this to register webhooks (public API URL). Use https:// if you have SSL.
-      PUBLIC_URL: ${PUBLIC_URL:-http://142.93.146.26:8000}
-      # Set ENABLE_SSL=true if your API is served over HTTPS (required for Stripe live keys).
-      ENABLE_SSL: ${ENABLE_SSL:-false}
-      EMAIL_URL: ${EMAIL_URL:-}
-      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-hello@hungerhankerings.com}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-vendure}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      APP_URL: ${APP_URL}
+      NODE_ENV: production
+    command: ["node", "dist/index.js"]
     depends_on:
       - redis
+    expose:
+      - "3000"
+    volumes:
+      - vendure_assets:/app/assets
 
-  saleor-worker:
+  vendure-worker:
+    build:
+      context: ./apps/vendure
+      dockerfile: Dockerfile
     env_file:
       - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      SECRET_KEY: ${SECRET_KEY}
-      DEBUG: ${DEBUG:-0}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
-      ALLOWED_CLIENT_HOSTS: ${ALLOWED_CLIENT_HOSTS:-${ALLOWED_HOSTS}}
-      EMAIL_URL: ${EMAIL_URL:-}
-      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-hello@hungerhankerings.com}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-vendure}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      NODE_ENV: production
+    command: ["node", "dist/worker.js"]
     depends_on:
-      - saleor-api
+      - vendure
       - redis
 
-  # Dashboard runs in the browser and must call the API at a URL your browser can reach.
-  # Set PUBLIC_API_URL in .env (e.g. http://YOUR_IP/graphql/ when using Nginx on port 80).
-  saleor-dashboard:
-    environment:
-      API_URL: ${PUBLIC_API_URL:-http://143.110.221.220/graphql/}
-
-  # Storefront: listen on 0.0.0.0 so it's reachable from other PCs.
-  # SALEOR_API_URL is used server-side (product listing, etc.). NEXT_PUBLIC_* are for client/build.
-  # Use root .env on droplet (no storefront/.env in repo or on server).
   storefront:
     env_file:
       - .env
     build:
       context: ./storefront
       args:
-        NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:-http://142.93.146.26:8000/graphql/}
+        NEXT_PUBLIC_VENDURE_SHOP_API_URL: ${NEXT_PUBLIC_VENDURE_SHOP_API_URL}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
-        # Same as SALEOR_CHANNEL so client-side checkout uses your channel (required for Add to Cart).
-        NEXT_PUBLIC_SALEOR_CHANNEL: ${SALEOR_CHANNEL:-default-channel}
     command: ["npx", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
     environment:
       HOSTNAME: 0.0.0.0
-      # Server-side API URL (product listing runs on server). Internal hostname so it works in Docker.
-      SALEOR_API_URL: http://saleor-api:8000/graphql/
-      # Channel slug from Saleor (e.g. canada-international). Must match the channel your products use.
-      SALEOR_CHANNEL: ${SALEOR_CHANNEL:-default-channel}
+      VENDURE_SHOP_API_URL: http://vendure:3000/shop-api
+    depends_on:
+      - vendure
+    expose:
+      - "3000"
+
+volumes:
+  vendure_assets:

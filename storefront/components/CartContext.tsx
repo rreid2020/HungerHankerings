@@ -12,8 +12,8 @@ import {
   checkoutLineUpdate,
   checkoutLinesAdd,
   createCheckout,
-  getCheckout
-} from "../lib/saleor"
+  getActiveOrder
+} from "../lib/vendure"
 
 type CartItem = {
   id: string
@@ -77,8 +77,7 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
-const CHECKOUT_STORAGE_KEY = "saleor_checkout_id"
-const ORDER_STORAGE_KEY = "saleor_last_order_v1"
+const ORDER_STORAGE_KEY = "vendure_last_order_v1"
 
 const buildCart = (items: CartItem[], totals?: { subtotal?: number; shipping?: number; total?: number }): Cart => {
   const subtotal = totals?.subtotal ?? items.reduce(
@@ -96,21 +95,7 @@ const buildCart = (items: CartItem[], totals?: { subtotal?: number; shipping?: n
   }
 }
 
-const getStoredCheckoutId = () => {
-  if (typeof window === "undefined") return null
-  return window.localStorage.getItem(CHECKOUT_STORAGE_KEY)
-}
-
-const setStoredCheckoutId = (id: string | null) => {
-  if (typeof window === "undefined") return
-  if (!id) {
-    window.localStorage.removeItem(CHECKOUT_STORAGE_KEY)
-    return
-  }
-  window.localStorage.setItem(CHECKOUT_STORAGE_KEY, id)
-}
-
-const mapCheckoutToCart = (checkout: Awaited<ReturnType<typeof getCheckout>>): Cart => {
+const mapCheckoutToCart = (checkout: Awaited<ReturnType<typeof getActiveOrder>>): Cart => {
   if (!checkout) return buildCart([])
   const items = checkout.lines.map((line) => {
     const price = line.variant.pricing?.price?.gross?.amount ?? 0
@@ -139,18 +124,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [checkoutId, setCheckoutId] = useState<string | null>(null)
 
   useEffect(() => {
-    const storedId = getStoredCheckoutId()
-    if (!storedId) {
-      setCart(buildCart([]))
-      setLoading(false)
-      return
-    }
-
     let cancelled = false
     const safetyTimeout = setTimeout(() => {
       if (cancelled) return
       cancelled = true
-      setStoredCheckoutId(null)
       setCheckoutId(null)
       setCart(buildCart([]))
       setLoading(false)
@@ -158,22 +135,20 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     const init = async () => {
       try {
-        const checkout = await getCheckout(storedId)
+        const checkout = await getActiveOrder()
         if (cancelled) return
         clearTimeout(safetyTimeout)
-        if (!checkout) {
-          setStoredCheckoutId(null)
+        if (!checkout || !checkout.lines?.length) {
           setCheckoutId(null)
           setCart(buildCart([]))
         } else {
-          setCheckoutId(storedId)
+          setCheckoutId(checkout.id)
           setCart(mapCheckoutToCart(checkout))
         }
       } catch {
         if (cancelled) return
         cancelled = true
         clearTimeout(safetyTimeout)
-        setStoredCheckoutId(null)
         setCheckoutId(null)
         setCart(buildCart([]))
       } finally {
@@ -235,14 +210,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const clearCart = () => {
     const cleared = buildCart([])
     setCart(cleared)
-    setStoredCheckoutId(null)
     setCheckoutId(null)
   }
 
   const completeCart = async (
     options?: CheckoutOptions
   ): Promise<string | { confirmationNeeded: true; clientSecret: string } | null> => {
-    if (!cart || !checkoutId) return null
+    if (!cart?.items?.length) return null
 
     const email = options?.billing?.email?.trim() ?? options?.shipping?.email?.trim()
     const billing = options?.billing

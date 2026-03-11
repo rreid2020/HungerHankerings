@@ -13,10 +13,9 @@ import {
   customerRegister,
   customerLogin,
   type SaleorAddressInput
-} from "../../../../lib/saleor"
+} from "../../../../lib/vendure"
 
-// Note: Saleor must allow unpaid orders for this to work without a payment gateway.
-// In Saleor Dashboard: Channel → Order settings → set "Allow unpaid orders" if needed.
+// Vendure: active order is from session (cookie). Forward request cookie to all Vendure calls.
 
 type AddressPayload = {
   first_name: string
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
-      checkoutId,
+      checkoutId: _checkoutId,
       email,
       billing,
       shipping,
@@ -56,29 +55,29 @@ export async function POST(request: NextRequest) {
       storefrontShippingLabel,
       paymentMethodId
     }: {
-      checkoutId: string
+      checkoutId?: string
       email: string
       billing: AddressPayload
       shipping: AddressPayload
       createAccount?: { password: string }
       storefrontShippingAmount?: number
       storefrontShippingLabel?: string
-      /** Stripe payment method id (pm_xxx) from Stripe.js; required when Stripe plugin is active */
       paymentMethodId?: string
     } = body
 
-    if (!checkoutId || !email?.trim()) {
+    if (!email?.trim()) {
       return NextResponse.json(
-        { error: "Checkout ID and email are required" },
+        { error: "Email is required" },
         { status: 400 }
       )
     }
 
+    const cookieHeader = request.headers.get("cookie") ?? undefined
+    const opts = { cookie: cookieHeader }
+
     const origin = request.nextUrl.origin
     const redirectUrl = `${origin}/order/complete`
 
-    // When "Create account" is checked: register → login → attach checkout to user BEFORE completing.
-    // That way the order is linked to the new account and appears on their dashboard.
     let authToken: string | null = null
     let refreshToken: string | null = null
     if (createAccount?.password && createAccount.password.trim().length >= 8) {
@@ -90,35 +89,33 @@ export async function POST(request: NextRequest) {
           lastName: billing?.last_name?.trim() ?? ""
         })
       } catch {
-        // User may already exist (e.g. created account on a previous visit); continue to login
+        // User may already exist; continue to login
       }
       try {
         const loginResult = await customerLogin(email.trim(), createAccount.password.trim())
         authToken = loginResult.token
         refreshToken = loginResult.refreshToken
-        await checkoutCustomerAttach(checkoutId, loginResult.token)
+        await checkoutCustomerAttach("", loginResult.token, opts)
       } catch (attachErr) {
-        const msg = attachErr instanceof Error ? attachErr.message : "Could not attach account to checkout"
+        const msg = attachErr instanceof Error ? attachErr.message : "Could not attach account to order"
         return NextResponse.json({ error: msg }, { status: 400 })
       }
     }
 
-    await checkoutEmailUpdate(checkoutId, email.trim())
+    await checkoutEmailUpdate("", email.trim(), opts)
     try {
-      await checkoutShippingAddressUpdate(checkoutId, toSaleorAddress(shipping))
+      await checkoutShippingAddressUpdate("", toSaleorAddress(shipping), opts)
     } catch (shippingErr) {
       const msg = shippingErr instanceof Error ? shippingErr.message : ""
       if (!msg.includes("doesn't need shipping")) throw shippingErr
-      // Checkout has no shippable lines; skip shipping address
     }
-    await checkoutBillingAddressUpdate(checkoutId, toSaleorAddress(billing))
+    await checkoutBillingAddressUpdate("", toSaleorAddress(billing), opts)
 
-    const shippingMethods = await getCheckoutShippingMethods(checkoutId)
+    const shippingMethods = await getCheckoutShippingMethods("", opts)
     const firstMethod = shippingMethods[0]
     if (firstMethod) {
-      await checkoutDeliveryMethodUpdate(checkoutId, firstMethod.id)
+      await checkoutDeliveryMethodUpdate("", firstMethod.id, opts)
     }
-    // If no shipping methods (e.g. checkout doesn't need shipping), skip delivery method and continue
 
     const metadata: { key: string; value: string }[] = []
     if (typeof storefrontShippingAmount === "number") {
@@ -128,12 +125,10 @@ export async function POST(request: NextRequest) {
       metadata.push({ key: "storefront_shipping_label", value: storefrontShippingLabel.trim() })
     }
 
-    // When Stripe is enabled: create payment then complete. Works for guest and logged-in users.
-    const stripeGateway =
-      process.env.SALEOR_STRIPE_GATEWAY_ID || "mirumee.payments.stripe"
+    const stripeGateway = process.env.VENDURE_STRIPE_METHOD_CODE || "stripe"
     if (paymentMethodId?.trim()) {
-      const amount = await getCheckoutTotalPrice(checkoutId)
-      await checkoutPaymentCreate(checkoutId, {
+      const amount = await getCheckoutTotalPrice("", opts)
+      await checkoutPaymentCreate("", {
         gateway: stripeGateway,
         amount,
         token: paymentMethodId.trim()
@@ -144,10 +139,10 @@ export async function POST(request: NextRequest) {
       paymentMethodId?.trim() ?
         JSON.stringify({ payment_method_id: paymentMethodId.trim() })
       : undefined
-    const result = await checkoutComplete(checkoutId, redirectUrl, {
+    const result = await checkoutComplete("", redirectUrl, {
       metadata: metadata.length ? metadata : undefined,
       paymentData
-    })
+    }, opts)
 
     if (result.errors?.length) {
       const message = result.errors[0]?.message ?? "Checkout could not be completed"
@@ -186,14 +181,14 @@ export async function POST(request: NextRequest) {
 
     if (authToken && refreshToken) {
       const cookieStore = await cookies()
-      cookieStore.set("saleor_token", authToken, {
+      cookieStore.set("vendure_token", authToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
       })
-      cookieStore.set("saleor_refresh_token", refreshToken, {
+      cookieStore.set("vendure_refresh_token", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",

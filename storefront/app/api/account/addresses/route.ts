@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthToken } from "../../../../lib/auth"
-import { accountAddressCreate } from "../../../../lib/saleor"
-import type { SaleorAddressInput } from "../../../../lib/saleor"
+import { accountAddressCreate } from "../../../../lib/vendure"
+import type { SaleorAddressInput } from "../../../../lib/vendure"
 
 function parseBody(body: unknown): (SaleorAddressInput & { setAsDefaultShipping?: boolean; setAsDefaultBilling?: boolean }) | null {
   if (!body || typeof body !== "object") return null

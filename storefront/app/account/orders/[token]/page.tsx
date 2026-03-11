@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation"
 import Image from "next/image"
 import { getAuthUser, getAuthToken } from "../../../../lib/auth"
-import { getOrderByToken } from "../../../../lib/saleor"
+import { getOrderByToken } from "../../../../lib/vendure"
 
 export default async function OrderDetailPage({
   params

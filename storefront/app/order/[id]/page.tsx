@@ -1,4 +1,4 @@
-import { getOrderByToken } from "../../../lib/saleor"
+import { getOrderByToken } from "../../../lib/vendure"
 import OrderClient, { OrderGiftDetails, OrderShippingDetails } from "./order-client"
 import Link from "next/link"
 

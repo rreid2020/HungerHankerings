@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import Button from "../../components/Button"
 import { getAuthUser, getAuthToken } from "../../lib/auth"
-import { getCustomerOrders, confirmAccount } from "../../lib/saleor"
+import { getCustomerOrders, confirmAccount } from "../../lib/vendure"
 
 export default async function AccountPage({
   searchParams

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { confirmAccount } from "../../../../lib/saleor"
+import { confirmAccount } from "../../../../lib/vendure"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams

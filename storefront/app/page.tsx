@@ -1,6 +1,6 @@
 import Button from "../components/Button"
 import ProductCard from "../components/ProductCard"
-import { listProducts } from "../lib/saleor"
+import { listProducts } from "../lib/vendure"
 import Link from "next/link"
 
 const HomePage = async () => {

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { getCurrentCustomer, refreshToken } from "./saleor"
+import { getCurrentCustomer, refreshToken } from "./vendure"
 
 export type AuthUser = {
   id: string
@@ -24,7 +24,7 @@ export type GetAuthUserResult = {
 export async function getAuthUser(): Promise<GetAuthUserResult> {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get("saleor_token")?.value
+    const token = cookieStore.get("vendure_token")?.value ?? cookieStore.get("saleor_token")?.value
 
     if (!token) {
       return { user: null, hasToken: false }
@@ -35,11 +35,11 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
       customer = await getCurrentCustomer(token)
     } catch {
       // API error (e.g. network) - try refresh once
-      const refreshTokenValue = cookieStore.get("saleor_refresh_token")?.value
+      const refreshTokenValue = cookieStore.get("vendure_refresh_token")?.value ?? cookieStore.get("saleor_refresh_token")?.value
       if (refreshTokenValue) {
         try {
           const refreshed = await refreshToken(refreshTokenValue)
-          cookieStore.set("saleor_token", refreshed.token, {
+          cookieStore.set("vendure_token", refreshed.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
@@ -48,6 +48,8 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
           })
           customer = await getCurrentCustomer(refreshed.token)
         } catch {
+          cookieStore.delete("vendure_token")
+          cookieStore.delete("vendure_refresh_token")
           cookieStore.delete("saleor_token")
           cookieStore.delete("saleor_refresh_token")
           return { user: null, hasToken: false }
@@ -58,11 +60,11 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
     }
 
     if (!customer) {
-      const refreshTokenValue = cookieStore.get("saleor_refresh_token")?.value
+      const refreshTokenValue = cookieStore.get("vendure_refresh_token")?.value ?? cookieStore.get("saleor_refresh_token")?.value
       if (refreshTokenValue) {
         try {
           const refreshed = await refreshToken(refreshTokenValue)
-          cookieStore.set("saleor_token", refreshed.token, {
+          cookieStore.set("vendure_token", refreshed.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
@@ -100,5 +102,5 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
  */
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies()
-  return cookieStore.get("saleor_token")?.value || null
+  return cookieStore.get("vendure_token")?.value ?? cookieStore.get("saleor_token")?.value ?? null
 }

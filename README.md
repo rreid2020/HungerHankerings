@@ -1,12 +1,13 @@
 # Hunger Hankerings
 
-Modern headless ecommerce rebuild for hungerhankerings.com using Next.js 15, Saleor, Tailwind, and Docker.
+Modern headless ecommerce for hungerhankerings.com using Next.js 15, Vendure, Tailwind, and Docker.
 
 ## Monorepo Structure
 
 ```
-storefront/   Next.js 15 storefront
-deploy/       Nginx config for DigitalOcean
+apps/vendure/   Vendure server + worker + custom shipping plugin
+storefront/     Next.js 15 storefront
+deploy/         Nginx config for DigitalOcean
 ```
 
 ## Local Development
@@ -24,38 +25,30 @@ pnpm install
 
 ### 2) Set environment variables
 
-Copy and edit the example:
-
 ```
 cp storefront/.env.example storefront/.env
+cp .env.example .env
 ```
 
-### 3) Start Saleor + Postgres + Redis
+### 3) Start Vendure + Postgres + Redis (local profile)
 
 ```
-pnpm docker:up
+docker compose --profile local up -d
+docker compose --profile local run --rm vendure node dist/migrate.js
 ```
 
-Saleor API: http://localhost:8000/graphql/
-Saleor Dashboard: http://localhost:9000
-Mailpit (dev inbox): http://localhost:8025
+Vendure Shop API: http://localhost:3000/shop-api  
+Vendure Admin: http://localhost:3000/admin  
+Storefront (in Docker): http://localhost:3001  
+Mailpit: http://localhost:8025  
 
-### 4) Initialize Saleor
+### 4) Run the storefront (dev)
 
-```
-docker compose run --rm saleor-api python manage.py migrate
-docker compose run --rm saleor-api python manage.py createsuperuser
-```
+### 5) (Optional) Configure products in Vendure Admin
 
-### 5) Configure Saleor channel + products
+- Create products and assign to the default channel in Vendure Admin (http://localhost:3000/admin).
 
-- Create a channel named `default-channel` in the Saleor Dashboard.
-- Add the 7 snack box products and assign them to the channel.
-
-**Snack box sizes and gift option (optional):**
-
-- **Sizes:** Create a product attribute (e.g. `Size`) with values: Small, Medium, Large, X-Large. Assign it to your snack box product type and create one variant per size (or per size × gift combination).
-- **Gift option:** Create a second attribute (e.g. `Gift option`) with values: Standard, Gift Box. Create variants that include “Gift Box” and set a higher price for those (gift wrapping + gift card). The storefront shows separate **Size** and **Gift option** dropdowns and resolves the correct variant and price automatically. See `storefront/docs/SALEOR-SNACK-BOX-SETUP.md` for step-by-step Saleor setup.
+- **Gift option:** Create a second attribute (e.g. `Gift option`) with values: Standard, Gift Box. Create variants that include “Gift Box” and set a higher price for those (gift wrapping + gift card). The storefront shows separate **Size** and **Gift option** dropdowns and resolves the correct variant and price automatically. See Vendure docs for product and variant setup.
 
 ### 6) Run the storefront
 
@@ -73,10 +66,10 @@ an email provider or CRM integration for production.
 
 ## Docker
 
-Start the full stack:
+Start the full stack (with Vendure and optional local Postgres):
 
 ```
-pnpm docker:up
+docker compose --profile local up -d
 ```
 
 ## DigitalOcean Deployment Guide
@@ -93,12 +86,7 @@ sudo usermod -aG docker $USER
 ```
 
 ### Environment variables
-Update `storefront/.env`:
-
-```
-NEXT_PUBLIC_SALEOR_API_URL=https://api.hungerhankerings.com/graphql/
-NEXT_PUBLIC_SALEOR_CHANNEL=default-channel
-```
+Copy `deploy/env.production.example` to `.env` on the droplet and set `DB_*`, `COOKIE_SECRET`, `APP_URL`, `NEXT_PUBLIC_VENDURE_SHOP_API_URL`, etc.
 
 ### Start services
 
@@ -120,11 +108,11 @@ sudo certbot --nginx -d hungerhankerings.com -d api.hungerhankerings.com -d admi
 ## Scripts
 
 - `pnpm dev` - Run storefront
-- `pnpm docker:up` - Build and run Saleor + storefront services
+- `pnpm docker:up` - Build and run Vendure + storefront (use `--profile local` for Postgres)
 
 ## Quick Verification
 
 1. Open `http://localhost:3000` and confirm homepage sections render.
-2. Visit `/themed-snack-boxes` and verify products appear from Saleor.
+2. Visit `/themed-snack-boxes` and verify products appear from Vendure.
 3. Add a product to cart and proceed to `/checkout`.
 4. Submit a lead form and verify it logs in the Next.js console.

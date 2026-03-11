@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { getAuthUser, getAuthToken } from "../../../lib/auth"
-import { getCurrentCustomer } from "../../../lib/saleor"
+import { getCurrentCustomer } from "../../../lib/vendure"
 import AddressesClient from "./AddressesClient"
 
 export default async function AddressesPage() {

@@ -3,10 +3,15 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "workspaces": [
-    "storefront"
+    "storefront",
+    "apps/vendure"
   ],
   "scripts": {
     "dev": "pnpm --filter ./storefront dev",
-    "docker:up": "docker compose up --build"
+    "docker:up": "docker compose up --build",
+    "build:vendure": "pnpm exec tsc -p apps/vendure/tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
   }
 }

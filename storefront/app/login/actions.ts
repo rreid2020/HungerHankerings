@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
-import { customerLogin } from "../../lib/saleor"
+import { customerLogin } from "../../lib/vendure"
 
 function isRedirectError(err: unknown): boolean {
   return typeof err === "object" && err !== null && (err as { digest?: string }).digest?.startsWith?.("NEXT_REDIRECT") === true
@@ -22,14 +22,14 @@ export async function loginAction(formData: FormData) {
   try {
     const result = await customerLogin(email, password)
     const cookieStore = await cookies()
-    cookieStore.set("saleor_token", result.token, {
+    cookieStore.set("vendure_token", result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     })
-    cookieStore.set("saleor_refresh_token", result.refreshToken, {
+    cookieStore.set("vendure_refresh_token", result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

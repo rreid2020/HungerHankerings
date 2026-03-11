@@ -1,14 +1,15 @@
+# Local dev: postgres (profile local), redis, storefront, mailpit. Vendure added via docker-compose.vendure.yml or prod.
 services:
   postgres:
     image: postgres:15
     profiles:
       - local
     environment:
-      POSTGRES_USER: saleor
-      POSTGRES_PASSWORD: saleor
-      POSTGRES_DB: saleor
+      POSTGRES_USER: vendure
+      POSTGRES_PASSWORD: vendure
+      POSTGRES_DB: vendure
     volumes:
-      - saleor_postgres:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "55432:5432"
 
@@ -17,74 +18,70 @@ services:
     ports:
       - "6379:6379"
 
-  saleor-api:
-    image: ghcr.io/saleor/saleor:3.20
-    depends_on:
-      - redis
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgres://saleor:saleor@postgres:5432/saleor
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: dev-secret-key
-      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,saleor-api"
-      DEBUG: "1"
-      ENABLE_DEBUG_TOOLBAR: "0"
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      DEFAULT_FROM_EMAIL: hello@hungerhankerings.com
-      EMAIL_URL: smtp://mailpit:1025
-    volumes:
-      - saleor_media:/app/media
-
-  saleor-worker:
-    image: ghcr.io/saleor/saleor:3.20
-    command: celery -A saleor worker --loglevel=info
-    depends_on:
-      - saleor-api
-      - redis
-    environment:
-      DATABASE_URL: postgres://saleor:saleor@postgres:5432/saleor
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: dev-secret-key
-      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0,saleor-api"
-      DEBUG: "1"
-      ENABLE_DEBUG_TOOLBAR: "0"
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      DEFAULT_FROM_EMAIL: hello@hungerhankerings.com
-      EMAIL_URL: smtp://mailpit:1025
-    volumes:
-      - saleor_media:/app/media
-
-  saleor-dashboard:
-    image: ghcr.io/saleor/saleor-dashboard:3.20
-    ports:
-      - "9000:80"
-    environment:
-      API_URL: http://localhost:8000/graphql/
-
   mailpit:
     image: axllent/mailpit:latest
     ports:
       - "8025:8025"
 
+  vendure:
+    build:
+      context: ./apps/vendure
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: vendure
+      DB_PASSWORD: vendure
+      DB_NAME: vendure
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      COOKIE_SECRET: dev-cookie-secret
+      APP_URL: http://localhost:3000
+      NODE_ENV: development
+    command: ["node", "dist/index.js"]
+    depends_on:
+      redis: { condition: service_started }
+    ports:
+      - "3000:3000"
+    volumes:
+      - vendure_assets:/app/assets
+    profiles:
+      - local
+
+  vendure-worker:
+    build:
+      context: ./apps/vendure
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: vendure
+      DB_PASSWORD: vendure
+      DB_NAME: vendure
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      COOKIE_SECRET: dev-cookie-secret
+      NODE_ENV: development
+    command: ["node", "dist/worker.js"]
+    depends_on:
+      - vendure
+      - redis
+    profiles:
+      - local
+
   storefront:
     build:
       context: ./storefront
       args:
-        # So client-side code works from any device (not just localhost).
-        NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:-http://localhost:8000/graphql/}
-    # env_file omitted so prod/droplet does not require storefront/.env; use root .env in prod override
+        NEXT_PUBLIC_VENDURE_SHOP_API_URL: ${NEXT_PUBLIC_VENDURE_SHOP_API_URL:-http://localhost:3000/shop-api}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
     environment:
-      SALEOR_API_URL: http://saleor-api:8000/graphql/
-      # Listen on all interfaces so the app is reachable from other PCs.
+      VENDURE_SHOP_API_URL: http://vendure:3000/shop-api
       HOSTNAME: 0.0.0.0
-    depends_on:
-      - saleor-api
+    depends_on: []
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
 volumes:
-  saleor_postgres:
-  saleor_media:
+  postgres_data:
+  vendure_assets:

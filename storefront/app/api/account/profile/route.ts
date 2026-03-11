@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthToken } from "../../../../lib/auth"
-import { accountUpdate } from "../../../../lib/saleor"
+import { accountUpdate } from "../../../../lib/vendure"
 
 /** PATCH: update profile (firstName, lastName) */
 export async function PATCH(request: NextRequest) {

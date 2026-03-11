@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthToken } from "../../../../../lib/auth"
-import { accountAddressUpdate, accountAddressDelete } from "../../../../../lib/saleor"
-import type { SaleorAddressInput } from "../../../../../lib/saleor"
+import { accountAddressUpdate, accountAddressDelete } from "../../../../../lib/vendure"
+import type { SaleorAddressInput } from "../../../../../lib/vendure"
 
 function parseBody(body: unknown): SaleorAddressInput | null {
   if (!body || typeof body !== "object") return null

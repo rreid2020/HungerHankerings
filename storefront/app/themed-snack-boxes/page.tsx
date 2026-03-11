@@ -1,6 +1,6 @@
 import ProductCard from "../../components/ProductCard"
 import CheckoutButton from "../../components/CheckoutButton"
-import { listProducts } from "../../lib/saleor"
+import { listProducts } from "../../lib/vendure"
 
 const ThemedSnackBoxesPage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []

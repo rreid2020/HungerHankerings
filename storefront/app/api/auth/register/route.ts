@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { customerRegister, customerLogin } from "../../../../lib/saleor"
+import { customerRegister, customerLogin } from "../../../../lib/vendure"
 import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
@@ -61,13 +61,13 @@ export async function POST(request: NextRequest) {
 
       // Set HTTP-only cookies for tokens
       const cookieStore = await cookies()
-      cookieStore.set("saleor_token", loginResult.token, {
+      cookieStore.set("vendure_token", loginResult.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7 // 7 days
       })
-      cookieStore.set("saleor_refresh_token", loginResult.refreshToken, {
+      cookieStore.set("vendure_refresh_token", loginResult.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",

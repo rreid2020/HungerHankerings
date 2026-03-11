@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { getAuthUser, getAuthToken } from "../../../lib/auth"
-import { getCustomerOrders } from "../../../lib/saleor"
+import { getCustomerOrders } from "../../../lib/vendure"
 
 export default async function OrdersPage() {
   const { user, hasToken } = await getAuthUser()

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
-  const token = request.cookies.get("saleor_token")
+  const token = request.cookies.get("vendure_token") ?? request.cookies.get("saleor_token")
 
   // Allow access to account page if there's a confirmation token (from email confirmation links)
   const hasConfirmationToken = searchParams.has("token") || searchParams.has("t") || searchParams.has("key")

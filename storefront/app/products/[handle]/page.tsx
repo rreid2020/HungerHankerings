@@ -1,4 +1,4 @@
-import { getProductByHandle, type SaleorProduct } from "../../../lib/saleor"
+import { getProductByHandle, type SaleorProduct } from "../../../lib/vendure"
 import { getPlainDescription } from "../../../lib/description"
 import ProductPurchase, {
   type AttributeDefinition

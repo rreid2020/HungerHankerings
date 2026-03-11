@@ -1,5 +1,5 @@
 import ProductCard from "../../components/ProductCard"
-import { listProducts } from "../../lib/saleor"
+import { listProducts } from "../../lib/vendure"
 import Button from "../../components/Button"
 
 const GiftABoxPage = async () => {

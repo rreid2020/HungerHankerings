@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getAuthToken } from "../../../../lib/auth"
-import { getCurrentCustomer } from "../../../../lib/saleor"
+import { getCurrentCustomer } from "../../../../lib/vendure"
 
 /** Shape expected by checkout page (billing/shipping form state) */
 export type CheckoutAddressPayload = {

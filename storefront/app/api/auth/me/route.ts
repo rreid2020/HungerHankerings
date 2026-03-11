@@ -1,21 +1,23 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { getCurrentCustomer } from "../../../../lib/saleor"
+import { getCurrentCustomer } from "../../../../lib/vendure"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get("saleor_token")?.value
+    const token = cookieStore.get("vendure_token")?.value ?? cookieStore.get("saleor_token")?.value
+    const cookieHeader = request.headers.get("cookie") ?? undefined
 
-    if (!token) {
+    if (!token && !cookieHeader) {
       return NextResponse.json({ user: null }, { status: 200 })
     }
 
     try {
-      const customer = await getCurrentCustomer(token)
+      const customer = await getCurrentCustomer(cookieHeader ?? token ?? undefined)
 
       if (!customer) {
-        // Clear invalid tokens
+        cookieStore.delete("vendure_token")
+        cookieStore.delete("vendure_refresh_token")
         cookieStore.delete("saleor_token")
         cookieStore.delete("saleor_refresh_token")
         return NextResponse.json({ user: null }, { status: 200 })
@@ -23,8 +25,9 @@ export async function GET() {
 
       return NextResponse.json({ user: customer })
     } catch (apiError) {
-      // If the API call fails (invalid token, network error, etc.), clear tokens and return null
       console.error("Failed to get current customer:", apiError)
+      cookieStore.delete("vendure_token")
+      cookieStore.delete("vendure_refresh_token")
       cookieStore.delete("saleor_token")
       cookieStore.delete("saleor_refresh_token")
       return NextResponse.json({ user: null }, { status: 200 })
