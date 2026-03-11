@@ -4,7 +4,6 @@
 
 services:
   vendure:
-    profiles: []  # include in prod (base has profile "local")
     build:
       context: ./apps/vendure
       dockerfile: Dockerfile
@@ -30,7 +29,6 @@ services:
       - vendure_assets:/app/assets
 
   vendure-worker:
-    profiles: []  # include in prod (base has profile "local")
     build:
       context: ./apps/vendure
       dockerfile: Dockerfile

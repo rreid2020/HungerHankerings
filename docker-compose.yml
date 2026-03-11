@@ -1,4 +1,4 @@
-# Local dev: postgres (profile local), redis, storefront, mailpit. Vendure added via docker-compose.vendure.yml or prod.
+# Base: redis, vendure, vendure-worker, storefront, mailpit. Postgres optional with --profile local. Prod overrides in docker-compose.prod.yml.
 services:
   postgres:
     image: postgres:15
@@ -45,8 +45,6 @@ services:
       - "3000:3000"
     volumes:
       - vendure_assets:/app/assets
-    profiles:
-      - local
 
   vendure-worker:
     build:
@@ -66,8 +64,6 @@ services:
     depends_on:
       - vendure
       - redis
-    profiles:
-      - local
 
   storefront:
     build:
