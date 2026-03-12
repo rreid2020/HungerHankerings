@@ -1,0 +1,82 @@
+# Fixing 502 Bad Gateway (Droplet)
+
+A 502 means Nginx got an invalid response from the backend (Vendure or Storefront). Follow these steps on the droplet.
+
+## 1. Check that containers are running
+
+```bash
+cd /root/HungerHankerings
+export COMPOSE_PROJECT_NAME=hungerhankerings
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml ps
+```
+
+All services (nginx, vendure, vendure-worker, storefront, redis, mailpit) should show "Up". If **vendure** or **storefront** is "Exit" or missing, that’s the cause.
+
+## 2. Check Vendure logs (most common cause of 502)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=80
+```
+
+Look for:
+
+- **"relation … does not exist"** → DB not migrated or Vendure using wrong DB. Run migrations (see README), then restart the stack with `.env` loaded.
+- **"ECONNREFUSED" / "getaddrinfo"** → Wrong DB host (e.g. still `postgres`). Ensure you start the stack with `.env` loaded (step 4).
+- **"Timed out when awaiting the DB schema"** → Same as above; Vendure can’t see the schema.
+
+## 3. Test backend directly (bypass Nginx)
+
+On the droplet:
+
+```bash
+# Vendure
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec vendure wget -qO- http://localhost:3000/shop-api 2>&1 | head -5
+
+# Or from the host (if vendure exposes port in dev)
+curl -s http://localhost:3000/shop-api 2>&1 | head -5
+```
+
+If this fails or hangs, the problem is Vendure, not Nginx.
+
+## 4. Start/restart the stack with .env loaded (required for prod DB)
+
+So that Vendure and the migrate step use the same DB, **always** load `.env` before running compose:
+
+```bash
+cd /root/HungerHankerings
+export COMPOSE_PROJECT_NAME=hungerhankerings
+set -a && [ -f .env ] && . ./.env && set +a
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate
+```
+
+Wait ~30–60 seconds, then check:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=30
+```
+
+You should see Vendure listening (e.g. "Vendure server listening on port 3000"). Then try the site again.
+
+## 5. If Nginx still returns 502
+
+Increase timeouts in `nginx/nginx.conf` for the location that 502s (e.g. `/admin` or `/shop-api`):
+
+```nginx
+proxy_connect_timeout 60s;
+proxy_send_timeout 60s;
+proxy_read_timeout 60s;
+```
+
+Then reload Nginx:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec nginx nginx -s reload
+```
+
+## Summary
+
+| Symptom | Likely cause | Action |
+|--------|---------------|--------|
+| vendure container Exited | Crash on startup (often DB) | Check vendure logs; run migrations; start stack with `.env` loaded (step 4). |
+| vendure Up but 502 | Vendure not ready or erroring on request | Check vendure logs; increase nginx timeouts if needed. |
+| storefront Exited | Build or runtime error | Check storefront logs. |
