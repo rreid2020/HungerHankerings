@@ -415,7 +415,10 @@ function mapVendureOrderToSaleorCheckout(order: {
           name: line.productVariant.name,
           product: {
             name: line.productVariant.product.name,
-            thumbnail: line.productVariant.product.featuredAsset ?? line.productVariant.featuredAsset ?? null,
+            thumbnail: (() => {
+              const asset = line.productVariant.product.featuredAsset ?? line.productVariant.featuredAsset;
+              return asset?.preview != null ? { url: asset.preview } : null;
+            })(),
           },
           pricing: {
             price: {
@@ -926,7 +929,8 @@ export async function getCurrentCustomer(
   `, undefined, opts);
   const c = data.activeCustomer;
   if (!c) return null;
-  const [first = "", last = ""] = (c.fullName ?? `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim()).split(" ");
+  const first = c.firstName ?? "";
+  const last = c.lastName ?? "";
   return {
     id: c.id,
     email: c.emailAddress ?? "",
@@ -1091,7 +1095,7 @@ function mapVendureOrderToSaleorOrder(order: {
         variantName: l.productVariant.name,
         quantity: l.quantity,
         unitPrice: { gross: { amount: l.unitPriceWithTax / 100, currency } },
-        thumbnail: l.featuredAsset ?? null,
+        thumbnail: l.featuredAsset?.preview != null ? { url: l.featuredAsset.preview } : null,
       })) ?? [],
     shippingAddress: order.shippingAddress
       ? {
@@ -1105,7 +1109,7 @@ function mapVendureOrderToSaleorOrder(order: {
             code: order.shippingAddress.countryCode ?? "",
             country: order.shippingAddress.country?.name ?? "",
           },
-          province: order.shippingAddress.province ?? null,
+          countryArea: order.shippingAddress.province ?? null,
           phone: order.shippingAddress.phoneNumber ?? null,
         }
       : null,
