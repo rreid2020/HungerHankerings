@@ -17,11 +17,15 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
+    networks:
+      - app
 
   mailpit:
     image: axllent/mailpit:latest
     ports:
       - "8025:8025"
+    networks:
+      - app
 
   vendure:
     build:
@@ -45,6 +49,8 @@ services:
       - "3000:3000"
     volumes:
       - vendure_assets:/app/assets
+    networks:
+      - app
 
   vendure-worker:
     build:
@@ -64,6 +70,8 @@ services:
     depends_on:
       - vendure
       - redis
+    networks:
+      - app
 
   storefront:
     build:
@@ -77,6 +85,12 @@ services:
     depends_on: []
     ports:
       - "3001:3000"
+    networks:
+      - app
+
+networks:
+  app:
+    name: hungerhankerings_app
 
 volumes:
   postgres_data:
