@@ -36,6 +36,7 @@ const corsOptions =
 
 const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   apiOptions: {
+    hostname: "0.0.0.0",
     port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
