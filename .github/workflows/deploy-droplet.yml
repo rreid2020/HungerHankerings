@@ -1,6 +1,9 @@
 # Deploy to DigitalOcean Droplet on push to main.
-# Requires GitHub secrets: DROPLET_IP, DROPLET_SSH_KEY (private key contents).
-# If the key is passphrase-protected, add DROPLET_SSH_KEY_PASSPHRASE.
+#
+# Secrets: DROPLET_IP, DROPLET_SSH_KEY (optional: DROPLET_SSH_KEY_PASSPHRASE)
+#
+# Run DB migrations from your machine before deploying (see apps/vendure/README.md).
+# This workflow only builds and starts the stack; the DB must already be migrated.
 name: Deploy to Droplet
 
 on:
@@ -25,9 +28,16 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             export COMPOSE_PROJECT_NAME=hungerhankerings
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
-            echo "Starting stack (Vendure runs migrations on startup, same DB as server)..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
+            if [ ! -f .env ]; then
+              echo "ERROR: .env not found at /root/HungerHankerings/.env. Create it from deploy/env.production.example."
+              exit 1
+            fi
+            # Use --env-file so Compose substitutes ${DB_HOST} etc. from .env (avoids shell sourcing issues over SSH)
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
+            echo "Running migrations (one-off container, same .env as stack)..."
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
+            echo "Starting stack..."
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
             echo "Waiting for Vendure to listen (up to 90s)..."
             ok=0
             for i in $(seq 1 18); do
@@ -42,8 +52,8 @@ jobs:
               echo "Vendure reachable from nginx."
             else
               echo "Vendure did not become reachable. Dumping vendure logs:"
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=100 || true
+              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=100 || true
               echo "--- nginx can resolve vendure?"
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=3 http://vendure:3000/shop-api 2>&1 || true
+              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=3 http://vendure:3000/shop-api 2>&1 || true
               exit 1
             fi
