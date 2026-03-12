@@ -1,22 +1,43 @@
+# =============================================================================
+# NEVER commit secrets, keys, or .env. Do not stage these; do not suggest
+# committing them. Rotate any key that was ever pushed.
+# =============================================================================
+
 node_modules
 .pnpm-store
-.env
-.env.local
-.env.*.local
 .DS_Store
 .next
 .dist
 .dist/*
 coverage
 
-# Secrets (do not commit)
-jwt_key.pem
-docker-compose.jwt.yml
-recovered
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+*.pem
+*_key
+*_key.pub
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+id_ecdsa
+id_ecdsa.pub
 deploy_key
 deploy_key.pub
 HungerTwo
 HungerTwo.pub
+jwt_key.pem
+docker-compose.jwt.yml
+recovered
+*credentials*
+*secret*.json
+*secret*.yml
+*secret*.yaml
 
 # Archives (may contain secrets)
 *.tar
