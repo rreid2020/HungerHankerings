@@ -172,7 +172,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
           lines: [{ variantId, quantity }]
         })
         setCheckoutId(checkout.id)
-        setStoredCheckoutId(checkout.id)
       } else {
         checkout = await checkoutLinesAdd(checkoutId, [
           { variantId, quantity }
