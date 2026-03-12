@@ -1,6 +1,7 @@
 import path from "path";
 import {
   DefaultJobQueuePlugin,
+  DefaultSearchPlugin,
   defaultConfig,
   dummyPaymentHandler,
   mergeConfig,
@@ -77,6 +78,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   },
   plugins: [
     DefaultJobQueuePlugin,
+    DefaultSearchPlugin.init({}),
     AssetServerPlugin.init({
       route: "assets",
       assetUploadDir: assetDir,
