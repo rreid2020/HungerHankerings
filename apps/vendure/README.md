@@ -7,9 +7,8 @@ Vendure server and worker for Hunger Hankerings.
 1. Set environment variables (see root `.env.example` and `deploy/env.production.example`).
 2. Ensure PostgreSQL and Redis are running (Docker Compose or managed).
 3. Run migrations (when using production with `synchronize: false`):
-   ```bash
-   node dist/migrate.js
-   ```
+   From **repo root**: `pnpm run migrate:vendure`. Or from this dir: `pnpm run build` then `pnpm run migrate`. Put prod DB vars in `apps/vendure/.env`.
+   (Optional) create a `.env` (or copy from droplet) with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` pointing at the managed DB, then run the same command. Run this before deploying so the droplet’s stack starts against an already-migrated DB.
 4. Start the server: `node dist/index.js` (or `pnpm start`).
 5. Start the worker: `node dist/worker.js` (or `pnpm start:worker`).
 

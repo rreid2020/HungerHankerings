@@ -31,16 +31,21 @@ The workflow in `.github/workflows/deploy-droplet.yml` deploys to your droplet w
 
 ### Setup (one-time)
 
-1. In GitHub: repo **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+1. **Use a deploy SSH key without a passphrase** (recommended for CI; passphrase-protected keys often fail with the action).
+   - On your machine: `ssh-keygen -t ed25519 -f deploy_key -N "" -C "github-deploy"`
+   - Add `deploy_key.pub` to the Droplet: `echo "contents of deploy_key.pub" >> /root/.ssh/authorized_keys` (as root).
+   - Use the **private** key contents for `DROPLET_SSH_KEY` below (no passphrase). You can delete the key files after adding the secret.
 
-2. Add two secrets:
+2. In GitHub: repo **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+
+3. Add two secrets:
 
    | Name             | Value |
    |------------------|--------|
    | `DROPLET_IP`     | Your droplet’s public IP (e.g. `68.183.199.85`) |
-   | `DROPLET_SSH_KEY`| Full contents of your **private** SSH key (e.g. the `hungerhankerings` key). Paste the entire key including `-----BEGIN ... KEY-----` and `-----END ... KEY-----`. |
+   | `DROPLET_SSH_KEY`| Full contents of the **private** deploy key (entire file, including `-----BEGIN ... KEY-----` / `-----END ... KEY-----`). Use a key **without a passphrase** for reliable CI. If you use a passphrase-protected key, add secret `DROPLET_SSH_KEY_PASSPHRASE` with the exact passphrase. |
 
-3. On the **droplet**, the app must already be under `/root/HungerHankerings` and that directory must be a git clone of the repo (so `git fetch` / `git reset` work). If you used “clone from GitHub” when setting up the droplet, you’re set. If you used SCP, either reclone there or run `git init` and `git remote add origin https://github.com/rreid2020/HungerHankerings.git` so the workflow can pull.
+4. On the **droplet**, the app must already be under `/root/HungerHankerings` and that directory must be a git clone of the repo (so `git fetch` / `git reset` work). If you used “clone from GitHub” when setting up the droplet, you’re set. If you used SCP, either reclone there or run `git init` and `git remote add origin https://github.com/rreid2020/HungerHankerings.git` so the workflow can pull.
 
 After that, every push to `main` will run the workflow. Check **Actions** in the GitHub repo to see runs and logs.
 

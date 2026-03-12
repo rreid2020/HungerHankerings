@@ -11,14 +11,28 @@ const asset_server_plugin_1 = require("@vendure/asset-server-plugin");
 const email_plugin_1 = require("@vendure/email-plugin");
 const shipping_plugin_1 = require("./plugins/shipping-plugin");
 require("dotenv").config();
+if (process.env.NODE_ENV === "production") {
+    const warn = (name, defaultVal) => {
+        if (!process.env[name] || process.env[name] === defaultVal) {
+            console.warn(`[vendure] Security: set ${name} in production (currently using default).`);
+        }
+    };
+    warn("COOKIE_SECRET", "dev-cookie-secret");
+    warn("SUPERADMIN_USERNAME", "superadmin");
+    warn("SUPERADMIN_PASSWORD", "superadmin");
+}
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path_1.default.join(__dirname, "../assets");
+const isProduction = process.env.NODE_ENV === "production";
+// In production restrict CORS to APP_URL; in dev allow all (localhost)
+const corsOptions = isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
 const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
     apiOptions: {
+        hostname: "0.0.0.0",
         port,
         adminApiPath: "admin-api",
         shopApiPath: "shop-api",
-        cors: true,
+        cors: corsOptions,
     },
     dbConnectionOptions: {
         type: "postgres",
@@ -28,6 +42,10 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
         password: process.env.DB_PASSWORD ?? "vendure",
         database: process.env.DB_NAME ?? "vendure",
         synchronize: process.env.NODE_ENV !== "production",
+        // SSL: set DB_SSL=false to disable. For self-signed certs set DB_SSL_REJECT_UNAUTHORIZED=false
+        ssl: process.env.DB_SSL === "false"
+            ? false
+            : { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" },
     },
     authOptions: {
         tokenMethod: "cookie",
@@ -57,6 +75,7 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
             port: 3002,
         }),
         email_plugin_1.EmailPlugin.init({
+            templatePath: path_1.default.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
             devMode: true,
             outputPath: path_1.default.join(assetDir, "test-emails"),
             route: "mailbox",
