@@ -736,7 +736,8 @@ export async function checkoutPaymentCreate(
 export async function checkoutComplete(
   _checkoutId: string,
   _redirectUrl: string,
-  options?: { paymentData?: string; metadata?: { key: string; value: string }[] }
+  options?: { paymentData?: string; metadata?: { key: string; value: string }[] },
+  opts?: VendureRequestOptions
 ): Promise<CheckoutCompleteResult> {
   const method = "dummy-payment-method";
   let orderCode: string | null = null;
