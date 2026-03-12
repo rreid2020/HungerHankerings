@@ -88,6 +88,11 @@ services:
     networks:
       - app
 
+  nginx:
+    image: nginx:alpine
+    networks:
+      - app
+
 networks:
   app:
     name: hungerhankerings_app
