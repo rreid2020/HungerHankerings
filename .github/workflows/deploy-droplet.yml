@@ -26,9 +26,7 @@ jobs:
             git reset --hard origin/main
             export COMPOSE_PROJECT_NAME=hungerhankerings
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
-            echo "Running Vendure migrations (separate step, uses .env DB_* on droplet)..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
-            echo "Starting stack..."
+            echo "Starting stack (Vendure runs migrations on startup, same DB as server)..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
             echo "Waiting for Vendure to listen (up to 90s)..."
             ok=0
