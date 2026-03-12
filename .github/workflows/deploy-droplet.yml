@@ -18,6 +18,7 @@ jobs:
           username: root
           key: ${{ secrets.DROPLET_SSH_KEY }}
           passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}
+          command_timeout: 30m
           script: |
             set -e
             cd /root/HungerHankerings
