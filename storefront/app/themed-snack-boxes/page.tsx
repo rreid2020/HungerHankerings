@@ -2,6 +2,8 @@ import ProductCard from "../../components/ProductCard"
 import CheckoutButton from "../../components/CheckoutButton"
 import { listProducts } from "../../lib/vendure"
 
+export const dynamic = "force-dynamic"
+
 const ThemedSnackBoxesPage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []
   try {

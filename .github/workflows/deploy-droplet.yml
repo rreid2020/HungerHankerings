@@ -37,9 +37,23 @@ jobs:
             set -a && . ./.env && set +a
             echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
+            # Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
+            # the "creating a new table" logs are TypeORM's diff only—tables are not created when synchronize is false.
+            # So: if administrator table is missing, run one-time schema creation (synchronize) against that DB.
+            echo "Checking if Vendure schema exists on $DB_NAME..."
+            set +e
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/check-schema.js
+            schema_ok=$?
+            set -e
+            if [ "$schema_ok" -ne 0 ]; then
+              echo "Schema missing; running one-time schema creation (RUN_SCHEMA_SYNC=1)..."
+              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm -e RUN_SCHEMA_SYNC=1 vendure node dist/schema-init.js
+            else
+              echo "Vendure schema already exists."
+            fi
             echo "Running migrations (one-off container, same .env as stack)..."
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
-            echo "Starting stack (migrate completed; if Vendure still fails with 'relation does not exist', run migrate manually on droplet then restart stack)..."
+            echo "Starting stack..."
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
             echo "Verify vendure container DB env (must match .env):"
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true

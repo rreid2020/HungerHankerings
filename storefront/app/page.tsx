@@ -3,6 +3,9 @@ import ProductCard from "../components/ProductCard"
 import { listProducts } from "../lib/vendure"
 import Link from "next/link"
 
+// Fetch uses no-store (dynamic); avoid static generation at build when API is unavailable
+export const dynamic = "force-dynamic"
+
 const HomePage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []
   try {

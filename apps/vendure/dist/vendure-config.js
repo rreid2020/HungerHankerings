@@ -41,7 +41,8 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
         username: process.env.DB_USER ?? "vendure",
         password: process.env.DB_PASSWORD ?? "vendure",
         database: process.env.DB_NAME ?? "vendure",
-        synchronize: process.env.NODE_ENV !== "production",
+        // In production use migrations only, unless RUN_SCHEMA_SYNC=1 for one-time initial schema creation
+        synchronize: process.env.NODE_ENV !== "production" || process.env.RUN_SCHEMA_SYNC === "1",
         // SSL: set DB_SSL=false to disable. For self-signed certs set DB_SSL_REJECT_UNAUTHORIZED=false
         ssl: process.env.DB_SSL === "false"
             ? false

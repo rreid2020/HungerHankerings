@@ -2,6 +2,8 @@ import ProductCard from "../../components/ProductCard"
 import { listProducts } from "../../lib/vendure"
 import Button from "../../components/Button"
 
+export const dynamic = "force-dynamic"
+
 const GiftABoxPage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []
   try {
