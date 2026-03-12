@@ -32,16 +32,20 @@ jobs:
               echo "ERROR: .env not found at /root/HungerHankerings/.env. Create it from deploy/env.production.example."
               exit 1
             fi
-            # Use --env-file so Compose substitutes ${DB_HOST} etc. from .env (avoids shell sourcing issues over SSH)
+            # Source .env into shell AND use --env-file so Compose always has DB_* for substitution (run and up must see same values)
+            set -a && . ./.env && set +a
+            echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
             echo "Running migrations (one-off container, same .env as stack)..."
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
             echo "Starting stack..."
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
+            echo "Verify vendure container DB env (must match .env):"
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
             echo "Waiting for Vendure to listen (up to 90s)..."
             ok=0
             for i in $(seq 1 18); do
-              if docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/shop-api 2>/dev/null | head -c 1 | grep -q .; then
+              if docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/shop-api 2>/dev/null | head -c 1 | grep -q .; then
                 ok=1
                 break
               fi

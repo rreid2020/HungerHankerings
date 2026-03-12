@@ -47,6 +47,8 @@ set -a && [ -f .env ] && . ./.env && set +a
 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
 ```
 
+**If deploy runs migrate successfully but Vendure then says "relation administrator does not exist":** The migrate container and the Vendure container are using different databases. On the droplet, (1) ensure `.env` has Unix line endings (no `\r`): run `sed -i 's/\r$//' .env`. (2) Use `--env-file .env` when you run compose: `docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d`. (3) Confirm the running container sees the same DB: `docker compose --env-file .env -f ... exec vendure env | grep -E '^DB_HOST=|^DB_NAME='` and compare to your production DB.
+
 ## 1. Check that containers are running
 
 ```bash
