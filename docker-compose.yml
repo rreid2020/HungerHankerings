@@ -27,17 +27,18 @@ services:
     build:
       context: ./apps/vendure
       dockerfile: Dockerfile
+    # Use vars from .env when set (e.g. --env-file .env on droplet); else dev defaults so base never "wins" over prod
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: vendure
-      DB_PASSWORD: vendure
-      DB_NAME: vendure
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      COOKIE_SECRET: dev-cookie-secret
-      APP_URL: http://localhost:3000
-      NODE_ENV: development
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-vendure}
+      DB_PASSWORD: ${DB_PASSWORD:-vendure}
+      DB_NAME: ${DB_NAME:-vendure}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      COOKIE_SECRET: ${COOKIE_SECRET:-dev-cookie-secret}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-development}
     command: ["node", "dist/index.js"]
     depends_on:
       redis: { condition: service_started }
@@ -51,15 +52,15 @@ services:
       context: ./apps/vendure
       dockerfile: Dockerfile
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: vendure
-      DB_PASSWORD: vendure
-      DB_NAME: vendure
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      COOKIE_SECRET: dev-cookie-secret
-      NODE_ENV: development
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-vendure}
+      DB_PASSWORD: ${DB_PASSWORD:-vendure}
+      DB_NAME: ${DB_NAME:-vendure}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      COOKIE_SECRET: ${COOKIE_SECRET:-dev-cookie-secret}
+      NODE_ENV: ${NODE_ENV:-development}
     command: ["node", "dist/worker.js"]
     depends_on:
       - vendure
