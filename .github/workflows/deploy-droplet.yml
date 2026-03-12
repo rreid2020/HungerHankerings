@@ -60,7 +60,7 @@ jobs:
             echo "Waiting for Vendure to listen (up to 90s)..."
             ok=0
             for i in $(seq 1 18); do
-              if docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/shop-api 2>/dev/null | head -c 1 | grep -q .; then
+              if docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/health 2>/dev/null | head -c 1 | grep -q .; then
                 ok=1
                 break
               fi
@@ -73,6 +73,6 @@ jobs:
               echo "Vendure did not become reachable. Dumping vendure logs:"
               docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=100 || true
               echo "--- nginx can resolve vendure?"
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=3 http://vendure:3000/shop-api 2>&1 || true
+              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=3 http://vendure:3000/health 2>&1 || true
               exit 1
             fi
