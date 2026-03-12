@@ -2,6 +2,51 @@
 
 A 502 means Nginx got an invalid response from the backend (Vendure or Storefront). Follow these steps on the droplet.
 
+## 0. Verify migration target (before running migrations)
+
+Before running any migration, confirm that the **one-off migrate container** will use the same DB as your production app (and as the DB you see in pgAdmin).
+
+**On the droplet:**
+
+1. **`.env` must exist at project root** (same directory as `docker-compose.yml`):
+   ```bash
+   cd /root/HungerHankerings
+   ls -la .env
+   ```
+   If missing, create it from `.env.example` and fill in your DigitalOcean managed Postgres values.
+
+2. **Check that DB variables match your intended production DB** (host, port **25060**, database name). Do **not** paste the file; use:
+   ```bash
+   grep -E '^DB_' .env | sed 's/=.*/=***/'
+   ```
+   You should see lines like `DB_HOST=***`, `DB_PORT=***`, `DB_NAME=***`. Then confirm in the DigitalOcean control panel that:
+   - `DB_HOST` is your cluster host (e.g. `xxx.db.ondigitalocean.com`).
+   - `DB_PORT` is **25060** (managed Postgres port).
+   - `DB_NAME` is the database you want to migrate (e.g. `vendure` — the one you use in pgAdmin). **Do not** use `saleor` or `defaultdb`; the migrate script will refuse to run (to avoid applying Vendure schema to the wrong database).
+
+3. **Load `.env` into the shell** (required so Compose can substitute `${DB_HOST}` etc. into the container):
+   ```bash
+   set -a && [ -f .env ] && . ./.env && set +a
+   ```
+
+4. **Confirm what the migrate container will see** (same env the app uses):
+   ```bash
+   export COMPOSE_PROJECT_NAME=hungerhankerings
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure env | grep -E '^DB_'
+   ```
+   Compare `DB_HOST`, `DB_PORT`, and `DB_NAME` with your DO connection details (and the DB you have open in pgAdmin). If they match, the next migration run will hit that database.
+
+**Why this is correct:** The base `docker-compose.yml` sets `DB_HOST=postgres` (local). Prod overrides with `${DB_HOST}` from the shell, so you must run `set -a && [ -f .env ] && . ./.env && set +a` before any prod compose command (migrate or up). Then the migrate container gets your managed DB host.
+
+**Run migration on the droplet** (after the checks above):
+
+```bash
+cd /root/HungerHankerings
+export COMPOSE_PROJECT_NAME=hungerhankerings
+set -a && [ -f .env ] && . ./.env && set +a
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
+```
+
 ## 1. Check that containers are running
 
 ```bash

@@ -1,4 +1,5 @@
 # Migrate local Saleor data to DO – commands only
+# LEGACY – Saleor only. For Vendure use DB_NAME=vendure and: docker compose ... run --rm vendure node dist/migrate.js
 # Replace 142.93.146.26 with your Droplet IP. For SSH key: add -i "C:\path\to\key" to scp/ssh.
 
 # ========== ON YOUR PC (PowerShell) ==========

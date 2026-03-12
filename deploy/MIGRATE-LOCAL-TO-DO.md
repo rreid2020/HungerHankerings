@@ -1,5 +1,7 @@
 # Migrate Saleor data: local → DigitalOcean
 
+> **LEGACY – Saleor only.** This doc is for migrating **Saleor** data. For **Vendure**, use `DB_NAME=vendure` in `.env` and run migrations with `docker compose ... run --rm vendure node dist/migrate.js`. See `docs/troubleshoot-502.md` and `deploy/DROPLET-DATABASE-AND-MIGRATIONS.md`.
+
 Copy **data** (products, orders, users, etc.) from your **local** Saleor Postgres into the **Saleor** database on DigitalOcean. Do the steps in order: PC first, then Droplet.
 
 ---

@@ -29,7 +29,7 @@ Use this guide after you have:
    ```
 
 2. Set at least:
-   - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (your Postgres connection)
+   - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (your Postgres connection). Use a **dedicated database** for Vendure (e.g. `vendure`). Do not use `saleor` or `defaultdb`—the migrate script will refuse to run.
    - `REDIS_HOST`, `REDIS_PORT` (use `redis` when using Docker; Redis runs in the same compose)
    - `COOKIE_SECRET` (e.g. `openssl rand -hex 32`)
    - `APP_URL` (e.g. `https://yourdomain.com` or `http://YOUR_IP`)

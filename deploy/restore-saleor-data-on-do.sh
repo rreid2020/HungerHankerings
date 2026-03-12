@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# =============================================================================
+# LEGACY – Saleor only. Do NOT use for Vendure.
+# Vendure uses DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME (no DATABASE_URL).
+# Run Vendure migrations with: docker compose ... run --rm vendure node dist/migrate.js
+# (see docs/troubleshoot-502.md and deploy/DROPLET-DATABASE-AND-MIGRATIONS.md)
+# =============================================================================
 # Run on the Droplet: truncate DO Saleor data (keep schema + django_migrations), then restore from deploy/saleor_data.dump
 # Requires: deploy/saleor_data.dump present, .env with DATABASE_URL in project root.
 
