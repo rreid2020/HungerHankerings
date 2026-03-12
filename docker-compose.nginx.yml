@@ -12,5 +12,3 @@ services:
     depends_on:
       - storefront
       - vendure
-    networks:
-      - app
