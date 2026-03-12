@@ -81,6 +81,10 @@ services:
   nginx:
     image: nginx:alpine
 
+networks:
+  default:
+    name: hungerhankerings_default
+
 volumes:
   postgres_data:
   vendure_assets:

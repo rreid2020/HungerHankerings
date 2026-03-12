@@ -24,5 +24,22 @@ jobs:
             cd /root/HungerHankerings
             git fetch origin main
             git reset --hard origin/main
+            export COMPOSE_PROJECT_NAME=hungerhankerings
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
             docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
+            echo "Waiting for Vendure to listen (up to 60s)..."
+            ok=0
+            for i in $(seq 1 12); do
+              if docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/shop-api 2>/dev/null | head -c 1 | grep -q .; then
+                ok=1
+                break
+              fi
+              echo "Attempt $i/12: Vendure not ready, waiting 5s..."
+              sleep 5
+            done
+            if [ "$ok" = "1" ]; then
+              echo "Vendure reachable from nginx."
+            else
+              echo "Vendure did not become reachable; check vendure container logs."
+              exit 1
+            fi
