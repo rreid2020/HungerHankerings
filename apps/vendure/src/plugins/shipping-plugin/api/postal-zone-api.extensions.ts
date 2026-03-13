@@ -1,7 +1,5 @@
-import type { DocumentNode } from "graphql";
-import gql from "graphql-tag";
-
-export const postalZoneAdminSchema: DocumentNode = gql`
+/** SDL for admin API extension. Parsed at runtime with Vendure's graphql to avoid version mismatch. */
+export const postalZoneAdminSchemaSdl = `
   type PostalCodeZone {
     id: ID!
     createdAt: DateTime!
@@ -19,4 +17,4 @@ export const postalZoneAdminSchema: DocumentNode = gql`
   extend type Mutation {
     updatePostalCodeZone(id: ID!, rateCents: Int!): PostalCodeZone
   }
-`;
+`.trim();
