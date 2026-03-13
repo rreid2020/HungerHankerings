@@ -12,6 +12,7 @@
     "fix-stripe-column-casing": "node dist/fix-stripe-customer-column-casing.js",
     "add-stripe-column-any-customer-table": "node dist/add-stripe-column-any-customer-table.js",
     "add-stripe-column-exact-name": "node dist/add-stripe-column-exact-name.js",
+    "seed:canadian-tax": "node dist/seed-canadian-tax-zones.js",
     "dev": "ts-node src/index.ts",
     "dev:worker": "ts-node src/worker.ts"
   },

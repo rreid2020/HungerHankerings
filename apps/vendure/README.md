@@ -16,6 +16,17 @@ Vendure server and worker for Hunger Hankerings.
 
 Open `/admin` (e.g. http://localhost:3000/admin). Log in with `SUPERADMIN_USERNAME` / `SUPERADMIN_PASSWORD`.
 
+## Canadian tax (province-based)
+
+Province-specific tax is configured via a custom **TaxZoneStrategy** and zones/tax rates. To seed zones and rates so you don’t have to create them in Admin:
+
+1. Ensure **Canada** is enabled in Admin → **Settings** → **Countries** (the seed adds Canada to each zone).
+2. From this directory: `pnpm run build` then `pnpm run seed:canadian-tax`.  
+   On the droplet (same DB env):  
+   `node dist/seed-canadian-tax-zones.js`
+
+This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback), each with Canada as member, and a **Standard** tax rate per zone (e.g. CA-ON 13%, CA-QC 14.975%, CA-AB 5%). It also sets the channel’s default tax zone to **Canada**. Safe to run multiple times (skips existing zones/rates).
+
 ## Shipping
 
 The custom region-based shipping plugin is registered. In Admin, create a **Shipping Method** and select:
