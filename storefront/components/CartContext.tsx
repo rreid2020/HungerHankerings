@@ -225,6 +225,15 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error("Email and billing/shipping addresses are required")
     }
 
+    const toCountryCode = (c: string | { code?: string } | undefined): string => {
+      if (c == null) return "CA"
+      if (typeof c === "string") {
+        const s = c.trim()
+        return s.length >= 2 ? s.slice(0, 2).toUpperCase() : "CA"
+      }
+      return (c.code ?? "CA").toString().slice(0, 2).toUpperCase() || "CA"
+    }
+
     try {
       const res = await fetch("/api/checkout/complete", {
         method: "POST",
@@ -240,7 +249,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             city: billing.city,
             province: billing.province,
             postal_code: billing.postal_code,
-            country: billing.country
+            country: toCountryCode(billing.country)
           },
           shipping: {
             first_name: shipping.first_name,
@@ -249,7 +258,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
             city: shipping.city,
             province: shipping.province,
             postal_code: shipping.postal_code,
-            country: shipping.country
+            country: toCountryCode(shipping.country)
           },
           createAccount: options?.createAccount,
           storefrontShippingAmount: options?.shippingAmount,

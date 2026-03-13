@@ -904,7 +904,7 @@ export async function getCurrentCustomer(
         streetLine2?: string;
         city?: string;
         postalCode?: string;
-        country?: { code: string; name: string };
+        countryCode?: string;
         province?: string;
         phoneNumber?: string;
         defaultShippingAddress?: boolean;
@@ -926,7 +926,7 @@ export async function getCurrentCustomer(
           streetLine2
           city
           postalCode
-          country { code name }
+          countryCode
           province
           phoneNumber
           defaultShippingAddress
@@ -949,15 +949,16 @@ export async function getCurrentCustomer(
     addresses:
       c.addresses?.map((a) => {
         const [f = "", l = ""] = (a.fullName ?? "").split(" ");
+        const code = a.countryCode ?? "";
         return {
           id: a.id,
           firstName: f,
           lastName: l,
           streetAddress1: a.streetLine1 ?? "",
-          streetAddress2: a.streetLine2 ?? null,
+          streetLine2: a.streetLine2 ?? null,
           city: a.city ?? "",
           postalCode: a.postalCode ?? "",
-          country: { code: a.country?.code ?? "", country: a.country?.name ?? "" },
+          country: { code, country: code },
           countryArea: a.province ?? null,
           phone: a.phoneNumber ?? null,
           isDefaultShippingAddress: a.defaultShippingAddress ?? false,
