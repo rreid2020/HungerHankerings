@@ -25,7 +25,24 @@ type AddressPayload = {
   city: string
   province: string
   postal_code: string
-  country: string
+  /** May be string "CA" or object { code: "CA", name: "Canada" } from form */
+  country: string | { code?: string; name?: string }
+}
+
+/** Normalize country to 2-letter code for Vendure (expects countryCode string). */
+function toCountryCode(c: string | { code?: string; name?: string } | undefined): string {
+  if (c == null) return "CA"
+  if (typeof c === "string") {
+    const s = c.trim()
+    if (s.length === 2) return s.toUpperCase()
+    if (/canada/i.test(s)) return "CA"
+    if (/united states|usa|us/i.test(s)) return "US"
+    return s.slice(0, 2).toUpperCase() || "CA"
+  }
+  const code = c.code?.trim()
+  if (code) return code.length === 2 ? code.toUpperCase() : code.slice(0, 2).toUpperCase()
+  if (c.name) return toCountryCode(c.name)
+  return "CA"
 }
 
 function toSaleorAddress(a: AddressPayload): SaleorAddressInput {
@@ -36,7 +53,7 @@ function toSaleorAddress(a: AddressPayload): SaleorAddressInput {
     streetAddress2: null,
     city: a.city?.trim() ?? "",
     postalCode: a.postal_code?.trim() ?? "",
-    country: a.country?.trim() || "CA",
+    country: toCountryCode(a.country),
     countryArea: a.province?.trim() || null,
     phone: null
   }
