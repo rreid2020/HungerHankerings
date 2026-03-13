@@ -11,6 +11,7 @@ import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
+import { canadianProvinceTaxZoneStrategy } from "./plugins/tax/canadian-province-tax-zone-strategy";
 import {
   regionShippingCalculator,
   regionShippingEligibilityChecker,
@@ -76,6 +77,9 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     paymentMethodHandlers: [dummyPaymentHandler],
   },
   // Stripe: create Payment Method in Admin with "Stripe payments" and set API key + webhook secret
+  taxOptions: {
+    taxZoneStrategy: canadianProvinceTaxZoneStrategy,
+  },
   shippingOptions: {
     shippingEligibilityCheckers: [regionShippingEligibilityChecker],
     shippingCalculators: [regionShippingCalculator],
