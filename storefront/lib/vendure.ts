@@ -607,8 +607,8 @@ export async function checkoutEmailUpdate(
   opts?: VendureRequestOptions
 ): Promise<SaleorCheckout> {
   await fetchVendure(`
-    mutation SetOrderCustomer($input: CreateCustomerInput!) {
-      setOrderCustomer(input: $input) {
+    mutation SetCustomerForOrder($input: CreateCustomerInput!) {
+      setCustomerForOrder(input: $input) {
         ... on Order { id }
         ... on ErrorResult { message errorCode }
       }
