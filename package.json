@@ -10,7 +10,8 @@
     "dev": "pnpm --filter ./storefront dev",
     "docker:up": "docker compose up --build",
     "build:vendure": "pnpm exec tsc -p apps/vendure/tsconfig.json",
-    "migrate:vendure": "pnpm --filter vendure run build && pnpm --filter vendure run migrate"
+    "migrate:vendure": "pnpm --filter vendure run build && pnpm --filter vendure run migrate",
+    "add-stripe-column:vendure": "pnpm --filter vendure run build && pnpm --filter vendure run add-stripe-column"
   },
   "dependencies": {
     "pg": "^8.11.0"

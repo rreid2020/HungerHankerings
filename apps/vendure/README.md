@@ -50,6 +50,13 @@ A dummy payment handler is configured. In Admin → **Settings** → **Payment m
    - Use the `createStripePaymentIntent` mutation (from the plugin) to get a client secret, then use Stripe.js / Stripe Elements to confirm payment. See [Vendure Stripe docs](https://docs.vendure.io/current/core/reference/core-plugins/payments-plugin/stripe-plugin). For React: `@stripe/react-stripe-js` and `@stripe/stripe-js`.
    - Set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (or equivalent) in the storefront for the publishable key.
 
+6. **"column order_order_customer.customFieldsStripecustomerid does not exist"**  
+   With `storeCustomersInStripe: true`, the plugin adds a custom field on the Customer entity. If the DB was created with `synchronize: false`, that column may be missing. Fix options:
+   - **Add the column (recommended):** From repo root: `pnpm run build --filter vendure` (or `cd apps/vendure && pnpm run build`), then run the one-time script with the same DB env as production:  
+     `cd apps/vendure && node dist/add-stripe-customer-column.js`  
+     (On the droplet: run the vendure container with the same env and run that script, or run it from the host with DB_* in .env.)
+   - **Or** set `storeCustomersInStripe: false` in `StripePlugin.init({ ... })` so the plugin does not store Stripe customer IDs (no DB change; slightly less strict about reusing payment intents).
+
 ### PayPal
 
 Vendure does not ship an official PayPal plugin in `@vendure/payments-plugin` for v2. Options:
