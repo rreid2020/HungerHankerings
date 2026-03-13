@@ -1,0 +1,13 @@
+# Hunger Hankerings project rules
+
+## Droplet / server commands
+When the user asks for commands for deployment, database, migrations, or server operations, **default to commands that run on the droplet console** (SSH into the droplet, working directory `/root/HungerHankerings`). Do not assume a local machine or ask the user to confirm—provide copy-paste commands that work on the droplet using:
+- `cd /root/HungerHankerings`
+- `set -a && . ./.env && set +a` when env is needed
+- `docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml` for compose
+- Bash syntax (the droplet uses Linux/bash).
+
+Only give Windows/PowerShell or local-only commands when the user explicitly says they are on their local machine or in a different context.
+
+## Commit and push for deploy
+Whenever code changes are made that require a new deploy on GitHub (push to main triggers the deploy workflow), **always provide the commit and push command** so the user can trigger the deploy. Give it without being asked. Use a short, descriptive commit message that matches the change. Example (PowerShell, from project root): `git add -A; git commit -m "Brief description"; git push`
