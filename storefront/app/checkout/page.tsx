@@ -1507,48 +1507,62 @@ const CheckoutPage = () => {
         ) : null}
         <div className="mt-4 space-y-2 text-sm text-foreground">
           {addressBreakdown.length > 0 ? (
-            addressBreakdown.map((addr) => (
-              <div key={addr.label} className="space-y-2 border-t border-gray-200 pt-3 first:border-t-0 first:pt-0">
-                <p className="font-medium text-foreground">{addr.label}</p>
-                <div className="space-y-1 pl-0">
-                  {addr.lineItems.map((li, idx) => (
-                    <div key={`${addr.label}-${idx}-${li.lineId}`} className="flex justify-between text-muted-foreground">
-                      <span>
-                        {li.title}
-                        <span className="ml-1 text-muted-foreground">
-                          {li.quantity} × ${li.unitPrice.toFixed(2)}
+            addressBreakdown.map((addr) => {
+              const isMainAddressOnly =
+                useVendureTotals && addressBreakdown.length === 1
+              const rowShipping = isMainAddressOnly ? displayShipping : addr.shipping
+              const rowTax = isMainAddressOnly ? displayTax : addr.taxAmount
+              const rowTotal =
+                isMainAddressOnly
+                  ? addr.subtotal + displayShipping + addr.giftFee + displayTax
+                  : addr.totalForAddress
+              const taxRateDisplay =
+                rowTax > 0 && addr.subtotal + rowShipping + addr.giftFee > 0
+                  ? ((rowTax / (addr.subtotal + rowShipping + addr.giftFee)) * 100).toFixed(1)
+                  : (addr.taxRate * 100).toFixed(1)
+              return (
+                <div key={addr.label} className="space-y-2 border-t border-gray-200 pt-3 first:border-t-0 first:pt-0">
+                  <p className="font-medium text-foreground">{addr.label}</p>
+                  <div className="space-y-1 pl-0">
+                    {addr.lineItems.map((li, idx) => (
+                      <div key={`${addr.label}-${idx}-${li.lineId}`} className="flex justify-between text-muted-foreground">
+                        <span>
+                          {li.title}
+                          <span className="ml-1 text-muted-foreground">
+                            {li.quantity} × ${li.unitPrice.toFixed(2)}
+                          </span>
                         </span>
-                      </span>
-                      <span>${li.lineTotal.toFixed(2)}</span>
+                        <span>${li.lineTotal.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between font-medium text-foreground">
+                      <span>Boxes total</span>
+                      <span>${addr.subtotal.toFixed(2)}</span>
                     </div>
-                  ))}
-                  <div className="flex justify-between font-medium text-foreground">
-                    <span>Boxes total</span>
-                    <span>${addr.subtotal.toFixed(2)}</span>
                   </div>
-                </div>
-                <div className="flex justify-between pl-0 text-muted-foreground">
-                  <span>Shipping</span>
-                  <span>${addr.shipping.toFixed(2)}</span>
-                </div>
-                {addr.giftCount > 0 && (
                   <div className="flex justify-between pl-0 text-muted-foreground">
-                    <span>Gift box ({addr.giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
-                    <span>${addr.giftFee.toFixed(2)}</span>
+                    <span>Shipping</span>
+                    <span>${rowShipping.toFixed(2)}</span>
                   </div>
-                )}
-                {addr.taxAmount > 0 && (
-                  <div className="flex justify-between pl-0 text-muted-foreground">
-                    <span>Tax ({(addr.taxRate * 100).toFixed(1)}%)</span>
-                    <span>${addr.taxAmount.toFixed(2)}</span>
+                  {addr.giftCount > 0 && (
+                    <div className="flex justify-between pl-0 text-muted-foreground">
+                      <span>Gift box ({addr.giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
+                      <span>${addr.giftFee.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {rowTax > 0 && (
+                    <div className="flex justify-between pl-0 text-muted-foreground">
+                      <span>Tax ({taxRateDisplay}%)</span>
+                      <span>${rowTax.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-gray-200 pt-2 font-medium text-foreground">
+                    <span>Total for this address</span>
+                    <span>${rowTotal.toFixed(2)}</span>
                   </div>
-                )}
-                <div className="flex justify-between border-t border-gray-200 pt-2 font-medium text-foreground">
-                  <span>Total for this address</span>
-                  <span>${addr.totalForAddress.toFixed(2)}</span>
                 </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <>
               <div className="flex justify-between text-muted-foreground">

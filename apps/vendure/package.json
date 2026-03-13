@@ -13,6 +13,7 @@
     "add-stripe-column-any-customer-table": "node dist/add-stripe-column-any-customer-table.js",
     "add-stripe-column-exact-name": "node dist/add-stripe-column-exact-name.js",
     "seed:canadian-tax": "node dist/seed-canadian-tax-zones.js",
+    "seed:postal-zones": "node dist/seed-postal-code-zones.js",
     "dev": "ts-node src/index.ts",
     "dev:worker": "ts-node src/worker.ts"
   },
@@ -24,7 +25,8 @@
     "@vendure/payments-plugin": "^2.1.5",
     "dotenv": "^16.3.1",
     "pg": "^8.11.0",
-    "stripe": "^13.0.0"
+    "stripe": "^13.0.0",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

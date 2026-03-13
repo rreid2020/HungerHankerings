@@ -8,7 +8,10 @@ const path_1 = __importDefault(require("path"));
 const core_1 = require("@vendure/core");
 const admin_ui_plugin_1 = require("@vendure/admin-ui-plugin");
 const asset_server_plugin_1 = require("@vendure/asset-server-plugin");
+const stripe_1 = require("@vendure/payments-plugin/package/stripe");
 const email_plugin_1 = require("@vendure/email-plugin");
+const canadian_province_tax_zone_strategy_1 = require("./plugins/tax/canadian-province-tax-zone-strategy");
+const postal_zone_plugin_1 = require("./plugins/shipping-plugin/postal-zone.plugin");
 const shipping_plugin_1 = require("./plugins/shipping-plugin");
 require("dotenv").config();
 if (process.env.NODE_ENV === "production") {
@@ -47,6 +50,8 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
         ssl: process.env.DB_SSL === "false"
             ? false
             : { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" },
+        // Set LOG_SQL=true on droplet to log every query (find the one that references order_order_customer)
+        ...(process.env.LOG_SQL === "true" ? { logging: true } : {}),
     },
     authOptions: {
         tokenMethod: "cookie",
@@ -61,12 +66,19 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
     paymentOptions: {
         paymentMethodHandlers: [core_1.dummyPaymentHandler],
     },
+    // Stripe: create Payment Method in Admin with "Stripe payments" and set API key + webhook secret
+    taxOptions: {
+        taxZoneStrategy: canadian_province_tax_zone_strategy_1.canadianProvinceTaxZoneStrategy,
+    },
     shippingOptions: {
-        shippingEligibilityCheckers: [shipping_plugin_1.regionShippingEligibilityChecker],
-        shippingCalculators: [shipping_plugin_1.regionShippingCalculator],
+        shippingEligibilityCheckers: [shipping_plugin_1.postalShippingEligibilityChecker],
+        shippingCalculators: [shipping_plugin_1.postalShippingCalculator],
     },
     plugins: [
+        postal_zone_plugin_1.PostalZonePlugin,
         core_1.DefaultJobQueuePlugin,
+        core_1.DefaultSearchPlugin.init({}),
+        stripe_1.StripePlugin.init({ storeCustomersInStripe: true }),
         asset_server_plugin_1.AssetServerPlugin.init({
             route: "assets",
             assetUploadDir: assetDir,

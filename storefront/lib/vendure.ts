@@ -82,6 +82,27 @@ function assertNoErrors(
   throw new Error(`${label}: ${errors[0]?.message || "Unknown error"}`);
 }
 
+/** Countries available in the active channel (from Vendure zones). Use for address/country dropdowns. */
+export async function getAvailableCountries(
+  opts?: VendureRequestOptions
+): Promise<{ code: string; name: string }[]> {
+  const data = await fetchVendure<{
+    availableCountries: Array<{ code: string; name: string }>;
+  }>(
+    `
+    query AvailableCountries {
+      availableCountries {
+        code
+        name
+      }
+    }
+  `,
+    undefined,
+    opts
+  );
+  return data?.availableCountries ?? [];
+}
+
 // ---------------------------------------------------------------------------
 // Types (compatible with existing Saleor type names for minimal storefront changes)
 // ---------------------------------------------------------------------------

@@ -29,12 +29,18 @@ This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback)
 
 ## Shipping
 
-The custom region-based shipping plugin is registered. In Admin, create a **Shipping Method** and select:
+Postal-code–based shipping uses the **PostalCodeZone** table (Canadian first-letter zones + US default). Seed the table, then create a Shipping Method in Admin.
 
-- **Eligibility checker:** Region-based shipping
-- **Calculator:** Region-based rate (Toronto / Ontario / Canada / USA / Remote)
+1. **Seed postal zones** (run once after schema exists):  
+   `pnpm run build && pnpm run seed:postal-zones`  
+   On droplet: `node dist/seed-postal-code-zones.js`  
+   Inserts 18 Canadian first-letter regions (A, B, C, E, G, H, J, K, L, M, N, P, R, S, T, V, X, Y) plus CA default and US default, each with a placeholder rate ($12 CA, $18 US). Edit the `postal_code_zone` table to change rates.
 
-Assign the method to your shipping zone(s). Rules: Toronto (M prefix) $10, Ontario $15, Canada $20, remote (NT/YT/NU) $35, USA $30 (prices in CAD cents).
+2. **Admin** → **Settings** → **Shipping methods** → Create; choose:
+   - **Eligibility checker:** Postal code shipping
+   - **Calculator:** Postal code zone rate (Canada first letter, US default)
+
+3. Assign the method to your channel’s shipping zone(s). The storefront syncs the shipping address (with postal code) to Vendure and displays the shipping charge from the API.
 
 ## Payment
 

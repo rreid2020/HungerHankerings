@@ -1,1 +1,1 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src/plugins/shipping-plugin/index.ts"],"names":[],"mappings":"AAAA,OAAO,EACL,gCAAgC,EAChC,wBAAwB,GACzB,MAAM,mBAAmB,CAAC"}
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../src/plugins/shipping-plugin/index.ts"],"names":[],"mappings":"AAAA,OAAO,EACL,gCAAgC,EAChC,wBAAwB,GACzB,MAAM,mBAAmB,CAAC;AAC3B,OAAO,EACL,gCAAgC,EAChC,wBAAwB,GACzB,MAAM,mBAAmB,CAAC"}

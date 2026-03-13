@@ -1,0 +1,92 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.seed = seed;
+/**
+ * Seeds the PostalCodeZone table with Canadian first-letter regions and US default.
+ * Run after schema exists: pnpm run build && pnpm run seed:postal-zones
+ *
+ * Uses the standard Canada Post first-letter zones; placeholder rate $12 (1200 cents) for all.
+ * Edit rates later in the database or add Admin UI.
+ */
+const core_1 = require("@vendure/core");
+const vendure_config_1 = require("./vendure-config");
+const postal_code_zone_entity_1 = require("./plugins/shipping-plugin/entities/postal-code-zone.entity");
+/** Canadian first letter → zone name (standard Canada Post). */
+const CA_FIRST_LETTER_ZONES = {
+    A: "Newfoundland & Labrador",
+    B: "Nova Scotia",
+    C: "Prince Edward Island",
+    E: "New Brunswick",
+    G: "Eastern Quebec",
+    H: "Montreal Metro",
+    J: "Western Quebec",
+    K: "Eastern Ontario",
+    L: "Central Ontario",
+    M: "Toronto Metro",
+    N: "Southwestern Ontario",
+    P: "Northern Ontario",
+    R: "Manitoba",
+    S: "Saskatchewan",
+    T: "Alberta",
+    V: "British Columbia",
+    X: "NWT & Nunavut",
+    Y: "Yukon",
+};
+const PLACEHOLDER_CA_CENTS = 1200; // $12
+const PLACEHOLDER_US_CENTS = 1800; // $18
+async function seed() {
+    const { app } = await (0, core_1.bootstrapWorker)(vendure_config_1.config);
+    const connection = app.get(core_1.TransactionalConnection);
+    const requestContextService = app.get(core_1.RequestContextService);
+    const ctx = await requestContextService.create({ apiType: "admin" });
+    const repo = connection.getRepository(ctx, postal_code_zone_entity_1.PostalCodeZone);
+    const existing = await repo.find();
+    const key = (z) => `${z.countryCode}:${z.prefix}`;
+    const existingKeys = new Set(existing.map(key));
+    let added = 0;
+    for (const [prefix, zoneName] of Object.entries(CA_FIRST_LETTER_ZONES)) {
+        if (existingKeys.has(`CA:${prefix}`)) {
+            core_1.Logger.info(`PostalCodeZone CA:${prefix} already exists`);
+            continue;
+        }
+        await repo.save(repo.create({
+            countryCode: "CA",
+            prefix,
+            zoneName,
+            rateCents: PLACEHOLDER_CA_CENTS,
+        }));
+        existingKeys.add(`CA:${prefix}`);
+        added++;
+    }
+    if (!existingKeys.has("CA:")) {
+        await repo.save(repo.create({
+            countryCode: "CA",
+            prefix: "",
+            zoneName: "Canada (default)",
+            rateCents: PLACEHOLDER_CA_CENTS,
+        }));
+        added++;
+    }
+    if (!existingKeys.has("US:")) {
+        await repo.save(repo.create({
+            countryCode: "US",
+            prefix: "",
+            zoneName: "United States",
+            rateCents: PLACEHOLDER_US_CENTS,
+        }));
+        added++;
+    }
+    core_1.Logger.info(`PostalCodeZone seed: ${added} row(s) added.`);
+    await app.close();
+}
+if (require.main === module) {
+    seed()
+        .then(() => {
+        core_1.Logger.info("Postal code zones seeded.");
+        process.exit(0);
+    })
+        .catch((err) => {
+        core_1.Logger.error(err);
+        process.exit(1);
+    });
+}

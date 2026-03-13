@@ -12,9 +12,10 @@ import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import { canadianProvinceTaxZoneStrategy } from "./plugins/tax/canadian-province-tax-zone-strategy";
+import { PostalZonePlugin } from "./plugins/shipping-plugin/postal-zone.plugin";
 import {
-  regionShippingCalculator,
-  regionShippingEligibilityChecker,
+  postalShippingCalculator,
+  postalShippingEligibilityChecker,
 } from "./plugins/shipping-plugin";
 
 require("dotenv").config();
@@ -81,10 +82,11 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     taxZoneStrategy: canadianProvinceTaxZoneStrategy,
   },
   shippingOptions: {
-    shippingEligibilityCheckers: [regionShippingEligibilityChecker],
-    shippingCalculators: [regionShippingCalculator],
+    shippingEligibilityCheckers: [postalShippingEligibilityChecker],
+    shippingCalculators: [postalShippingCalculator],
   },
   plugins: [
+    PostalZonePlugin,
     DefaultJobQueuePlugin,
     DefaultSearchPlugin.init({}),
     StripePlugin.init({ storeCustomersInStripe: true }),

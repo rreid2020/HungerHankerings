@@ -17,7 +17,7 @@ const client = new pg_1.Client({
 });
 client
     .connect()
-    .then(() => client.query(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'administrator'`))
+    .then(() => client.query(`SELECT 1 FROM information_schema.tables WHERE table_schema IN ('public', 'vendure') AND table_name = 'administrator'`))
     .then((res) => {
     client.end().catch(() => { });
     process.exit(res.rows.length > 0 ? 0 : 1);
