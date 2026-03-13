@@ -59,6 +59,8 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
       process.env.DB_SSL === "false"
         ? false
         : { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" },
+    // Set LOG_SQL=true on droplet to log every query (find the one that references order_order_customer)
+    ...(process.env.LOG_SQL === "true" ? { logging: true } : {}),
   },
   authOptions: {
     tokenMethod: "cookie",

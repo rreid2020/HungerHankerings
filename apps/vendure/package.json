@@ -10,6 +10,7 @@
     "add-stripe-column": "node dist/add-stripe-customer-column.js",
     "add-stripe-column-order-order-customer": "node dist/add-stripe-column-order-order-customer.js",
     "fix-stripe-column-casing": "node dist/fix-stripe-customer-column-casing.js",
+    "add-stripe-column-any-customer-table": "node dist/add-stripe-column-any-customer-table.js",
     "dev": "ts-node src/index.ts",
     "dev:worker": "ts-node src/worker.ts"
   },
