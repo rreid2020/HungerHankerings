@@ -13,7 +13,7 @@ import { ShippingRatesUiController } from "./shipping-rates-ui.controller";
   entities: [PostalCodeZone as any],
   providers: [PostalCodeZoneService],
   adminApiExtensions: {
-    schema: postalZoneAdminSchema,
+    schema: postalZoneAdminSchema as any,
     resolvers: [PostalZoneAdminResolver],
   },
   controllers: [ShippingRatesUiController],
