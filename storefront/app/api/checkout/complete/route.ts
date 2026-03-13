@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await checkoutEmailUpdate("", email.trim(), opts)
+    await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
     try {
       await checkoutShippingAddressUpdate("", toSaleorAddress(shipping), opts)
     } catch (shippingErr) {

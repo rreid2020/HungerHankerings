@@ -604,7 +604,9 @@ function toVendureAddress(addr: SaleorAddressInput) {
 export async function checkoutEmailUpdate(
   _checkoutId: string,
   email: string,
-  opts?: VendureRequestOptions
+  opts?: VendureRequestOptions,
+  firstName?: string,
+  lastName?: string
 ): Promise<SaleorCheckout> {
   await fetchVendure(`
     mutation SetCustomerForOrder($input: CreateCustomerInput!) {
@@ -613,7 +615,13 @@ export async function checkoutEmailUpdate(
         ... on ErrorResult { message errorCode }
       }
     }
-  `, { input: { emailAddress: email } }, opts);
+  `, {
+    input: {
+      emailAddress: email,
+      firstName: (firstName ?? "").trim() || "Guest",
+      lastName: (lastName ?? "").trim() || "Guest",
+    },
+  }, opts);
   const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
