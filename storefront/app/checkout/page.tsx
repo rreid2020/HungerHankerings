@@ -12,6 +12,11 @@ import {
   getTaxRate,
   CANADIAN_PROVINCES
 } from "../../lib/shippingTax"
+import {
+  checkoutShippingAddressUpdate,
+  getCheckoutShippingMethods,
+  checkoutDeliveryMethodUpdate
+} from "../../lib/vendure"
 import Link from "next/link"
 import Image from "next/image"
 import Script from "next/script"
@@ -22,6 +27,7 @@ const GIFT_BOX_FEE = 3.99
 const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
 const CHECKOUT_DRAFT_KEY = "hungerhankerings_checkout_draft_v1"
 
+/** Fallback when Vendure countries are not yet loaded or API fails */
 const emptyAddress: AddressFields = {
   first_name: "",
   last_name: "",
@@ -37,7 +43,7 @@ const inputClass =
   "rounded-md border border-gray-300 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
 const CheckoutPage = () => {
-  const { cart, loading, updating, completeCart, updateItem, removeItem } = useCart()
+  const { cart, loading, updating, completeCart, updateItem, removeItem, refreshCart } = useCart()
   const { user, login: authLogin } = useAuth()
   const router = useRouter()
   const isLoggedIn = !!user
@@ -48,6 +54,7 @@ const CheckoutPage = () => {
   const [checkoutLoginSubmitting, setCheckoutLoginSubmitting] = useState(false)
   const [billing, setBilling] = useState<AddressFields>(emptyAddress)
   const [shipping, setShipping] = useState<AddressFields>(emptyAddress)
+  const [countries, setCountries] = useState<{ code: string; name: string }[]>([])
   const [giftByLineUnit, setGiftByLineUnit] = useState<
     Record<string, { enabled: boolean; message: string }>
   >({})
@@ -148,6 +155,16 @@ const CheckoutPage = () => {
     }
   }, [])
 
+  // Load countries from Vendure (zones) for country dropdowns; only Vendure-configured countries are shown
+  useEffect(() => {
+    fetch("/api/countries", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((list: { code: string; name: string }[]) => {
+        if (Array.isArray(list)) setCountries(list)
+      })
+      .catch(() => setCountries([]))
+  }, [])
+
   // Pre-fill billing and shipping from logged-in user's default addresses (only when form is still empty so draft wins)
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -196,6 +213,55 @@ const CheckoutPage = () => {
       /* ignore */
     }
   }, [billing, shipping, giftByLineUnit, customAddresses, assignment])
+
+  // Sync main shipping address to Vendure so tax/shipping are calculated by province; then refetch cart
+  const syncAddressToVendureRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    const country = shipping.country?.trim().toUpperCase().slice(0, 2)
+    const province = shipping.province?.trim()
+    if (!country || !province || !cart?.items?.length) return
+
+    if (syncAddressToVendureRef.current) clearTimeout(syncAddressToVendureRef.current)
+    syncAddressToVendureRef.current = setTimeout(async () => {
+      syncAddressToVendureRef.current = null
+      try {
+        await checkoutShippingAddressUpdate("", {
+          firstName: shipping.first_name?.trim() || "Guest",
+          lastName: shipping.last_name?.trim() || "Guest",
+          streetAddress1: shipping.address_1?.trim() ?? "",
+          streetAddress2: null,
+          city: shipping.city?.trim() ?? "",
+          postalCode: shipping.postal_code?.trim() ?? "",
+          country,
+          countryArea: province || null,
+          phone: null
+        })
+        const methods = await getCheckoutShippingMethods("")
+        if (methods[0]) {
+          await checkoutDeliveryMethodUpdate("", methods[0].id)
+        }
+        await refreshCart()
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : ""
+        if (!msg.includes("doesn't need shipping")) {
+          // Log but don't block; user can still complete and API will set address then
+        }
+      }
+    }, 800)
+    return () => {
+      if (syncAddressToVendureRef.current) clearTimeout(syncAddressToVendureRef.current)
+    }
+  }, [
+    shipping.country,
+    shipping.province,
+    shipping.first_name,
+    shipping.last_name,
+    shipping.address_1,
+    shipping.city,
+    shipping.postal_code,
+    cart?.items?.length,
+    refreshCart
+  ])
 
   const copyBillingToShipping = useCallback(() => {
     const get = (id: string) => {
@@ -521,6 +587,16 @@ const CheckoutPage = () => {
       giftFee
     ])
 
+  // Prefer Vendure totals when we have a shipping address (tax/shipping from province)
+  const hasShippingAddress = !!(shipping.country?.trim() && shipping.province?.trim())
+  const useVendureTotals =
+    hasShippingAddress && cart?.total != null && cart.total > 0
+  const displayShipping = useVendureTotals ? (cart?.shippingTotal ?? 0) : shippingAmount
+  const displayTax = useVendureTotals
+    ? Math.max(0, (cart?.total ?? 0) - (cart?.subtotal ?? 0) - (cart?.shippingTotal ?? 0))
+    : taxAmount
+  const displayOrderTotal = useVendureTotals ? (cart?.total ?? 0) : orderTotal
+
   const { isLoaded: placesLoaded } = useGooglePlacesScript()
 
   const keyToBoxLabel = useMemo(() => {
@@ -680,8 +756,8 @@ const CheckoutPage = () => {
       const options = {
         giftByLineUnit: giftCount ? giftUnits : undefined,
         giftFee: giftCount ? giftFee : undefined,
-        shippingAmount,
-        taxAmount,
+        shippingAmount: displayShipping,
+        taxAmount: displayTax,
         billing,
         shipping,
         shippingOverridesByUnit: Object.keys(customOnly).length ? customOnly : undefined,
@@ -977,8 +1053,9 @@ const CheckoutPage = () => {
                   onChange={(e) => setBilling((b) => ({ ...b, country: e.target.value }))}
                   className={inputClass + " w-full"}
                 >
-                  <option value="CA">Canada</option>
-                  <option value="US">United States</option>
+                  {countries.map((c) => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -1042,8 +1119,9 @@ const CheckoutPage = () => {
                   <input className={inputClass} placeholder="Postal code" required value={shipping.postal_code} onChange={(e) => setShipping((s) => ({ ...s, postal_code: e.target.value }))} />
                   <div className="md:col-span-2">
                     <select value={shipping.country} onChange={(e) => setShipping((s) => ({ ...s, country: e.target.value }))} className={inputClass + " w-full"} required>
-                      <option value="CA">Canada</option>
-                      <option value="US">United States</option>
+                      {countries.map((c) => (
+                        <option key={c.code} value={c.code}>{c.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1141,8 +1219,9 @@ const CheckoutPage = () => {
                     <input className={inputClass} placeholder="Postal code" value={addr.postal_code} onChange={(e) => setCustomAddressAt(idx, { postal_code: e.target.value })} />
                     <div className="md:col-span-2">
                       <select value={addr.country} onChange={(e) => setCustomAddressAt(idx, { country: e.target.value })} className={inputClass + " w-full"}>
-                        <option value="CA">Canada</option>
-                        <option value="US">United States</option>
+                        {countries.map((c) => (
+                          <option key={c.code} value={c.code}>{c.name}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1480,7 +1559,7 @@ const CheckoutPage = () => {
                 <span>Shipping</span>
                 <span>
                   {shipping.country && shipping.province ? (
-                    `$${shippingAmount.toFixed(2)}`
+                    `$${displayShipping.toFixed(2)}`
                   ) : (
                     <span className="text-muted-foreground">Enter address</span>
                   )}
@@ -1492,10 +1571,10 @@ const CheckoutPage = () => {
                   <span>${giftFee.toFixed(2)}</span>
                 </div>
               )}
-              {shipping.country && shipping.province && taxAmount > 0 && (
+              {shipping.country && shipping.province && displayTax > 0 && (
                 <div className="flex justify-between text-muted-foreground">
                   <span>Taxes</span>
-                  <span>${taxAmount.toFixed(2)}</span>
+                  <span>${displayTax.toFixed(2)}</span>
                 </div>
               )}
             </>
@@ -1511,7 +1590,7 @@ const CheckoutPage = () => {
               </div>
               <div className="flex justify-between">
                 <span>Total shipping costs</span>
-                <span>${shippingAmount.toFixed(2)}</span>
+                <span>${displayShipping.toFixed(2)}</span>
               </div>
               {giftFee > 0 && (
                 <div className="flex justify-between">
@@ -1537,16 +1616,16 @@ const CheckoutPage = () => {
                   ))
                 })()
               ) : (
-                taxAmount > 0 && (
+                displayTax > 0 && (
                   <div className="flex justify-between">
                     <span>Total tax</span>
-                    <span>${taxAmount.toFixed(2)}</span>
+                    <span>${displayTax.toFixed(2)}</span>
                   </div>
                 )
               )}
               <div className="flex justify-between border-t border-white/20 pt-2 text-base font-semibold text-white">
                 <span>Grand total</span>
-                <span>${orderTotal.toFixed(2)}</span>
+                <span>${displayOrderTotal.toFixed(2)}</span>
               </div>
             </div>
           </section>

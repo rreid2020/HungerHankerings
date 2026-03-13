@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -70,6 +71,8 @@ type CartContextValue = {
   updateItem: (lineId: string, quantity: number) => Promise<void>
   removeItem: (lineId: string) => Promise<void>
   clearCart: () => void
+  /** Refetch active order from Vendure and update cart (e.g. after setting shipping address so tax/shipping are recalculated). */
+  refreshCart: () => Promise<void>
   completeCart: (
     options?: CheckoutOptions
   ) => Promise<string | { confirmationNeeded: true; clientSecret: string } | null>
@@ -212,6 +215,21 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setCheckoutId(null)
   }
 
+  const refreshCart = useCallback(async () => {
+    try {
+      const checkout = await getActiveOrder()
+      if (!checkout || !checkout.lines?.length) {
+        setCheckoutId(null)
+        setCart(buildCart([]))
+      } else {
+        setCheckoutId(checkout.id)
+        setCart(mapCheckoutToCart(checkout))
+      }
+    } catch {
+      // Keep current cart on error
+    }
+  }, [])
+
   const completeCart = async (
     options?: CheckoutOptions
   ): Promise<string | { confirmationNeeded: true; clientSecret: string } | null> => {
@@ -308,9 +326,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       updateItem,
       removeItem,
       clearCart,
+      refreshCart,
       completeCart
     }),
-    [cart, loading, updating]
+    [cart, loading, updating, refreshCart]
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
