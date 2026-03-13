@@ -15,8 +15,10 @@
     "@vendure/asset-server-plugin": "^2.1.0",
     "@vendure/core": "^2.1.0",
     "@vendure/email-plugin": "^2.1.0",
+    "@vendure/payments-plugin": "^2.1.5",
     "dotenv": "^16.3.1",
-    "pg": "^8.11.0"
+    "pg": "^8.11.0",
+    "stripe": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

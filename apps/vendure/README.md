@@ -27,4 +27,33 @@ Assign the method to your shipping zone(s). Rules: Toronto (M prefix) $10, Ontar
 
 ## Payment
 
-A dummy payment handler is configured for development. In Admin, create a Payment Method and choose "Dummy payment". For production, add Stripe or another handler.
+### Dummy (development)
+
+A dummy payment handler is configured. In Admin → **Settings** → **Payment methods**, create a Payment Method and choose **"Dummy payment"**.
+
+### Stripe (production)
+
+1. **Install** (already in package.json): `@vendure/payments-plugin`, `stripe`.
+2. **StripePlugin** is registered in `vendure-config.ts`. No env vars are required in code; keys are set per Payment Method in Admin.
+3. **Stripe Dashboard**
+   - Create a Stripe account and get **Secret key** (and **Publishable key** for the storefront).
+   - **Developers** → **Webhooks** → **Add endpoint**:
+     - URL: `https://your-domain.com/payments/stripe` (e.g. `https://143.110.221.220/payments/stripe` if using IP, or your real domain).
+     - Events: `payment_intent.succeeded`, `payment_intent.payment_failed`.
+   - Copy the **Webhook signing secret**.
+4. **Admin UI**
+   - **Settings** → **Payment methods** → **Create new payment method**.
+   - **Handler:** choose **"Stripe payments"**.
+   - **API key:** your Stripe **Secret key** (e.g. `sk_test_...` or `sk_live_...`).
+   - **Webhook secret:** the signing secret from the webhook endpoint.
+5. **Storefront**
+   - Use the `createStripePaymentIntent` mutation (from the plugin) to get a client secret, then use Stripe.js / Stripe Elements to confirm payment. See [Vendure Stripe docs](https://docs.vendure.io/current/core/reference/core-plugins/payments-plugin/stripe-plugin). For React: `@stripe/react-stripe-js` and `@stripe/stripe-js`.
+   - Set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (or equivalent) in the storefront for the publishable key.
+
+### PayPal
+
+Vendure does not ship an official PayPal plugin in `@vendure/payments-plugin` for v2. Options:
+
+- **Custom PaymentMethodHandler:** Implement a handler that calls the PayPal API (Orders or Checkout) and implements Vendure’s `PaymentMethodHandler` interface (createPayment, settlePayment, etc.). See [Vendure payment guide](https://docs.vendure.io/guides/core-concepts/payment).
+- **Community:** Search for `vendure paypal` (e.g. `hopatibo/vendure-paypal-checkout`) and integrate if the project is compatible with your Vendure version.
+- **Braintree:** If you use Braintree (owned by PayPal), `@vendure/payments-plugin` includes a Braintree plugin you can use instead.

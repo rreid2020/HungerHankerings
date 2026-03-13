@@ -9,6 +9,7 @@ import {
 } from "@vendure/core";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
+import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import {
   regionShippingCalculator,
@@ -72,6 +73,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   paymentOptions: {
     paymentMethodHandlers: [dummyPaymentHandler],
   },
+  // Stripe: create Payment Method in Admin with "Stripe payments" and set API key + webhook secret
   shippingOptions: {
     shippingEligibilityCheckers: [regionShippingEligibilityChecker],
     shippingCalculators: [regionShippingCalculator],
@@ -79,6 +81,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   plugins: [
     DefaultJobQueuePlugin,
     DefaultSearchPlugin.init({}),
+    StripePlugin.init({ storeCustomersInStripe: true }),
     AssetServerPlugin.init({
       route: "assets",
       assetUploadDir: assetDir,
