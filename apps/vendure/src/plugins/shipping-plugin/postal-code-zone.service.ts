@@ -1,4 +1,4 @@
-import { RequestContext, TransactionalConnection } from "@vendure/core";
+import { ID, RequestContext, TransactionalConnection } from "@vendure/core";
 import { PostalCodeZone } from "./entities/postal-code-zone.entity";
 
 /**
@@ -26,5 +26,18 @@ export class PostalCodeZoneService {
       where: { countryCode: normalized, prefix: "" },
     });
     return defaultRow?.rateCents ?? null;
+  }
+
+  async findAll(ctx: RequestContext): Promise<PostalCodeZone[]> {
+    const repo = this.connection.getRepository(ctx, PostalCodeZone);
+    return repo.find({ order: { countryCode: "ASC", prefix: "ASC" } });
+  }
+
+  async updateRate(ctx: RequestContext, id: ID, rateCents: number): Promise<PostalCodeZone | null> {
+    const repo = this.connection.getRepository(ctx, PostalCodeZone);
+    const zone = await repo.findOne({ where: { id: id as string } });
+    if (!zone) return null;
+    zone.rateCents = Math.round(rateCents);
+    return repo.save(zone);
   }
 }

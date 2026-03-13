@@ -34,7 +34,9 @@ Postal-code–based shipping uses the **PostalCodeZone** table (Canadian first-l
 1. **Seed postal zones** (run once after schema exists):  
    `pnpm run build && pnpm run seed:postal-zones`  
    On droplet: `node dist/seed-postal-code-zones.js`  
-   Inserts 18 Canadian first-letter regions (A, B, C, E, G, H, J, K, L, M, N, P, R, S, T, V, X, Y) plus CA default and US default, each with a placeholder rate ($12 CA, $18 US). Edit the `postal_code_zone` table to change rates.
+   Inserts 18 Canadian first-letter regions (A, B, C, E, G, H, J, K, L, M, N, P, R, S, T, V, X, Y) plus CA default and US default, each with a placeholder rate ($12 CA, $18 US).
+
+   **Shipping rates UI:** Open **/shipping-rates** on the same host as the API (e.g. http://localhost:3000/shipping-rates) while logged in to Admin. You can view and edit each zone’s rate (cents) and save; the page uses the Admin API. Alternatively edit the `postal_code_zone` table directly.
 
 2. **Admin** → **Settings** → **Shipping methods** → Create; choose:
    - **Eligibility checker:** Postal code shipping

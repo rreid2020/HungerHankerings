@@ -3,6 +3,33 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.postalShippingCalculator = exports.postalShippingEligibilityChecker = void 0;
 const core_1 = require("@vendure/core");
 const postal_code_zone_service_1 = require("./postal-code-zone.service");
+/** Province name or code -> 2-letter code (matches tax zone strategy). */
+const PROVINCE_TO_CODE = {
+    Alberta: "AB",
+    "British Columbia": "BC",
+    Manitoba: "MB",
+    "New Brunswick": "NB",
+    "Newfoundland and Labrador": "NL",
+    "Newfoundland & Labrador": "NL",
+    "Nova Scotia": "NS",
+    "Northwest Territories": "NT",
+    Nunavut: "NU",
+    Ontario: "ON",
+    "Prince Edward Island": "PE",
+    Quebec: "QC",
+    Saskatchewan: "SK",
+    Yukon: "YT",
+    AB: "AB", BC: "BC", MB: "MB", NB: "NB", NL: "NL", NS: "NS",
+    NT: "NT", NU: "NU", ON: "ON", PE: "PE", QC: "QC", SK: "SK", YT: "YT",
+};
+function normalizeProvince(province) {
+    if (!province || typeof province !== "string")
+        return "";
+    const t = province.trim();
+    if (t.length === 2)
+        return t.toUpperCase();
+    return (PROVINCE_TO_CODE[t] ?? PROVINCE_TO_CODE[t.replace(/\s+and\s+/gi, " & ")])?.toUpperCase() ?? t.slice(0, 2).toUpperCase();
+}
 /**
  * Eligibility: all orders with a shipping address and postal code are eligible.
  */
@@ -19,7 +46,8 @@ exports.postalShippingEligibilityChecker = new core_1.ShippingEligibilityChecker
 const FALLBACK_RATE_CENTS = 1200; // $12 if no zone found
 /**
  * Postal-code–based shipping calculator using seeded PostalCodeZone table.
- * Canadian first letter = zone; US = country default. Rates from DB.
+ * Shipping price from DB by postal zone; tax on shipping uses the same provincial
+ * rate as the order (from tax zones CA-ON, CA-AB, etc.).
  */
 class PostalZoneShippingCalculator extends core_1.ShippingCalculator {
     constructor() {
@@ -31,32 +59,45 @@ class PostalZoneShippingCalculator extends core_1.ShippingCalculator {
                     value: "Postal code zone rate (Canada first letter, US default)",
                 },
             ],
-            args: {
-                taxRate: {
-                    type: "int",
-                    ui: { component: "number-form-input", suffix: "%" },
-                    label: [{ languageCode: core_1.LanguageCode.en, value: "Tax rate" }],
-                },
-            },
-            calculate: function (ctx, order, args) {
-                return this.doCalculate(ctx, order, args);
+            args: {},
+            calculate: function (ctx, order) {
+                return this.doCalculate(ctx, order);
             },
         });
     }
     async init(injector) {
         this.postalZoneService = injector.get(postal_code_zone_service_1.PostalCodeZoneService);
+        this.zoneService = injector.get(core_1.ZoneService);
+        this.taxRateService = injector.get(core_1.TaxRateService);
+        this.taxCategoryService = injector.get(core_1.TaxCategoryService);
     }
-    async doCalculate(ctx, order, args) {
+    async doCalculate(ctx, order) {
         const addr = order.shippingAddress;
         const countryCode = (addr?.countryCode ?? "").trim().toUpperCase();
         const postalCode = (addr?.postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
         const prefix = countryCode === "CA" ? postalCode.slice(0, 1) : "";
         const rateCents = (await this.postalZoneService.getRateCents(ctx, countryCode, prefix)) ??
             FALLBACK_RATE_CENTS;
+        let taxRate = 0;
+        if (countryCode === "CA") {
+            const provinceCode = normalizeProvince(addr?.province);
+            const zoneName = provinceCode ? `CA-${provinceCode}` : "Canada";
+            const zones = await this.zoneService.getAllWithMembers(ctx);
+            const zone = zones.find((z) => z.name === zoneName) ?? zones.find((z) => z.name === "Canada");
+            if (zone) {
+                const { items: categories } = await this.taxCategoryService.findAll(ctx, { take: 5 });
+                const defaultCategory = categories.find((c) => c.name === "Standard" || c.isDefault);
+                if (defaultCategory) {
+                    const applicable = await this.taxRateService.getApplicableTaxRate(ctx, zone, defaultCategory);
+                    if (applicable?.value != null)
+                        taxRate = Number(applicable.value);
+                }
+            }
+        }
         return {
             price: rateCents,
             priceIncludesTax: ctx.channel.pricesIncludeTax,
-            taxRate: args.taxRate ?? 0,
+            taxRate,
             metadata: {
                 postalPrefix: countryCode === "CA" ? prefix || undefined : undefined,
                 countryCode,

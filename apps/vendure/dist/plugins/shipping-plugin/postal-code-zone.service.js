@@ -24,5 +24,17 @@ class PostalCodeZoneService {
         });
         return defaultRow?.rateCents ?? null;
     }
+    async findAll(ctx) {
+        const repo = this.connection.getRepository(ctx, postal_code_zone_entity_1.PostalCodeZone);
+        return repo.find({ order: { countryCode: "ASC", prefix: "ASC" } });
+    }
+    async updateRate(ctx, id, rateCents) {
+        const repo = this.connection.getRepository(ctx, postal_code_zone_entity_1.PostalCodeZone);
+        const zone = await repo.findOne({ where: { id: id } });
+        if (!zone)
+            return null;
+        zone.rateCents = Math.round(rateCents);
+        return repo.save(zone);
+    }
 }
 exports.PostalCodeZoneService = PostalCodeZoneService;
