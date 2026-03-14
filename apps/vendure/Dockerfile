@@ -7,7 +7,8 @@ RUN npm install
 
 COPY . .
 RUN npm run build
-RUN npm run build:admin
+# Use pre-built admin-ui from context when present (e.g. from CI); otherwise build here (may OOM on small droplets).
+RUN if [ ! -d admin-ui/dist ] || [ -z "$(ls -A admin-ui/dist 2>/dev/null)" ]; then npm run build:admin; else echo "Using pre-built admin-ui"; fi
 
 FROM node:20-alpine
 

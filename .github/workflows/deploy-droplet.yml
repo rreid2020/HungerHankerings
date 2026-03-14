@@ -4,6 +4,9 @@
 #
 # Run DB migrations from your machine before deploying (see apps/vendure/README.md).
 # This workflow only builds and starts the stack; the DB must already be migrated.
+#
+# Admin UI is built in CI (build-admin job) and synced to the droplet so the vendure Docker build
+# skips the heavy Angular step and avoids OOM on the droplet.
 name: Deploy to Droplet
 
 on:
@@ -11,12 +14,53 @@ on:
     branches: [main]
 
 jobs:
+  build-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - name: Install and build Vendure + Admin UI
+        run: |
+          pnpm install --frozen-lockfile || pnpm install
+          pnpm --filter vendure run build
+          pnpm --filter vendure run build:admin
+      - name: Upload admin-ui
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-ui
+          path: apps/vendure/admin-ui
+
   deploy:
+    needs: build-admin
     runs-on: ubuntu-latest
     env:
       SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
     steps:
-      - name: Deploy to Droplet
+      - uses: actions/checkout@v4
+      - name: Download admin-ui
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-ui
+      - name: Place admin-ui in vendure app
+        run: |
+          rm -rf apps/vendure/admin-ui
+          mv admin-ui apps/vendure/admin-ui
+      - name: Sync repo to droplet (exclude .env and .git)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DROPLET_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key" \
+            --exclude .env --exclude .git --exclude node_modules \
+            ./ root@${{ secrets.DROPLET_IP }}:/root/HungerHankerings/
+      - name: Deploy on droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DROPLET_IP }}
@@ -26,20 +70,14 @@ jobs:
           script: |
             set -e
             cd /root/HungerHankerings
-            git fetch origin main
-            git reset --hard origin/main
             export COMPOSE_PROJECT_NAME=hungerhankerings
             if [ ! -f .env ]; then
               echo "ERROR: .env not found at /root/HungerHankerings/.env. Create it from deploy/env.production.example."
               exit 1
             fi
-            # Source .env into shell AND use --env-file so Compose always has DB_* for substitution (run and up must see same values)
             set -a && . ./.env && set +a
             echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
-            # Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
-            # the "creating a new table" logs are TypeORM's diff only—tables are not created when synchronize is false.
-            # So: if administrator table is missing, run one-time schema creation (synchronize) against that DB.
             echo "Checking if Vendure schema exists on $DB_NAME..."
             set +e
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/check-schema.js
