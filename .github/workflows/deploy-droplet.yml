@@ -57,14 +57,14 @@ jobs:
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
             echo "Verify vendure container DB env (must match .env):"
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
-            echo "Waiting for Vendure to listen (up to 90s)..."
+            echo "Waiting for Vendure to listen (up to 180s)..."
             ok=0
-            for i in $(seq 1 18); do
+            for i in $(seq 1 36); do
               if docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/health 2>/dev/null | head -c 1 | grep -q .; then
                 ok=1
                 break
               fi
-              echo "Attempt $i/18: Vendure not ready, waiting 5s..."
+              echo "Attempt $i/36: Vendure not ready, waiting 5s..."
               sleep 5
             done
             if [ "$ok" = "1" ]; then

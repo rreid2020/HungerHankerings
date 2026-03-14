@@ -99,11 +99,14 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     AdminUiPlugin.init({
       route: "admin",
       port: 3002,
-      app: compileUiExtensions({
-        outputPath: path.join(__dirname, "..", "admin-ui"),
-        baseHref: "/admin/",
-        extensions: [shippingRatesAdminExtension],
-      }),
+      // In production serve pre-built admin-ui only (no compile at runtime). In dev use full compileUiExtensions.
+      app: isProduction
+        ? { path: path.join(__dirname, "..", "admin-ui", "dist"), route: "admin" }
+        : compileUiExtensions({
+            outputPath: path.join(__dirname, "..", "admin-ui"),
+            baseHref: "/admin/",
+            extensions: [shippingRatesAdminExtension],
+          }),
     }),
     EmailPlugin.init({
       templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
