@@ -50,7 +50,7 @@ services:
   vendure-worker:
     build:
       context: ./apps/vendure
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.worker
     environment:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}

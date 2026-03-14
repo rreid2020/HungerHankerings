@@ -32,7 +32,7 @@ services:
   vendure-worker:
     build:
       context: ./apps/vendure
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.worker
     env_file:
       - .env
     environment:
