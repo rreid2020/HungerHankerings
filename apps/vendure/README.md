@@ -16,6 +16,8 @@ Vendure server and worker for Hunger Hankerings.
 
 Open `/admin` (e.g. http://localhost:3000/admin). Log in with `SUPERADMIN_USERNAME` / `SUPERADMIN_PASSWORD`.
 
+**Shipping rates in the dashboard:** The Admin UI can be built with an extension that adds **Settings → Shipping rates** (same content as `/shipping-rates`). To build this extended Admin UI locally, run `pnpm run build` then `pnpm run build:admin`. Production Docker builds run both steps automatically.
+
 ## Canadian tax (province-based)
 
 Province-specific tax is configured via a custom **TaxZoneStrategy** and zones/tax rates. To seed zones and rates so you don’t have to create them in Admin:

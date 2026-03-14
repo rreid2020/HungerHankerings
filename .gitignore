@@ -8,6 +8,7 @@ node_modules
 .DS_Store
 .next
 .dist
+apps/vendure/admin-ui
 .dist/*
 coverage
 

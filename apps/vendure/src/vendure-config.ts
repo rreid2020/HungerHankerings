@@ -8,6 +8,8 @@ import {
   VendureConfig,
 } from "@vendure/core";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
+import { compileUiExtensions } from "@vendure/ui-devkit/compiler";
+import { shippingRatesAdminExtension } from "./plugins/shipping-plugin/admin-ui-extension";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
@@ -97,6 +99,11 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     AdminUiPlugin.init({
       route: "admin",
       port: 3002,
+      app: compileUiExtensions({
+        outputPath: path.join(__dirname, "..", "admin-ui"),
+        baseHref: "/admin/",
+        extensions: [shippingRatesAdminExtension],
+      }),
     }),
     EmailPlugin.init({
       templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
