@@ -22,7 +22,7 @@ jobs:
           host: ${{ secrets.DROPLET_IP }}
           username: root
           key: ${{ env.SSH_KEY }}
-          command_timeout: 30m
+          command_timeout: 45m
           script: |
             set -e
             cd /root/HungerHankerings
@@ -57,6 +57,8 @@ jobs:
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
             echo "Verify vendure container DB env (must match .env):"
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
+            echo "Admin UI static files in container (must have index.html, vendure-ui-config.json):"
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T vendure ls -la /app/admin-ui/dist/ 2>/dev/null || true
             echo "Waiting for Vendure to listen (up to 180s)..."
             ok=0
             for i in $(seq 1 36); do
@@ -65,6 +67,10 @@ jobs:
                 break
               fi
               echo "Attempt $i/36: Vendure not ready, waiting 5s..."
+              if [ $i -eq 6 ] || [ $i -eq 18 ]; then
+                echo "--- vendure logs (attempt $i) ---"
+                docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=80 || true
+              fi
               sleep 5
             done
             if [ "$ok" = "1" ]; then

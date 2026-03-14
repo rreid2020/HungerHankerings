@@ -99,9 +99,13 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     AdminUiPlugin.init({
       route: "admin",
       port: 3002,
-      // In production serve pre-built admin-ui only (no compile at runtime). In dev use full compileUiExtensions.
+      // In production serve pre-built admin-ui only (no compile at runtime). Provide no-op compile so plugin does not throw.
       app: isProduction
-        ? { path: path.join(__dirname, "..", "admin-ui", "dist"), route: "admin" }
+        ? {
+            path: path.join(__dirname, "..", "admin-ui", "dist"),
+            route: "admin",
+            compile: () => Promise.resolve(),
+          }
         : compileUiExtensions({
             outputPath: path.join(__dirname, "..", "admin-ui"),
             baseHref: "/admin/",
