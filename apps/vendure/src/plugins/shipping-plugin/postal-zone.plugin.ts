@@ -5,10 +5,10 @@ import { PostalCodeZone } from "./entities/postal-code-zone.entity";
 import { PostalCodeZoneService } from "./postal-code-zone.service";
 import { ShippingRatesUiController } from "./shipping-rates-ui.controller";
 
-/** Parse SDL at runtime with Vendure's graphql so schema merge accepts it. */
-function postalZoneAdminSchema(): import("graphql").DocumentNode {
+/** Parse SDL at runtime with Vendure's graphql so schema merge accepts it. Avoid typing as graphql.DocumentNode to prevent two graphql versions (project vs @vendure/core) from conflicting in Docker. */
+function postalZoneAdminSchema() {
   const { parse } = require("graphql");
-  return parse(postalZoneAdminSchemaSdl);
+  return parse(postalZoneAdminSchemaSdl) as any;
 }
 
 /**
