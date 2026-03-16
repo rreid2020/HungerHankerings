@@ -1,6 +1,8 @@
 import { PluginCommonModule, VendurePlugin } from "@vendure/core";
 import { postalZoneAdminSchemaSdl } from "./api/postal-zone-api.extensions";
+import { postalZoneShopSchemaSdl } from "./api/postal-zone-shop-api.extensions";
 import { PostalZoneAdminResolver } from "./api/postal-zone-admin.resolver";
+import { PostalZoneShopResolver } from "./api/postal-zone-shop.resolver";
 import { PostalCodeZone } from "./entities/postal-code-zone.entity";
 import { PostalCodeZoneService } from "./postal-code-zone.service";
 import { ShippingRatesUiController } from "./shipping-rates-ui.controller";
@@ -9,6 +11,11 @@ import { ShippingRatesUiController } from "./shipping-rates-ui.controller";
 function postalZoneAdminSchema(): import("graphql").DocumentNode {
   const { parse } = require("graphql");
   return parse(postalZoneAdminSchemaSdl);
+}
+
+function postalZoneShopSchema(): import("graphql").DocumentNode {
+  const { parse } = require("graphql");
+  return parse(postalZoneShopSchemaSdl);
 }
 
 /**
@@ -22,6 +29,10 @@ function postalZoneAdminSchema(): import("graphql").DocumentNode {
   adminApiExtensions: {
     schema: postalZoneAdminSchema,
     resolvers: [PostalZoneAdminResolver],
+  },
+  shopApiExtensions: {
+    schema: postalZoneShopSchema,
+    resolvers: [PostalZoneShopResolver],
   },
   controllers: [ShippingRatesUiController],
 })

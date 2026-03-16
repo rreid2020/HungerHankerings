@@ -13,6 +13,7 @@
     "add-stripe-column-any-customer-table": "node dist/add-stripe-column-any-customer-table.js",
     "add-stripe-column-exact-name": "node dist/add-stripe-column-exact-name.js",
     "seed:canadian-tax": "node dist/seed-canadian-tax-zones.js",
+    "create-postal-zone-table": "node dist/create-postal-code-zone-table.js",
     "seed:postal-zones": "node dist/seed-postal-code-zones.js",
     "dev": "ts-node src/index.ts",
     "dev:worker": "ts-node src/worker.ts"

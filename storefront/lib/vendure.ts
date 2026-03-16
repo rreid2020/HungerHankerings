@@ -692,6 +692,23 @@ export async function checkoutCustomerAttach(
   return getActiveOrder(opts) as Promise<SaleorCheckout>;
 }
 
+/** Returns shipping price in dollars (CAD) from Vendure postal code zones. Used for checkout order summary. */
+export async function getShippingQuoteDollars(
+  countryCode: string,
+  postalCode: string,
+  opts?: VendureRequestOptions
+): Promise<number> {
+  const data = await fetchVendure<{ shippingQuote: number }>(
+    `query ShippingQuote($countryCode: String!, $postalCode: String!) {
+      shippingQuote(countryCode: $countryCode, postalCode: $postalCode)
+    }`,
+    { countryCode: (countryCode || "").trim(), postalCode: (postalCode || "").trim() },
+    opts
+  );
+  const cents = data?.shippingQuote ?? 0;
+  return cents / 100;
+}
+
 export async function getCheckoutShippingMethods(
   _checkoutId: string,
   opts?: VendureRequestOptions

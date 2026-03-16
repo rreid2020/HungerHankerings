@@ -7,15 +7,12 @@ import { useCart } from "../../components/CartContext"
 import type { AddressFields, ShippingOverridesByUnit } from "../../components/CartContext"
 import { useAuth } from "../../components/AuthContext"
 import { useGooglePlacesScript } from "../../hooks/useGooglePlacesScript"
-import {
-  getShippingRate,
-  getTaxRate,
-  CANADIAN_PROVINCES
-} from "../../lib/shippingTax"
+import { getTaxRate, CANADIAN_PROVINCES } from "../../lib/shippingTax"
 import {
   checkoutShippingAddressUpdate,
   getCheckoutShippingMethods,
-  checkoutDeliveryMethodUpdate
+  checkoutDeliveryMethodUpdate,
+  getShippingQuoteDollars
 } from "../../lib/vendure"
 import Link from "next/link"
 import Image from "next/image"
@@ -403,6 +400,67 @@ const CheckoutPage = () => {
     return result
   }, [cart?.items, assignment, customAddresses])
 
+  /** Distinct addresses for shipping quote; used to fetch Vendure postal-zone rates. */
+  const addressKeysForShipping = useMemo(() => {
+    if (!cart?.items?.length) return []
+    const items = cart.items
+    const destKey = (d: AddressFields) =>
+      [
+        (d.country || "").trim().toUpperCase().slice(0, 2),
+        (d.province || "").trim(),
+        (d.postal_code || "").trim(),
+        (d.address_1 || "").trim(),
+        (d.city || "").trim()
+      ].join("|")
+    type Unit = { lineId: string; unitIndex: number }
+    const units: Unit[] = []
+    for (const item of items) {
+      for (let i = 0; i < item.quantity; i++) {
+        units.push({ lineId: item.lineId, unitIndex: i })
+      }
+    }
+    const getDest = (u: Unit) => {
+      const override = shippingOverridesByUnit[unitKey(u.lineId, u.unitIndex)]
+      if (override == null) return shipping
+      const c = (override.country || "").trim()
+      const p = (override.province || "").trim()
+      if (!c || !p) return shipping
+      return override
+    }
+    const keys = new Map<string, { country: string; postal_code: string }>()
+    for (const u of units) {
+      const d = getDest(u)
+      const c = (d.country || "").trim()
+      const p = (d.province || "").trim()
+      if (!c || !p) continue
+      const key = destKey(d)
+      if (!keys.has(key)) keys.set(key, { country: c, postal_code: (d.postal_code || "").trim() })
+    }
+    return Array.from(keys.entries()).map(([destKey, addr]) => ({ destKey, ...addr }))
+  }, [cart?.items, shipping, shippingOverridesByUnit])
+
+  const [shippingByDestKey, setShippingByDestKey] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    if (addressKeysForShipping.length === 0) {
+      setShippingByDestKey({})
+      return
+    }
+    let cancelled = false
+    Promise.all(
+      addressKeysForShipping.map(async ({ destKey, country, postal_code }) => {
+        const dollars = await getShippingQuoteDollars(country, postal_code)
+        return { destKey, dollars }
+      })
+    ).then((results) => {
+      if (cancelled) return
+      const next: Record<string, number> = {}
+      for (const { destKey, dollars } of results) next[destKey] = dollars
+      setShippingByDestKey(next)
+    })
+    return () => { cancelled = true }
+  }, [addressKeysForShipping])
+
   const { shippingAmount, taxAmount, orderTotal, addressBreakdown } =
     useMemo(() => {
       type LineItem = {
@@ -534,8 +592,8 @@ const CheckoutPage = () => {
         costPerBox: number
       }
       const addressBreakdown: AddressBreakdownItem[] = []
-      for (const [, g] of groups) {
-        const ship = getShippingRate(g.country, g.province)
+      for (const [destKey, g] of groups) {
+        const ship = shippingByDestKey[destKey] ?? 0
         const giftFeeGroup = g.giftCount * GIFT_BOX_FEE
         const taxable = g.subtotal + ship + giftFeeGroup
         const rate = getTaxRate(g.country, g.province)
@@ -592,7 +650,8 @@ const CheckoutPage = () => {
       shipping,
       shippingOverridesByUnit,
       giftByLineUnit,
-      giftFee
+      giftFee,
+      shippingByDestKey
     ])
 
   // Prefer Vendure totals when we have a single address and no gift (Vendure doesn't know about gift fee)

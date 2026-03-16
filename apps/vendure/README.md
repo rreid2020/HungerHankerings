@@ -31,9 +31,15 @@ This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback)
 
 Postal-code–based shipping uses the **PostalCodeZone** table (Canadian first-letter zones + US default). Seed the table, then create a Shipping Method in Admin.
 
-1. **Seed postal zones** (run once after schema exists):  
+1. **Create the table** (if it’s missing, e.g. DB was created before PostalZonePlugin was added):  
+   `pnpm run build && pnpm run create-postal-zone-table`  
+   On droplet (with same .env):  
+   `docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/create-postal-code-zone-table.js`  
+   Or run the SQL in `apps/vendure/scripts/create-postal-code-zone-table.sql` against your DB.
+
+2. **Seed postal zones** (run once after the table exists):  
    `pnpm run build && pnpm run seed:postal-zones`  
-   On droplet: `node dist/seed-postal-code-zones.js`  
+   On droplet: `docker compose ... run --rm vendure node dist/seed-postal-code-zones.js`  
    Inserts 18 Canadian first-letter regions (A, B, C, E, G, H, J, K, L, M, N, P, R, S, T, V, X, Y) plus CA default and US default, each with a placeholder rate ($12 CA, $18 US).
 
    **Shipping rates UI:** Open **/shipping-rates** on the same host as the API (e.g. http://localhost:3000/shipping-rates) while logged in to Admin. You can view and edit each zone’s rate (cents) and save; the page uses the Admin API. Alternatively edit the `postal_code_zone` table directly.
@@ -42,7 +48,7 @@ Postal-code–based shipping uses the **PostalCodeZone** table (Canadian first-l
    - **Eligibility checker:** Postal code shipping
    - **Calculator:** Postal code zone rate (Canada first letter, US default)
 
-3. Assign the method to your channel’s shipping zone(s). The storefront syncs the shipping address (with postal code) to Vendure and displays the shipping charge from the API.
+4. Assign the method to your channel’s shipping zone(s). The storefront syncs the shipping address (with postal code) to Vendure and displays the shipping charge from the API.
 
 ## Payment
 
