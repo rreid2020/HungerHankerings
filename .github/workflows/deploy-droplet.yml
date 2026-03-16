@@ -36,6 +36,9 @@ jobs:
             # Source .env into shell AND use --env-file so Compose always has DB_* for substitution (run and up must see same values)
             set -a && . ./.env && set +a
             echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
+            echo "Freeing disk space before build (prune images, containers, build cache)..."
+            docker system prune -af 2>/dev/null || true
+            docker builder prune -af 2>/dev/null || true
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
             # Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
             # the "creating a new table" logs are TypeORM's diff only—tables are not created when synchronize is false.
