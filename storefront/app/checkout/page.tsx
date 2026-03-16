@@ -133,7 +133,15 @@ const CheckoutPage = () => {
         setShipping((prev) => ({ ...emptyAddress, ...prev, ...draft.shipping }))
       }
       if (draft.giftByLineUnit && typeof draft.giftByLineUnit === "object") {
-        setGiftByLineUnit(draft.giftByLineUnit)
+        // Only restore gift where both enabled and non-empty message (avoid charging when not selected)
+        const normalized: Record<string, { enabled: boolean; message: string }> = {}
+        for (const [k, v] of Object.entries(draft.giftByLineUnit)) {
+          if (v && typeof v.enabled === "boolean" && typeof v.message === "string") {
+            const hasMessage = v.message.trim().length > 0
+            normalized[k] = { enabled: v.enabled && hasMessage, message: v.message }
+          }
+        }
+        setGiftByLineUnit(normalized)
       }
       if (Array.isArray(draft.customAddresses)) {
         setCustomAddresses(
@@ -587,10 +595,11 @@ const CheckoutPage = () => {
       giftFee
     ])
 
-  // Prefer Vendure totals when we have a shipping address (tax/shipping from province)
+  // Prefer Vendure totals when we have a single address and no gift (Vendure doesn't know about gift fee)
   const hasShippingAddress = !!(shipping.country?.trim() && shipping.province?.trim())
+  const useStoreTotals = giftFee > 0 || addressBreakdown.length > 1
   const useVendureTotals =
-    hasShippingAddress && cart?.total != null && cart.total > 0
+    hasShippingAddress && cart?.total != null && cart.total > 0 && !useStoreTotals
   const displayShipping = useVendureTotals ? (cart?.shippingTotal ?? 0) : shippingAmount
   const displayTax = useVendureTotals
     ? Math.max(0, (cart?.total ?? 0) - (cart?.subtotal ?? 0) - (cart?.shippingTotal ?? 0))
@@ -1540,16 +1549,20 @@ const CheckoutPage = () => {
                       <span>${addr.subtotal.toFixed(2)}</span>
                     </div>
                   </div>
-                  <div className="flex justify-between pl-0 text-muted-foreground">
-                    <span>Shipping</span>
-                    <span>${rowShipping.toFixed(2)}</span>
-                  </div>
                   {addr.giftCount > 0 && (
                     <div className="flex justify-between pl-0 text-muted-foreground">
                       <span>Gift box ({addr.giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
                       <span>${addr.giftFee.toFixed(2)}</span>
                     </div>
                   )}
+                  <div className="flex justify-between pl-0 text-muted-foreground">
+                    <span>Shipping</span>
+                    <span>${rowShipping.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pl-0 font-medium text-foreground">
+                    <span>Subtotal (before tax)</span>
+                    <span>${(addr.subtotal + addr.giftFee + rowShipping).toFixed(2)}</span>
+                  </div>
                   {rowTax > 0 && (
                     <div className="flex justify-between pl-0 text-muted-foreground">
                       <span>Tax ({taxRateDisplay}%)</span>
@@ -1565,10 +1578,16 @@ const CheckoutPage = () => {
             })
           ) : (
             <>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
+              <div className="flex justify-between font-medium text-foreground">
+                <span>Boxes total</span>
                 <span>${(cart?.subtotal ?? 0).toFixed(2)}</span>
               </div>
+              {giftCount > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Gift box ({giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
+                  <span>${giftFee.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-muted-foreground">
                 <span>Shipping</span>
                 <span>
@@ -1579,15 +1598,15 @@ const CheckoutPage = () => {
                   )}
                 </span>
               </div>
-              {giftCount > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Gift box ({giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
-                  <span>${giftFee.toFixed(2)}</span>
+              {shipping.country && shipping.province && (
+                <div className="flex justify-between font-medium text-foreground">
+                  <span>Subtotal (before tax)</span>
+                  <span>${((cart?.subtotal ?? 0) + giftFee + displayShipping).toFixed(2)}</span>
                 </div>
               )}
               {shipping.country && shipping.province && displayTax > 0 && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Taxes</span>
+                  <span>Tax</span>
                   <span>${displayTax.toFixed(2)}</span>
                 </div>
               )}
@@ -1602,16 +1621,16 @@ const CheckoutPage = () => {
                 <span>Total for all boxes</span>
                 <span>${(cart?.subtotal ?? 0).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Total shipping costs</span>
-                <span>${displayShipping.toFixed(2)}</span>
-              </div>
               {giftFee > 0 && (
                 <div className="flex justify-between">
                   <span>Total gift box charge</span>
                   <span>${giftFee.toFixed(2)}</span>
                 </div>
               )}
+              <div className="flex justify-between">
+                <span>Total shipping costs</span>
+                <span>${displayShipping.toFixed(2)}</span>
+              </div>
               {addressBreakdown.length > 0 ? (
                 (() => {
                   const taxByProvince = addressBreakdown.reduce(
