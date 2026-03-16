@@ -50,6 +50,7 @@ services:
     depends_on:
       - vendure
       - redis
+    restart: unless-stopped
 
   storefront:
     env_file:
