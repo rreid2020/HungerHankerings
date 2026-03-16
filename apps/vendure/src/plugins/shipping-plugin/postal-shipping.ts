@@ -87,40 +87,53 @@ class PostalZoneShippingCalculator extends ShippingCalculator {
   }
 
   private async doCalculate(ctx: any, order: any) {
-    const addr = order.shippingAddress;
-    const countryCode = (addr?.countryCode ?? "").trim().toUpperCase();
-    const postalCode = (addr?.postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
+    try {
+      const addr = order.shippingAddress;
+      const countryCode = (addr?.countryCode ?? "").trim().toUpperCase();
+      const postalCode = (addr?.postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
 
-    const prefix = countryCode === "CA" ? postalCode.slice(0, 1) : "";
-    const rateCents =
-      (await this.postalZoneService.getRateCents(ctx, countryCode, prefix)) ??
-      FALLBACK_RATE_CENTS;
+      // If postal looks Canadian (e.g. K1C 7E9) but country missing, assume CA so zone lookup works
+      const effectiveCountry =
+        countryCode || (postalCode.match(/^[A-Z]\d[A-Z]\s*\d[A-Z]\d$/i) ? "CA" : "");
+      const prefix = effectiveCountry === "CA" ? postalCode.slice(0, 1) : "";
+      const rateCents =
+        (await this.postalZoneService.getRateCents(ctx, effectiveCountry, prefix)) ??
+        FALLBACK_RATE_CENTS;
 
-    let taxRate = 0;
-    if (countryCode === "CA") {
-      const provinceCode = normalizeProvince(addr?.province);
-      const zoneName = provinceCode ? `CA-${provinceCode}` : "Canada";
-      const zones = await this.zoneService.getAllWithMembers(ctx);
-      const zone = zones.find((z) => z.name === zoneName) ?? zones.find((z) => z.name === "Canada");
-      if (zone) {
-        const { items: categories } = await this.taxCategoryService.findAll(ctx, { take: 5 });
-        const defaultCategory = categories.find((c: { name?: string; isDefault?: boolean }) => c.name === "Standard" || c.isDefault);
-        if (defaultCategory) {
-          const applicable = await this.taxRateService.getApplicableTaxRate(ctx, zone, defaultCategory);
-          if (applicable?.value != null) taxRate = Number(applicable.value);
+      let taxRate = 0;
+      if (effectiveCountry === "CA") {
+        const provinceCode = normalizeProvince(addr?.province);
+        const zoneName = provinceCode ? `CA-${provinceCode}` : "Canada";
+        const zones = await this.zoneService.getAllWithMembers(ctx);
+        const zone = zones.find((z) => z.name === zoneName) ?? zones.find((z) => z.name === "Canada");
+        if (zone) {
+          const { items: categories } = await this.taxCategoryService.findAll(ctx, { take: 5 });
+          const defaultCategory = categories.find((c: { name?: string; isDefault?: boolean }) => c.name === "Standard" || c.isDefault);
+          if (defaultCategory) {
+            const applicable = await this.taxRateService.getApplicableTaxRate(ctx, zone, defaultCategory);
+            if (applicable?.value != null) taxRate = Number(applicable.value);
+          }
         }
       }
-    }
 
-    return {
-      price: rateCents,
-      priceIncludesTax: ctx.channel.pricesIncludeTax,
-      taxRate,
-      metadata: {
-        postalPrefix: countryCode === "CA" ? prefix || undefined : undefined,
-        countryCode,
-      },
-    };
+      return {
+        price: rateCents,
+        priceIncludesTax: ctx.channel?.pricesIncludeTax ?? false,
+        taxRate,
+        metadata: {
+          postalPrefix: effectiveCountry === "CA" ? prefix || undefined : undefined,
+          countryCode: effectiveCountry || undefined,
+        },
+      };
+    } catch (err) {
+      // Avoid breaking Admin "Test shipping method" or checkout; return fallback
+      return {
+        price: FALLBACK_RATE_CENTS,
+        priceIncludesTax: ctx.channel?.pricesIncludeTax ?? false,
+        taxRate: 0,
+        metadata: { error: err instanceof Error ? err.message : "Shipping calculation failed" },
+      };
+    }
   }
 }
 
