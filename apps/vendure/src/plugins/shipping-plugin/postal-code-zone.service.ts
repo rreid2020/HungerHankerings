@@ -49,7 +49,7 @@ export class PostalCodeZoneService {
 
     const prefix = postal.slice(0, 3);
     const row = await repo.findOne({ where: { countryCode: country, prefix } });
-    if (row) return row.rateCents;
+    if (row && row.rateCents > 0) return row.rateCents;
     const defaultRow = await repo.findOne({ where: { countryCode: country, prefix: "" } });
     return defaultRow?.rateCents ?? null;
   }
@@ -60,12 +60,25 @@ export class PostalCodeZoneService {
     return repo.find({ order: { countryCode: "ASC", prefix: "ASC" } });
   }
 
-  async updateRate(ctx: RequestContext, id: ID, rateCents: number): Promise<PostalCodeZone | null> {
+  async updateZone(
+    ctx: RequestContext,
+    id: ID,
+    rateCents: number,
+    city?: string | null,
+    region?: string | null
+  ): Promise<PostalCodeZone | null> {
     if (!this.connection) return null;
     const repo = this.connection.getRepository(ctx, PostalCodeZone);
     const zone = await repo.findOne({ where: { id: id as string } });
     if (!zone) return null;
     zone.rateCents = Math.round(rateCents);
+    if (city !== undefined) zone.city = city === "" ? null : city;
+    if (region !== undefined) zone.region = region === "" ? null : region;
     return repo.save(zone);
+  }
+
+  /** @deprecated Use updateZone. */
+  async updateRate(ctx: RequestContext, id: ID, rateCents: number): Promise<PostalCodeZone | null> {
+    return this.updateZone(ctx, id, rateCents);
   }
 }

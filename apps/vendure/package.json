@@ -15,6 +15,7 @@
     "seed:canadian-tax": "node dist/seed-canadian-tax-zones.js",
     "create-postal-zone-table": "node dist/create-postal-code-zone-table.js",
     "alter-postal-zone-prefix": "node dist/alter-postal-zone-prefix-length.js",
+    "alter-postal-zone-city-region": "node dist/alter-postal-zone-add-city-region.js",
     "seed:postal-zones": "node dist/seed-postal-code-zones.js",
     "dev": "ts-node src/index.ts",
     "dev:worker": "ts-node src/worker.ts"

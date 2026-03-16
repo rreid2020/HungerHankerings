@@ -40,7 +40,7 @@ Postal-code–based shipping uses the **PostalCodeZone** table with **3-characte
 2. **Seed postal zones** (run once after the table exists):  
    `pnpm run build && pnpm run seed:postal-zones`  
    On droplet: `docker compose ... run --rm vendure node dist/seed-postal-code-zones.js`  
-   Inserts 18 Canadian first-letter regions (A, B, C, E, G, H, J, K, L, M, N, P, R, S, T, V, X, Y) plus CA default and US default, each with a placeholder rate ($12 CA, $18 US).
+   Inserts country defaults (CA, US) plus **all valid Canadian FSAs** (3,240 codes). Each FSA row has prefix, zone name, optional **city** and **region** (null until you add them), and **rateCents** = 0. You set your own rate (and city/region when available) per zone at **/shipping-rates**; 0 means “use country default” until you save a rate.
 
    **Shipping rates UI:** Open **/shipping-rates** on the same host as the API (e.g. http://localhost:3000/shipping-rates) while logged in to Admin. You can view and edit each zone’s rate (cents) and save; the page uses the Admin API. Alternatively edit the `postal_code_zone` table directly.
 
@@ -50,7 +50,7 @@ Postal-code–based shipping uses the **PostalCodeZone** table with **3-characte
 
 4. Assign the method to your channel’s shipping zone(s). The storefront syncs the shipping address (with postal code) to Vendure and displays the shipping charge from the API.
 
-**Remote or costly FSAs:** Lookup uses the **first 3 characters** of the postal code (Canadian FSA, e.g. K0K, M5V). Add rows for any FSA that needs a different rate (e.g. remote). Example: add `CA` + `K0K` = “Eastern ON remote” with a higher rate; addresses in K0K will use it, all others fall back to CA default. Insert into `postal_code_zone` (countryCode, prefix, zoneName, rateCents) then edit at **/shipping-rates**.
+**Rates and city/region:** You provide the rate (and optional city, region) per zone. Seed populates 3-char prefix and zone name only; rate starts at 0 (fallback to country default until you set one). Edit at **/shipping-rates** or in the `postal_code_zone` table. City and region are for display only (lookup uses prefix).
 
 ## Payment
 

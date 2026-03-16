@@ -7,6 +7,8 @@ export const postalZoneAdminSchemaSdl = `
     countryCode: String!
     prefix: String!
     zoneName: String!
+    city: String
+    region: String
     rateCents: Int!
   }
 
@@ -15,6 +17,6 @@ export const postalZoneAdminSchemaSdl = `
   }
 
   extend type Mutation {
-    updatePostalCodeZone(id: ID!, rateCents: Int!): PostalCodeZone
+    updatePostalCodeZone(id: ID!, rateCents: Int!, city: String, region: String): PostalCodeZone
   }
 `.trim();

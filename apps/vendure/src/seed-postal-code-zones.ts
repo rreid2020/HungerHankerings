@@ -1,16 +1,33 @@
 /**
- * Seeds the PostalCodeZone table with country defaults only (3-char FSA lookup).
+ * Seeds the PostalCodeZone table with 3-char FSA lookup data.
  * Run after schema exists: pnpm run build && pnpm run seed:postal-zones
  *
- * Creates CA (default) and US (default). Add rows for specific 3-char FSAs (e.g. K0K, M5V)
- * where you need a different rate (e.g. remote areas). Lookup: Canada = first 3 chars then default.
+ * There is no free Canadian API for FSA-based shipping rates. This seed:
+ * - Generates all valid Canadian FSAs (format: letter + digit + letter; Canada Post uses 18 letters).
+ * - Inserts one row per FSA with a default rate; you can edit specific FSAs (e.g. remote) at /shipping-rates.
+ * - Also ensures CA (default) and US (default) exist.
  */
 import { bootstrapWorker, Logger, RequestContextService, TransactionalConnection } from "@vendure/core";
 import { config } from "./vendure-config";
 import { PostalCodeZone } from "./plugins/shipping-plugin/entities/postal-code-zone.entity";
 
-const PLACEHOLDER_CA_CENTS = 1200; // $12
-const PLACEHOLDER_US_CENTS = 1800; // $18
+const DEFAULT_CA_CENTS = 1200; // $12 fallback when no FSA row or rate not set
+const DEFAULT_US_CENTS = 1800; // $18
+/** FSA rows start at 0; you add your own rate per zone at /shipping-rates. */
+const FSA_INITIAL_RATE_CENTS = 0;
+
+/** Letters used in Canadian postal codes (excludes D, F, I, O, Q, U, W, Z to avoid confusion). */
+const CA_FSA_LETTERS = "ABCEGHJKLMNPRSTVXY";
+
+function* allCanadianFsas(): Generator<string> {
+  for (const a of CA_FSA_LETTERS) {
+    for (let n = 0; n <= 9; n++) {
+      for (const b of CA_FSA_LETTERS) {
+        yield `${a}${n}${b}`;
+      }
+    }
+  }
+}
 
 async function seed() {
   const { app } = await bootstrapWorker(config);
@@ -30,7 +47,7 @@ async function seed() {
         countryCode: "CA",
         prefix: "",
         zoneName: "Canada (default)",
-        rateCents: PLACEHOLDER_CA_CENTS,
+        rateCents: DEFAULT_CA_CENTS,
       })
     );
     existingKeys.add("CA:");
@@ -43,10 +60,34 @@ async function seed() {
         countryCode: "US",
         prefix: "",
         zoneName: "United States",
-        rateCents: PLACEHOLDER_US_CENTS,
+        rateCents: DEFAULT_US_CENTS,
       })
     );
     added++;
+  }
+
+  const BATCH = 200;
+  let batch: Partial<PostalCodeZone>[] = [];
+  for (const fsa of allCanadianFsas()) {
+    if (existingKeys.has(`CA:${fsa}`)) continue;
+    batch.push({
+      countryCode: "CA",
+      prefix: fsa,
+      zoneName: `FSA ${fsa}`,
+      city: null,
+      region: null,
+      rateCents: FSA_INITIAL_RATE_CENTS,
+    });
+    existingKeys.add(`CA:${fsa}`);
+    if (batch.length >= BATCH) {
+      await repo.save(batch.map((b) => repo.create(b)));
+      added += batch.length;
+      batch = [];
+    }
+  }
+  if (batch.length > 0) {
+    await repo.save(batch.map((b) => repo.create(b)));
+    added += batch.length;
   }
 
   Logger.info(`PostalCodeZone seed: ${added} row(s) added.`);

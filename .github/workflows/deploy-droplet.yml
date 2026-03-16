@@ -60,6 +60,8 @@ jobs:
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/create-postal-code-zone-table.js
             echo "Widening postal_code_zone.prefix for remote zones if needed..."
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/alter-postal-zone-prefix-length.js || true
+            echo "Adding city/region columns to postal_code_zone if needed..."
+            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/alter-postal-zone-add-city-region.js || true
             echo "Seeding postal code zones if empty (idempotent)..."
             docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/seed-postal-code-zones.js
             echo "Starting stack..."

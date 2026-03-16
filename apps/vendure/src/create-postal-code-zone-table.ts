@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS postal_code_zone (
   "countryCode" varchar(2) NOT NULL,
   prefix varchar(6) NOT NULL DEFAULT '',
   "zoneName" varchar(128) NOT NULL,
+  city varchar(128),
+  region varchar(128),
   "rateCents" integer NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_postal_code_zone_country_prefix ON postal_code_zone ("countryCode", prefix);

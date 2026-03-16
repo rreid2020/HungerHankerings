@@ -19,8 +19,10 @@ export class PostalZoneAdminResolver {
   updatePostalCodeZone(
     @Ctx() ctx: RequestContext,
     @Args("id") id: string,
-    @Args("rateCents") rateCents: number
+    @Args("rateCents") rateCents: number,
+    @Args("city") city?: string,
+    @Args("region") region?: string
   ): Promise<PostalCodeZone | null> {
-    return this.postalZoneService.updateRate(ctx, id, rateCents);
+    return this.postalZoneService.updateZone(ctx, id, rateCents, city ?? null, region ?? null);
   }
 }
