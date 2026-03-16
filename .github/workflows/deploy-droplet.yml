@@ -79,3 +79,41 @@ jobs:
               docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=3 http://vendure:3000/health 2>&1 || true
               exit 1
             fi
+
+            echo "--- Health checks ---"
+            comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
+            psout=$($comp ps -a 2>/dev/null) || { echo "FAIL: docker compose ps failed"; exit 1; }
+            # All required containers must be running (status contains "Up" and not "Restarting")
+            for svc in vendure vendure-worker storefront nginx redis; do
+              line=$(echo "$psout" | grep -E "\s+$svc\s+" | head -1)
+              if [ -z "$line" ]; then
+                echo "FAIL: No container for service $svc."
+                echo "$psout"
+                exit 1
+              fi
+              if echo "$line" | grep -q "Restarting"; then
+                echo "FAIL: $svc is in restart loop."
+                $comp logs "$svc" --tail=30
+                exit 1
+              fi
+              if ! echo "$line" | grep -q "Up"; then
+                echo "FAIL: $svc is not up (status: $line)."
+                echo "$psout"
+                exit 1
+              fi
+              echo "  $svc: running"
+            done
+            # Public endpoints via nginx (localhost:80 on droplet)
+            health_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 http://127.0.0.1/health 2>/dev/null || echo "000")
+            if [ "$health_code" != "200" ]; then
+              echo "FAIL: GET /health returned $health_code (expected 200)."
+              exit 1
+            fi
+            echo "  GET /health: 200"
+            storefront_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 http://127.0.0.1/ 2>/dev/null || echo "000")
+            if [ "$storefront_code" != "200" ]; then
+              echo "FAIL: GET / (storefront) returned $storefront_code (expected 200)."
+              exit 1
+            fi
+            echo "  GET / (storefront): 200"
+            echo "Health checks passed."

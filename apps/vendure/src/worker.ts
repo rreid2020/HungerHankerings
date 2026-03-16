@@ -6,6 +6,9 @@ const keepAlive = setInterval(() => {}, 60000);
 
 bootstrapWorker(config)
   .then((worker) => {
+    return worker.startJobQueue();
+  })
+  .then(() => {
     console.log("Vendure worker started");
   })
   .catch((err) => {

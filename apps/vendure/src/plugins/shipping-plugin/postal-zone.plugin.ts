@@ -15,6 +15,7 @@ function postalZoneAdminSchema(): import("graphql").DocumentNode {
  * Registers PostalCodeZone entity and PostalCodeZoneService for postal-code–based shipping.
  */
 @VendurePlugin({
+  compatibility: '^2.0.0',
   imports: [PluginCommonModule],
   entities: [PostalCodeZone as any],
   providers: [PostalCodeZoneService],
