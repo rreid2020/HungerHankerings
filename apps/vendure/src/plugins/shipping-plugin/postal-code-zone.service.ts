@@ -13,6 +13,7 @@ export class PostalCodeZoneService {
     countryCode: string,
     prefix: string
   ): Promise<number | null> {
+    if (!this.connection) return null;
     const repo = this.connection.getRepository(ctx, PostalCodeZone);
     const normalized = (countryCode ?? "").trim().toUpperCase().slice(0, 2);
     const p = (prefix ?? "").trim().toUpperCase().slice(0, 1);
@@ -29,11 +30,13 @@ export class PostalCodeZoneService {
   }
 
   async findAll(ctx: RequestContext): Promise<PostalCodeZone[]> {
+    if (!this.connection) return [];
     const repo = this.connection.getRepository(ctx, PostalCodeZone);
     return repo.find({ order: { countryCode: "ASC", prefix: "ASC" } });
   }
 
   async updateRate(ctx: RequestContext, id: ID, rateCents: number): Promise<PostalCodeZone | null> {
+    if (!this.connection) return null;
     const repo = this.connection.getRepository(ctx, PostalCodeZone);
     const zone = await repo.findOne({ where: { id: id as string } });
     if (!zone) return null;
