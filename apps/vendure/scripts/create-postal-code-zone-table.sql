@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS postal_code_zone (
   "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
   "countryCode" varchar(2) NOT NULL,
-  prefix varchar(1) NOT NULL DEFAULT '',
+  prefix varchar(6) NOT NULL DEFAULT '',
   "zoneName" varchar(128) NOT NULL,
   "rateCents" integer NOT NULL
 );
@@ -18,4 +18,4 @@ CREATE TABLE IF NOT EXISTS postal_code_zone (
 CREATE INDEX IF NOT EXISTS idx_postal_code_zone_country_prefix
   ON postal_code_zone ("countryCode", prefix);
 
-COMMENT ON TABLE postal_code_zone IS 'Shipping rate by postal code zone (Canada: first letter; US: default). Seed with pnpm run seed:postal-zones.';
+COMMENT ON TABLE postal_code_zone IS 'Shipping rate by 3-char FSA (Canada) or country default. Seed with pnpm run seed:postal-zones.';

@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS postal_code_zone (
   "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
   "countryCode" varchar(2) NOT NULL,
-  prefix varchar(1) NOT NULL DEFAULT '',
+  prefix varchar(6) NOT NULL DEFAULT '',
   "zoneName" varchar(128) NOT NULL,
   "rateCents" integer NOT NULL
 );

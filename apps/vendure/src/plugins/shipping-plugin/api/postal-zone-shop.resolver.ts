@@ -16,9 +16,8 @@ export class PostalZoneShopResolver {
   ): Promise<number> {
     const country = (countryCode ?? "").trim().toUpperCase().slice(0, 2);
     const postal = (postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
-    const prefix = country === "CA" ? postal.slice(0, 1) : "";
     const cents =
-      (await this.postalZoneService.getRateCents(ctx, country, prefix)) ??
+      (await this.postalZoneService.getRateCentsByPostal(ctx, country, postal)) ??
       FALLBACK_RATE_CENTS;
     return cents;
   }

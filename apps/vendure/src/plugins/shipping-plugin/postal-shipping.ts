@@ -95,9 +95,8 @@ class PostalZoneShippingCalculator extends ShippingCalculator {
       // If postal looks Canadian (e.g. K1C 7E9) but country missing, assume CA so zone lookup works
       const effectiveCountry =
         countryCode || (postalCode.match(/^[A-Z]\d[A-Z]\s*\d[A-Z]\d$/i) ? "CA" : "");
-      const prefix = effectiveCountry === "CA" ? postalCode.slice(0, 1) : "";
       const rateCents =
-        (await this.postalZoneService.getRateCents(ctx, effectiveCountry, prefix)) ??
+        (await this.postalZoneService.getRateCentsByPostal(ctx, effectiveCountry, postalCode)) ??
         FALLBACK_RATE_CENTS;
 
       let taxRate = 0;
@@ -116,12 +115,13 @@ class PostalZoneShippingCalculator extends ShippingCalculator {
         }
       }
 
+      const prefix = effectiveCountry === "CA" ? postalCode.slice(0, 3) : "";
       return {
         price: rateCents,
         priceIncludesTax: ctx.channel?.pricesIncludeTax ?? false,
         taxRate,
         metadata: {
-          postalPrefix: effectiveCountry === "CA" ? prefix || undefined : undefined,
+          postalPrefix: prefix || undefined,
           countryCode: effectiveCountry || undefined,
         },
       };
