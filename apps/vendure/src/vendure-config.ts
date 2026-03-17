@@ -121,23 +121,37 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
       route: "admin",
       port: 3002,
     }),
-    EmailPlugin.init({
-      templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
-      // In devMode emails are written to outputPath and shown at /mailbox; they are not sent.
-      // In production we need devMode: false and a transport so verification/password-reset emails are delivered.
-      devMode: process.env.NODE_ENV !== "production",
-      outputPath: path.join(assetDir, "test-emails"),
-      route: "mailbox",
-      handlers: defaultEmailHandlers,
-      ...(process.env.NODE_ENV === "production" && buildEmailTransport()),
-      globalTemplateVars: {
-        baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
-        passwordResetUrl:
-          (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
-        verifyEmailAddressUrl:
-          (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
-      },
-    }),
+    EmailPlugin.init(
+      process.env.NODE_ENV === "production"
+        ? {
+            templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+            outputPath: path.join(assetDir, "test-emails"),
+            route: "mailbox",
+            handlers: defaultEmailHandlers,
+            ...buildEmailTransport(),
+            globalTemplateVars: {
+              baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
+              passwordResetUrl:
+                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
+              verifyEmailAddressUrl:
+                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+            },
+          }
+        : {
+            templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+            devMode: true,
+            outputPath: path.join(assetDir, "test-emails"),
+            route: "mailbox",
+            handlers: defaultEmailHandlers,
+            globalTemplateVars: {
+              baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
+              passwordResetUrl:
+                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
+              verifyEmailAddressUrl:
+                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+            },
+          }
+    ),
   ],
 });
 
