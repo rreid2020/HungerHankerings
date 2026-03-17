@@ -11,7 +11,8 @@ export default async function ConfirmAccountPage({
   const params = await searchParams
   const errorParam = typeof params.error === "string" ? params.error : undefined
   const email = params.email || params.e
-  const token = params.token || params.t || params.key
+  const tokenRaw = params.token ?? params.t ?? params.key
+  const token = typeof tokenRaw === "string" ? tokenRaw : Array.isArray(tokenRaw) ? tokenRaw[0] : undefined
 
   // Show error from redirect (e.g. from account page or API route) without calling API again
   if (errorParam) {
@@ -64,8 +65,9 @@ export default async function ConfirmAccountPage({
     )
   }
 
+  const tokenStr: string = token
   try {
-    const result = await confirmAccount(email, token)
+    const result = await confirmAccount(email ?? "", tokenStr)
 
     if (result.errors?.length) {
       return (
