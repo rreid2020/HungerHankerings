@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3003",
     "build": "next build",
-    "start": "next start -p 3000 -H 0.0.0.0",
+    "start": "next start -p 3000",
     "lint": "next lint",
     "check-theme": "node scripts/check-theme-colors.cjs",
     "clean": "node scripts/clean-next.cjs"
@@ -16,8 +16,7 @@
     "postgres": "^3.4.8",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "resend": "^6.9.2",
-    "@stripe/stripe-js": "^4.8.0"
+    "resend": "^6.9.2"
   },
   "devDependencies": {
     "@types/google.maps": "^3.58.1",

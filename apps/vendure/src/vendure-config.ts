@@ -65,7 +65,8 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     ...(process.env.LOG_SQL === "true" ? { logging: true } : {}),
   },
   authOptions: {
-    tokenMethod: "cookie",
+    // Bearer so headless storefront (Next.js) can receive token and send it on each request
+    tokenMethod: ["bearer", "cookie"],
     cookieOptions: {
       secret: process.env.COOKIE_SECRET ?? "dev-cookie-secret",
     },
@@ -104,6 +105,13 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
       outputPath: path.join(assetDir, "test-emails"),
       route: "mailbox",
       handlers: defaultEmailHandlers,
+      globalTemplateVars: {
+        baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
+        passwordResetUrl:
+          (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
+        verifyEmailAddressUrl:
+          (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+      },
     }),
   ],
 });

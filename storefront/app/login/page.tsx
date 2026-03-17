@@ -11,6 +11,7 @@ export default async function LoginPage({ searchParams }: Props) {
   const error = typeof params.error === "string" ? params.error : undefined
   const redirectTo = (typeof params.redirect === "string" ? params.redirect : undefined) || "/account"
   const confirmed = params.confirmed === "true"
+  const resetSuccess = params.reset === "success"
   const token = params.token ?? params.t
   const emailParam = params.email ?? params.e
 
@@ -41,6 +42,11 @@ export default async function LoginPage({ searchParams }: Props) {
           {confirmed && (
             <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
               Account confirmed successfully! You can now log in.
+            </div>
+          )}
+          {resetSuccess && (
+            <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+              Password reset successfully. You can now sign in with your new password.
             </div>
           )}
           {error && (

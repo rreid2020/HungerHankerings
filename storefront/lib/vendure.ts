@@ -15,19 +15,21 @@ type GraphQLResponse<T> = {
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
-/** Pass when calling from server (e.g. API route) to forward the request cookie to Vendure */
-export type VendureRequestOptions = { cookie?: string };
+/** Pass when calling from server (e.g. API route) to authenticate with Vendure */
+export type VendureRequestOptions = { cookie?: string; authToken?: string };
 
 export async function fetchVendure<T>(
   query: string,
   variables?: Record<string, unknown>,
-  options?: { cookie?: string }
+  options?: { cookie?: string; authToken?: string }
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (options?.cookie) {
+  if (options?.authToken) {
+    headers.Authorization = `Bearer ${options.authToken}`;
+  } else if (options?.cookie) {
     headers.Cookie = options.cookie;
   }
 
@@ -841,7 +843,7 @@ export async function checkoutComplete(
 }
 
 // ---------------------------------------------------------------------------
-// Customer auth & account (Vendure uses session cookies)
+// Customer auth & account (bearer token for headless storefront)
 // ---------------------------------------------------------------------------
 
 export type AuthTokenResponse = {
@@ -850,39 +852,62 @@ export type AuthTokenResponse = {
   user: { id: string; email: string };
 };
 
+const VENDURE_AUTH_HEADER = "vendure-auth-token";
+
+/** Login via Shop API; returns token from response header for bearer auth */
 export async function customerLogin(
   email: string,
   password: string
 ): Promise<AuthTokenResponse> {
-  const data = await fetchVendure<{
-    authenticate: {
-      success?: boolean;
-      token?: string;
-      id?: string;
-      identifier?: string;
-    };
-  }>(`
-    mutation Authenticate($input: NativeAuthInput!) {
-      authenticate(input: $input) {
-        ... on Success {
-          success
-        }
-        ... on CurrentUser {
-          id
-          identifier
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const body = JSON.stringify({
+    query: `
+      mutation Login($username: String!, $password: String!, $rememberMe: Boolean) {
+        login(username: $username, password: $password, rememberMe: $rememberMe) {
+          ... on CurrentUser { id identifier }
+          ... on InvalidCredentialsError { message errorCode }
+          ... on ErrorResult { message errorCode }
         }
       }
+    `,
+    variables: { username: email.trim(), password, rememberMe: true },
+  });
+  try {
+    const res = await fetch(shopApiUrl, {
+      method: "POST",
+      headers,
+      body,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const authToken = res.headers.get(VENDURE_AUTH_HEADER);
+    const json = (await res.json()) as {
+      data?: { login?: { id?: string; identifier?: string; message?: string } };
+      errors?: { message: string }[];
+    };
+    if (json.errors?.length) {
+      throw new Error(json.errors[0].message || "Login failed");
     }
-  `, { input: { username: email, password } });
-  const auth = (data as { authenticate?: { success?: boolean; token?: string; id?: string; identifier?: string } }).authenticate;
-  if (!auth?.success && !auth?.id) {
+    const login = json.data?.login;
+    if (login && "message" in login && login.message) {
+      throw new Error(login.message);
+    }
+    if (!authToken || !login?.id) {
+      throw new Error("Login failed");
+    }
+    return {
+      token: authToken,
+      refreshToken: authToken,
+      user: { id: login.id, email: (login.identifier as string) ?? email },
+    };
+  } catch (e) {
+    clearTimeout(timeoutId);
+    if (e instanceof Error) throw e;
     throw new Error("Login failed");
   }
-  return {
-    token: auth.token ?? "session",
-    refreshToken: "session",
-    user: { id: auth.id ?? "", email: auth.identifier ?? email },
-  };
 }
 
 export async function customerRegister(params: {
@@ -927,7 +952,7 @@ export async function customerRegister(params: {
 export async function getCurrentCustomer(
   tokenOrCookie?: string
 ): Promise<SaleorCustomer | null> {
-  const opts = tokenOrCookie ? { cookie: tokenOrCookie } : undefined
+  const opts = tokenOrCookie ? { authToken: tokenOrCookie } : undefined
   const data = await fetchVendure<{
     activeCustomer: {
       id: string;
@@ -1023,7 +1048,7 @@ export async function accountAddressCreate(
         ... on ErrorResult { message errorCode }
       }
     }
-  `, { input: toVendureAddress(input) }, { cookie: token });
+  `, { input: toVendureAddress(input) }, { authToken: token });
   const result = (data as { createCustomerAddress?: { id?: string; message?: string } }).createCustomerAddress;
   if (result && "message" in result && result.message) {
     return { errors: [{ message: result.message }] };
@@ -1044,7 +1069,7 @@ export async function accountAddressUpdate(
         ... on ErrorResult { message }
       }
     }
-  `, { id: addressId, input: toVendureAddress(input) }, { cookie: token });
+  `, { id: addressId, input: toVendureAddress(input) }, { authToken: token });
   const result = (data as { updateCustomerAddress?: { message?: string } }).updateCustomerAddress;
   if (result?.message) return { errors: [{ message: result.message }] };
   return {};
@@ -1063,7 +1088,7 @@ export async function accountAddressDelete(
         ... on ErrorResult { message }
       }
     }
-  `, { id: addressId }, { cookie: token });
+  `, { id: addressId }, { authToken: token });
   const result = (data as { deleteCustomerAddress?: { message?: string } }).deleteCustomerAddress;
   if (result?.message) return { errors: [{ message: result.message }] };
   return {};
@@ -1080,18 +1105,18 @@ export async function accountUpdate(
         ... on ErrorResult { message }
       }
     }
-  `, { input }, { cookie: token });
+  `, { input }, { authToken: token });
   return {};
 }
 
 export async function refreshToken(
-  _refreshToken: string
+  refreshTokenValue: string
 ): Promise<AuthTokenResponse> {
-  const customer = await getCurrentCustomer("session");
+  const customer = await getCurrentCustomer(refreshTokenValue);
   if (!customer) throw new Error("Token refresh failed");
   return {
-    token: "session",
-    refreshToken: "session",
+    token: refreshTokenValue,
+    refreshToken: refreshTokenValue,
     user: { id: customer.id, email: customer.email },
   };
 }
@@ -1268,7 +1293,7 @@ export async function getCustomerOrders(
         }
       }
     }
-  `, { take: first, skip: after ? parseInt(after, 10) : 0 }, { cookie: token });
+  `, { take: first, skip: after ? parseInt(after, 10) : 0 }, { authToken: token });
   const items = data.activeCustomer?.orders?.items ?? [];
   return {
     orders: items.map(mapVendureOrderToSaleorOrder),
@@ -1304,9 +1329,49 @@ export async function requestPasswordReset(
   return {};
 }
 
+/** Set new password using the token from the reset email. */
+export async function resetPassword(
+  token: string,
+  password: string
+): Promise<{ errors?: { message: string; field?: string }[] }> {
+  const data = await fetchVendure<{
+    resetPassword?: { id?: string; identifier?: string; message?: string };
+  }>(`
+    mutation ResetPassword($token: String!, $password: String!) {
+      resetPassword(token: $token, password: $password) {
+        ... on CurrentUser { id identifier }
+        ... on ErrorResult { message errorCode }
+      }
+    }
+  `, { token, password });
+  const result = (data as { resetPassword?: { message?: string } }).resetPassword;
+  if (result && "message" in result && result.message) {
+    return { errors: [{ message: result.message }] };
+  }
+  return {};
+}
+
+/** Verify customer email using the token from the confirmation email. */
 export async function confirmAccount(
   _email: string,
-  _token: string
+  token: string
 ): Promise<{ user?: SaleorCustomer; errors?: { message: string; field?: string }[] }> {
+  if (!token?.trim()) {
+    return { errors: [{ message: "Verification token is required." }] };
+  }
+  const data = await fetchVendure<{
+    verifyCustomerAccount?: { id?: string; identifier?: string; message?: string };
+  }>(`
+    mutation VerifyCustomerAccount($token: String!) {
+      verifyCustomerAccount(token: $token) {
+        ... on CurrentUser { id identifier }
+        ... on ErrorResult { message errorCode }
+      }
+    }
+  `, { token: token.trim() });
+  const result = (data as { verifyCustomerAccount?: { message?: string } }).verifyCustomerAccount;
+  if (result && "message" in result && result.message) {
+    return { errors: [{ message: result.message }] };
+  }
   return {};
 }

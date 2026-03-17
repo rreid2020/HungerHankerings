@@ -9,17 +9,48 @@ export default async function ConfirmAccountPage({
   searchParams: Promise<{ email?: string; token?: string; [key: string]: string | undefined }>
 }) {
   const params = await searchParams
-  // Try different possible parameter names
+  const errorParam = typeof params.error === "string" ? params.error : undefined
   const email = params.email || params.e
   const token = params.token || params.t || params.key
 
-  if (!email || !token) {
+  // Show error from redirect (e.g. from account page or API route) without calling API again
+  if (errorParam) {
+    const message = decodeURIComponent(errorParam)
+    return (
+      <div className="container-page flex flex-col items-center justify-center py-24">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground">Confirmation Failed</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {message || "Unable to confirm your account. The link may have expired."}
+            </p>
+          </div>
+          <div className="rounded-md bg-yellow-50 border border-yellow-200 p-4 text-sm text-yellow-800">
+            <p className="font-medium mb-2">What to do:</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li>Try logging in - your account might already be confirmed</li>
+              <li>Request a new confirmation email</li>
+              <li>Contact support if the problem persists</li>
+            </ul>
+          </div>
+          <div className="flex gap-3">
+            <Button href="/login" className="flex-1">Try Login</Button>
+            <Button href="/register" variant="secondary" className="flex-1">
+              Register Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!token) {
     return (
       <div className="container-page flex flex-col items-center justify-center py-24">
         <div className="w-full max-w-md space-y-6 text-center">
           <h1 className="text-2xl font-bold text-foreground">Invalid Confirmation Link</h1>
           <p className="text-sm text-muted-foreground">
-            The confirmation link is missing required parameters. Please check your email for the correct link.
+            The confirmation link is missing the verification token. Please check your email for the full link.
           </p>
           {process.env.NODE_ENV === "development" && (
             <div className="mt-4 rounded-md bg-gray-50 border border-gray-200 p-3 text-xs text-left">

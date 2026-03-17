@@ -2,10 +2,7 @@ const saleorUrl =
   process.env.SALEOR_API_URL ||
   process.env.NEXT_PUBLIC_SALEOR_API_URL ||
   "http://localhost:8000/graphql/"
-const channel =
-  process.env.SALEOR_CHANNEL ||
-  process.env.NEXT_PUBLIC_SALEOR_CHANNEL ||
-  "default-channel"
+const channel = process.env.NEXT_PUBLIC_SALEOR_CHANNEL || "default-channel"
 
 type GraphQlResponse<T> = {
   data?: T
@@ -651,56 +648,9 @@ export const checkoutDeliveryMethodUpdate = async (
   return data.checkoutDeliveryMethodUpdate.checkout
 }
 
-/** Get checkout total price (gross amount) for payment creation */
-export const getCheckoutTotalPrice = async (checkoutId: string): Promise<number> => {
-  const data = await fetchSaleor<{
-    checkout: { totalPrice: { gross: { amount: number } } } | null
-  }>(
-    `
-      query CheckoutTotalPrice($id: ID!) {
-        checkout(id: $id) {
-          totalPrice {
-            gross { amount }
-          }
-        }
-      }
-    `,
-    { id: checkoutId }
-  )
-  if (!data.checkout?.totalPrice?.gross?.amount) {
-    throw new Error("Could not get checkout total")
-  }
-  return data.checkout.totalPrice.gross.amount
-}
-
-/** Create Stripe payment for checkout (required before checkoutComplete when Stripe is enabled) */
-export const checkoutPaymentCreate = async (
-  checkoutId: string,
-  input: { gateway: string; amount: number; token?: string }
-): Promise<void> => {
-  const data = await fetchSaleor<{
-    checkoutPaymentCreate: {
-      payment: { id: string } | null
-      errors: { message?: string }[]
-    }
-  }>(
-    `
-      mutation CheckoutPaymentCreate($checkoutId: ID!, $input: PaymentInput!) {
-        checkoutPaymentCreate(checkoutId: $checkoutId, input: $input) {
-          payment { id }
-          errors { message }
-        }
-      }
-    `,
-    { checkoutId, input }
-  )
-  assertNoErrors(data.checkoutPaymentCreate.errors, "CheckoutPaymentCreate")
-}
-
 export type CheckoutCompleteResult = {
   order: SaleorOrder | null
   confirmationNeeded: boolean
-  confirmationData?: string | null
   errors: { message?: string }[]
 }
 
@@ -715,14 +665,12 @@ export const checkoutComplete = async (
     checkoutComplete: {
       order: SaleorOrder | null
       confirmationNeeded: boolean | null
-      confirmationData?: string | null
       errors: { message?: string }[]
     }
   }>(
     `
       mutation CheckoutComplete($id: ID!, $redirectUrl: String!, $paymentData: JSONString, $metadata: [MetadataInput!]) {
         checkoutComplete(id: $id, redirectUrl: $redirectUrl, paymentData: $paymentData, metadata: $metadata) {
-          confirmationData
           order {
             id
             token
@@ -797,7 +745,6 @@ export const checkoutComplete = async (
   return {
     order: result.order ?? null,
     confirmationNeeded: result.confirmationNeeded ?? false,
-    confirmationData: result.confirmationData ?? null,
     errors: []
   }
 }
