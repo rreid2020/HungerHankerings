@@ -5,11 +5,13 @@
  * There is no free Canadian API for FSA-based shipping rates. This seed:
  * - Generates all valid Canadian FSAs (format: letter + digit + letter; Canada Post uses 18 letters).
  * - Inserts one row per FSA with a default rate; you can edit specific FSAs (e.g. remote) at /shipping-rates.
+ * - Fills city and region from FSA first letter (Canada Post province/area).
  * - Also ensures CA (default) and US (default) exist.
  */
 import { bootstrapWorker, Logger, RequestContextService, TransactionalConnection } from "@vendure/core";
 import { config } from "./vendure-config";
 import { PostalCodeZone } from "./plugins/shipping-plugin/entities/postal-code-zone.entity";
+import { getCityLabelForFsa, getRegionForFsa } from "./fsa-region-city";
 
 const DEFAULT_CA_CENTS = 1200; // $12 fallback when no FSA row or rate not set
 const DEFAULT_US_CENTS = 1800; // $18
@@ -70,12 +72,14 @@ async function seed() {
   let batch: Partial<PostalCodeZone>[] = [];
   for (const fsa of allCanadianFsas()) {
     if (existingKeys.has(`CA:${fsa}`)) continue;
+    const region = getRegionForFsa(fsa);
+    const city = getCityLabelForFsa(fsa);
     batch.push({
       countryCode: "CA",
       prefix: fsa,
       zoneName: `FSA ${fsa}`,
-      city: null,
-      region: null,
+      city: city || null,
+      region: region || null,
       rateCents: FSA_INITIAL_RATE_CENTS,
     });
     existingKeys.add(`CA:${fsa}`);
@@ -88,6 +92,20 @@ async function seed() {
   if (batch.length > 0) {
     await repo.save(batch.map((b) => repo.create(b)));
     added += batch.length;
+  }
+
+  // Backfill city/region for existing Canadian FSA rows that have nulls
+  const toUpdate = await repo.find({ where: { countryCode: "CA" } });
+  const needsBackfill = toUpdate.filter(
+    (z) => z.prefix.length === 3 && (!z.city || !z.region)
+  );
+  if (needsBackfill.length > 0) {
+    for (const z of needsBackfill) {
+      z.region = getRegionForFsa(z.prefix) || z.region;
+      z.city = getCityLabelForFsa(z.prefix) || z.city;
+    }
+    await repo.save(needsBackfill);
+    Logger.info(`PostalCodeZone seed: backfilled city/region for ${needsBackfill.length} existing row(s).`);
   }
 
   Logger.info(`PostalCodeZone seed: ${added} row(s) added.`);
