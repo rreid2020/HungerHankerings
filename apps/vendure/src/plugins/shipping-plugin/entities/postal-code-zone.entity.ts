@@ -20,11 +20,11 @@ export class PostalCodeZone extends VendureEntity {
   zoneName!: string;
 
   /** City name when available (for display; not used in lookup). */
-  @Column({ length: 128, nullable: true })
+  @Column({ type: "varchar", length: 128, nullable: true })
   city!: string | null;
 
   /** Region/province when available (e.g. Ontario; for display). */
-  @Column({ length: 128, nullable: true })
+  @Column({ type: "varchar", length: 128, nullable: true })
   region!: string | null;
 
   /** Your shipping rate in cents (CAD). Set per zone after seed. */
