@@ -20,6 +20,28 @@ import {
 
 require("dotenv").config();
 
+/** In production, use SMTP if configured; otherwise noop so verification/password-reset emails are not sent until SMTP_* are set. */
+function buildEmailTransport(): { transport: { type: "smtp"; host: string; port: number; secure?: boolean; auth: { user: string; pass: string } } | { type: "none" } } {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (host && user && pass) {
+    return {
+      transport: {
+        type: "smtp",
+        host,
+        port: parseInt(process.env.SMTP_PORT ?? "587", 10),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: { user, pass },
+      },
+    };
+  }
+  console.warn(
+    "[vendure] EmailPlugin: SMTP not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS in .env). Verification and password-reset emails will not be sent."
+  );
+  return { transport: { type: "none" } };
+}
+
 if (process.env.NODE_ENV === "production") {
   const warn = (name: string, defaultVal: string) => {
     if (!process.env[name] || process.env[name] === defaultVal) {
@@ -101,10 +123,13 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     }),
     EmailPlugin.init({
       templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
-      devMode: true,
+      // In devMode emails are written to outputPath and shown at /mailbox; they are not sent.
+      // In production we need devMode: false and a transport so verification/password-reset emails are delivered.
+      devMode: process.env.NODE_ENV !== "production",
       outputPath: path.join(assetDir, "test-emails"),
       route: "mailbox",
       handlers: defaultEmailHandlers,
+      ...(process.env.NODE_ENV === "production" && buildEmailTransport()),
       globalTemplateVars: {
         baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
         passwordResetUrl:

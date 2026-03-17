@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Button from "../../components/Button"
 import { useAuth } from "../../components/AuthContext"
+import { getVendureMailboxUrl } from "../../lib/vendure"
 
 const RegisterPage = () => {
   const router = useRouter()
@@ -54,7 +55,7 @@ const RegisterPage = () => {
         setError("") // Clear any errors
         const message = result.message || "Account created! Please check your email to confirm your account."
         if (process.env.NODE_ENV === "development") {
-          alert(`${message}\n\nIn development, check Mailpit at http://localhost:8025 for the confirmation email.`)
+          alert(`${message}\n\nIn development, open the Vendure mailbox to get the verification link:\n${getVendureMailboxUrl()}\nThen click the link to confirm and log in.`)
         } else {
           alert(message)
         }
@@ -95,9 +96,9 @@ const RegisterPage = () => {
                     <p>• Check your spam folder</p>
                     {process.env.NODE_ENV === "development" && (
                       <p>
-                        • Check{" "}
-                        <a href="http://localhost:8025" target="_blank" rel="noopener noreferrer" className="underline font-medium">
-                          Mailpit (dev email inbox)
+                        • Get the verification link from{" "}
+                        <a href={getVendureMailboxUrl()} target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                          Vendure mailbox
                         </a>
                       </p>
                     )}

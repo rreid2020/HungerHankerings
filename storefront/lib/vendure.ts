@@ -8,6 +8,12 @@ const shopApiUrl =
   process.env.NEXT_PUBLIC_VENDURE_SHOP_API_URL ||
   "http://localhost:3000/shop-api";
 
+/** In dev, Vendure EmailPlugin serves captured emails here. Use this to get verification/reset links. */
+export function getVendureMailboxUrl(): string {
+  const base = shopApiUrl.replace(/\/shop-api\/?$/, "");
+  return `${base}/mailbox`;
+}
+
 type GraphQLResponse<T> = {
   data?: T;
   errors?: { message: string }[];

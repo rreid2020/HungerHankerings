@@ -4,6 +4,7 @@ import { useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import Button from "../../components/Button"
+import { getVendureMailboxUrl } from "../../lib/vendure"
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -189,11 +190,10 @@ function ResetPasswordForm() {
       </div>
       {process.env.NODE_ENV === "development" && (
         <p className="text-center text-xs text-muted-foreground">
-          Dev: Check Mailpit at{" "}
-          <a href="http://localhost:8025" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-            http://localhost:8025
-          </a>{" "}
-          for the reset email.
+          Dev: Get the reset link from{" "}
+          <a href={getVendureMailboxUrl()} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            Vendure mailbox
+          </a>
         </p>
       )}
     </div>

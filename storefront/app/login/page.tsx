@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { getVendureMailboxUrl } from "../../lib/vendure"
 import { LoginFormScript } from "./LoginFormScript"
 
 type Props = {
@@ -111,12 +112,12 @@ export default async function LoginPage({ searchParams }: Props) {
             <p className="mt-2 text-xs">
               <span className="text-muted-foreground">Dev:</span>{" "}
               <a
-                href="http://localhost:8025"
+                href={getVendureMailboxUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                Check Mailpit for confirmation emails
+                Get verification link from Vendure mailbox
               </a>
             </p>
           )}
