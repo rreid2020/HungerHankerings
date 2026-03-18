@@ -37,35 +37,39 @@ jobs:
             # Source .env into shell AND use --env-file so Compose always has DB_* for substitution (run and up must see same values)
             set -a && . ./.env && set +a
             echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
+            comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
+            # Stop stack first so prune does not leave Compose pointing at deleted container IDs (redis/mailpit "No such container")
+            echo "Stopping existing stack..."
+            $comp down --remove-orphans 2>/dev/null || true
             echo "Freeing disk space before build (prune images, containers, build cache)..."
             docker system prune -af 2>/dev/null || true
             docker builder prune -af 2>/dev/null || true
-            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml build --no-cache
+            $comp build --no-cache
             # Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
             # the "creating a new table" logs are TypeORM's diff only—tables are not created when synchronize is false.
             # So: if administrator table is missing, run one-time schema creation (synchronize) against that DB.
             echo "Checking if Vendure schema exists on $DB_NAME..."
             set +e
-            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/check-schema.js
+            $comp run --rm vendure node dist/check-schema.js
             schema_ok=$?
             set -e
             if [ "$schema_ok" -ne 0 ]; then
               echo "Schema missing; running one-time schema creation (RUN_SCHEMA_SYNC=1)..."
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm -e RUN_SCHEMA_SYNC=1 vendure node dist/schema-init.js
+              $comp run --rm -e RUN_SCHEMA_SYNC=1 vendure node dist/schema-init.js
             else
               echo "Vendure schema already exists."
             fi
             echo "Running migrations (one-off container, same .env as stack)..."
-            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml run --rm vendure node dist/migrate.js
+            $comp run --rm vendure node dist/migrate.js
             # postal_code_zone table + seed: run once on droplet (see deploy/run-postal-zone-once.sh)
             echo "Starting stack..."
-            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d --force-recreate --remove-orphans
+            $comp up -d --force-recreate --remove-orphans
             echo "Verify vendure container DB env (must match .env):"
-            docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
+            $comp exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
             echo "Waiting for Vendure to listen (up to 90s)..."
             ok=0
             for i in $(seq 1 18); do
-              if docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=5 http://vendure:3000/health 2>/dev/null | head -c 1 | grep -q .; then
+              if $comp exec -T nginx wget -qO- --timeout=5 http://vendure:3000/health 2>/dev/null | head -c 1 | grep -q .; then
                 ok=1
                 break
               fi
@@ -76,14 +80,13 @@ jobs:
               echo "Vendure reachable from nginx."
             else
               echo "Vendure did not become reachable. Dumping vendure logs:"
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml logs vendure --tail=100 || true
+              $comp logs vendure --tail=100 || true
               echo "--- nginx can resolve vendure?"
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml exec -T nginx wget -qO- --timeout=3 http://vendure:3000/health 2>&1 || true
+              $comp exec -T nginx wget -qO- --timeout=3 http://vendure:3000/health 2>&1 || true
               exit 1
             fi
 
             echo "--- Health checks ---"
-            comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
             psout=$($comp ps -a 2>/dev/null) || { echo "FAIL: docker compose ps failed"; exit 1; }
             # All required containers must be running (status contains "Up" and not "Restarting")
             for svc in vendure vendure-worker storefront nginx redis; do
