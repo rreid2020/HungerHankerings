@@ -21,6 +21,7 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       COOKIE_SECRET: ${COOKIE_SECRET}
       APP_URL: ${APP_URL}
+      VENDURE_REQUIRE_EMAIL_VERIFICATION: ${VENDURE_REQUIRE_EMAIL_VERIFICATION:-true}
       # Must be set here (not only env_file) so both API and worker see Resend SMTP for verification emails
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -53,6 +54,7 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       COOKIE_SECRET: ${COOKIE_SECRET}
       APP_URL: ${APP_URL}
+      VENDURE_REQUIRE_EMAIL_VERIFICATION: ${VENDURE_REQUIRE_EMAIL_VERIFICATION:-true}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

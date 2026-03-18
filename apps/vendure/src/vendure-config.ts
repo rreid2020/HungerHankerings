@@ -63,6 +63,14 @@ if (process.env.NODE_ENV === "production") {
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path.join(__dirname, "../assets");
 const isProduction = process.env.NODE_ENV === "production";
+/** Set VENDURE_REQUIRE_EMAIL_VERIFICATION=false to skip customer email verification (dev/testing only). */
+const requireCustomerEmailVerification =
+  process.env.VENDURE_REQUIRE_EMAIL_VERIFICATION !== "false";
+if (isProduction && !requireCustomerEmailVerification) {
+  console.warn(
+    "[vendure] VENDURE_REQUIRE_EMAIL_VERIFICATION=false — customers can sign in without confirming email. Turn this off before real launch."
+  );
+}
 // In production restrict CORS to APP_URL; in dev allow all (localhost)
 const corsOptions =
   isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
@@ -94,6 +102,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     ...(process.env.LOG_SQL === "true" ? { logging: true } : {}),
   },
   authOptions: {
+    requireVerification: requireCustomerEmailVerification,
     // Bearer so headless storefront (Next.js) can receive token and send it on each request
     tokenMethod: ["bearer", "cookie"],
     cookieOptions: {
