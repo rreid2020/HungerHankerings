@@ -23,6 +23,24 @@ In dev, Vendure’s EmailPlugin runs in **dev mode**: it does **not** send real 
 
 Same idea: request a password reset on the storefront, then open the Vendure mailbox, find the reset email, and use the link to set a new password.
 
-## Production
+## Production (droplet / IP like `143.110.221.220`)
 
-In production, set SMTP (e.g. Resend) in the server `.env` and use the real domain. Verification and password-reset emails will be sent to the user’s inbox; no mailbox is used.
+**The dev mailbox does not work there.** Your droplet runs Vendure with `NODE_ENV=production`, so EmailPlugin **sends mail via SMTP** (or does nothing if SMTP isn’t set). The `/mailbox` UI is **only enabled in development** on the Vendure process.
+
+So:
+
+- **`http://YOUR_DROPLET_IP/mailbox`** will not show captured emails on a normal production deploy (even though nginx can proxy `/mailbox` to Vendure, Vendure is not running in email dev mode).
+- To test verification on the droplet: add **Resend SMTP** (`SMTP_*`) to the server `.env`, restart Vendure, register again, and check the **real inbox** (and the Resend dashboard if needed).
+
+## Local development vs droplet
+
+| Where you run | Mailbox works? | How to verify account |
+|---------------|----------------|------------------------|
+| **Local** (Vendure not in production) | Yes → `http://localhost:3000/mailbox` (Vendure’s port) | Open mailbox, click link in email |
+| **Droplet / production** | No | Configure SMTP; use real email |
+
+If your storefront’s `NEXT_PUBLIC_VENDURE_SHOP_API_URL` points at the **droplet** while you develop locally, the “Vendure mailbox” link will still open `https://droplet/mailbox` — that **won’t** give you dev emails. For mailbox testing, run **Vendure locally** in dev and point the storefront at `http://localhost:3000/shop-api` (or use the mailbox at `http://localhost:3000/mailbox` after registering against that Vendure).
+
+## Production email
+
+In production, set SMTP (e.g. Resend) in the server `.env`. Verification and password-reset emails go to the user’s inbox; no mailbox is used.

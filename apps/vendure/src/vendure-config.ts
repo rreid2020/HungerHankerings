@@ -21,23 +21,30 @@ import {
 require("dotenv").config();
 
 /** In production, use SMTP if configured; otherwise noop so verification/password-reset emails are not sent until SMTP_* are set. */
-function buildEmailTransport(): { transport: { type: "smtp"; host: string; port: number; secure?: boolean; auth: { user: string; pass: string } } | { type: "none" } } {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+function buildEmailTransport(): {
+  transport:
+    | { type: "smtp"; host: string; port: number; secure?: boolean; auth: { user: string; pass: string }; logging?: boolean }
+    | { type: "none" };
+} {
+  const host = process.env.SMTP_HOST?.trim();
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
   if (host && user && pass) {
+    const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
+    console.info(`[vendure] EmailPlugin: SMTP enabled (${host}:${port}, user=${user})`);
     return {
       transport: {
         type: "smtp",
         host,
-        port: parseInt(process.env.SMTP_PORT ?? "587", 10),
+        port,
         secure: process.env.SMTP_SECURE === "true",
         auth: { user, pass },
+        logging: true,
       },
     };
   }
   console.warn(
-    "[vendure] EmailPlugin: SMTP not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS in .env). Verification and password-reset emails will not be sent."
+    "[vendure] EmailPlugin: SMTP not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS). Verification emails are dropped — nothing reaches Resend."
   );
   return { transport: { type: "none" } };
 }

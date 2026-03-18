@@ -21,6 +21,12 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       COOKIE_SECRET: ${COOKIE_SECRET}
       APP_URL: ${APP_URL}
+      # Must be set here (not only env_file) so both API and worker see Resend SMTP for verification emails
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
     command: ["node", "dist/index.js"]
     depends_on:
       - redis
@@ -46,6 +52,11 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       COOKIE_SECRET: ${COOKIE_SECRET}
       APP_URL: ${APP_URL}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
     command: ["node", "dist/worker.js"]
     depends_on:
       - vendure
