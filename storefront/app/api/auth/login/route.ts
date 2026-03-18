@@ -11,7 +11,11 @@ async function getLoginPayload(request: NextRequest): Promise<{
   const contentType = request.headers.get("content-type") ?? ""
   if (contentType.includes("application/json")) {
     const body = await request.json()
-    return { email: body.email ?? "", password: body.password ?? "" }
+    return {
+      email: body.email ?? "",
+      password: body.password ?? "",
+      redirect: body.redirect as string | undefined,
+    }
   }
   const form = await request.formData()
   return {
@@ -23,9 +27,6 @@ async function getLoginPayload(request: NextRequest): Promise<{
 }
 
 export async function POST(request: NextRequest) {
-  // DIAGNOSTIC: remove after confirming whether request reaches the server
-  console.log("[LOGIN] POST /api/auth/login received", new Date().toISOString())
-
   try {
     const { email, password, redirect: redirectTo, isForm } = await getLoginPayload(request)
 
