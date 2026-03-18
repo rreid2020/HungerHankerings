@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { customerLogin } from "../../../../lib/vendure"
-import { cookies } from "next/headers"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
+
+const cookieOpts = (secure: boolean) =>
+  ({
+    httpOnly: true,
+    secure,
+    sameSite: "lax" as const,
+    path: "/",
+  }) as const
 
 async function getLoginPayload(request: NextRequest): Promise<{
   email: string
@@ -45,30 +52,28 @@ export async function POST(request: NextRequest) {
 
     const result = await customerLogin(email.trim(), password)
     const secure = cookieSecureFromRequest(request)
-
-    const cookieStore = await cookies()
-    cookieStore.set("vendure_token", result.token, {
-      httpOnly: true,
-      secure,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    })
-    cookieStore.set("vendure_refresh_token", result.refreshToken, {
-      httpOnly: true,
-      secure,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
-      path: "/",
-    })
+    const maxAgeAccess = 60 * 60 * 24 * 7
+    const maxAgeRefresh = 60 * 60 * 24 * 30
 
     if (isForm) {
       const target = redirectTo?.trim() && redirectTo.startsWith("/") ? redirectTo : "/account"
       const origin = request.nextUrl.origin
-      return NextResponse.redirect(new URL(target, origin))
+      const res = NextResponse.redirect(new URL(target, origin))
+      res.cookies.set("vendure_token", result.token, { ...cookieOpts(secure), maxAge: maxAgeAccess })
+      res.cookies.set("vendure_refresh_token", result.refreshToken, {
+        ...cookieOpts(secure),
+        maxAge: maxAgeRefresh,
+      })
+      return res
     }
 
-    return NextResponse.json({ success: true, user: result.user })
+    const res = NextResponse.json({ success: true, user: result.user })
+    res.cookies.set("vendure_token", result.token, { ...cookieOpts(secure), maxAge: maxAgeAccess })
+    res.cookies.set("vendure_refresh_token", result.refreshToken, {
+      ...cookieOpts(secure),
+      maxAge: maxAgeRefresh,
+    })
+    return res
   } catch (error) {
     const message = error instanceof Error ? error.message : "Login failed"
     const contentType = request.headers.get("content-type") ?? ""

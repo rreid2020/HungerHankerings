@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { customerRegister, customerLogin, refreshCustomerVerification } from "../../../../lib/vendure"
-import { cookies } from "next/headers"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
+
+const regCookieOpts = (secure: boolean) =>
+  ({
+    httpOnly: true,
+    secure,
+    sameSite: "lax" as const,
+    path: "/",
+  }) as const
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,27 +86,16 @@ export async function POST(request: NextRequest) {
     try {
       const loginResult = await customerLogin(email, password)
       const secure = cookieSecureFromRequest(request)
-
-      const cookieStore = await cookies()
-      cookieStore.set("vendure_token", loginResult.token, {
-        httpOnly: true,
-        secure,
-        sameSite: "lax",
+      const res = NextResponse.json({ success: true, user: loginResult.user })
+      res.cookies.set("vendure_token", loginResult.token, {
+        ...regCookieOpts(secure),
         maxAge: 60 * 60 * 24 * 7,
-        path: "/",
       })
-      cookieStore.set("vendure_refresh_token", loginResult.refreshToken, {
-        httpOnly: true,
-        secure,
-        sameSite: "lax",
+      res.cookies.set("vendure_refresh_token", loginResult.refreshToken, {
+        ...regCookieOpts(secure),
         maxAge: 60 * 60 * 24 * 30,
-        path: "/",
       })
-
-      return NextResponse.json({
-        success: true,
-        user: loginResult.user
-      })
+      return res
     } catch (loginError) {
       // After register, Vendure often returns "Please verify this email address before logging in" (not "confirm")
       const errorMessage = loginError instanceof Error ? loginError.message : "Login failed"

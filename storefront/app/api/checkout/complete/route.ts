@@ -1,4 +1,3 @@
-import { cookies } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 import {
   checkoutEmailUpdate,
@@ -199,15 +198,14 @@ export async function POST(request: NextRequest) {
 
     if (authToken && refreshToken) {
       const secure = cookieSecureFromRequest(request)
-      const cookieStore = await cookies()
-      cookieStore.set("vendure_token", authToken, {
+      response.cookies.set("vendure_token", authToken, {
         httpOnly: true,
         secure,
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
       })
-      cookieStore.set("vendure_refresh_token", refreshToken, {
+      response.cookies.set("vendure_refresh_token", refreshToken, {
         httpOnly: true,
         secure,
         sameSite: "lax",
