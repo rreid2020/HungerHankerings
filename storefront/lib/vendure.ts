@@ -955,6 +955,33 @@ export async function customerRegister(params: {
   return {};
 }
 
+/** Resend verification email for an unverified customer (Shop API). */
+export async function refreshCustomerVerification(emailAddress: string): Promise<{ ok: boolean; message?: string }> {
+  const data = await fetchVendure<{
+    refreshCustomerVerification: { __typename?: string; success?: boolean; message?: string };
+  }>(
+    `
+    mutation RefreshCustomerVerification($email: String!) {
+      refreshCustomerVerification(emailAddress: $email) {
+        __typename
+        ... on Success {
+          success
+        }
+        ... on ErrorResult {
+          message
+        }
+      }
+    }
+  `,
+    { email: emailAddress }
+  );
+  const r = data.refreshCustomerVerification;
+  if (r?.__typename === "Success" && r.success) {
+    return { ok: true };
+  }
+  return { ok: false, message: r?.message };
+}
+
 export async function getCurrentCustomer(
   tokenOrCookie?: string
 ): Promise<SaleorCustomer | null> {

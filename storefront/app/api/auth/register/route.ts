@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { customerRegister, customerLogin } from "../../../../lib/vendure"
+import { customerRegister, customerLogin, refreshCustomerVerification } from "../../../../lib/vendure"
 import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
@@ -25,24 +25,43 @@ export async function POST(request: NextRequest) {
     if (result.errors?.length) {
       const errorMessage = result.errors[0].message
       const errorField = result.errors[0].field
-      
-      // Check if email already exists - offer to resend confirmation or try login
-      if (errorMessage.toLowerCase().includes("already exists") || errorMessage.toLowerCase().includes("email")) {
+      const em = errorMessage.toLowerCase()
+      const maybeExistingAccount =
+        em.includes("verify") ||
+        em.includes("already") ||
+        em.includes("exist") ||
+        em.includes("registered") ||
+        em.includes("in use")
+
+      if (maybeExistingAccount) {
+        const refresh = await refreshCustomerVerification(email.trim())
+        if (refresh.ok) {
+          return NextResponse.json({
+            success: true,
+            requiresConfirmation: true,
+            message:
+              "We sent another verification email to this address. Check your inbox and spam folder, then click the link to confirm before signing in.",
+          })
+        }
+      }
+
+      if (
+        errorMessage.toLowerCase().includes("already exists") ||
+        errorMessage.toLowerCase().includes("email")
+      ) {
         return NextResponse.json(
-          { 
+          {
             error: errorMessage,
             field: errorField,
             emailExists: true,
-            suggestion: "This email is already registered. If you didn't receive a confirmation email, try logging in or check Mailpit at http://localhost:8025 (dev environment)."
+            suggestion:
+              "This email may already be registered. Try signing in, or use Forgot password if you need access.",
           },
           { status: 400 }
         )
       }
-      
-      return NextResponse.json(
-        { error: errorMessage, field: errorField },
-        { status: 400 }
-      )
+
+      return NextResponse.json({ error: errorMessage, field: errorField }, { status: 400 })
     }
 
     // Check if account was created but requires email confirmation
