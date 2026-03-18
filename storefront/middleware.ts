@@ -48,5 +48,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/login", "/register"]
+  // Include exact /account — some Next versions don't match /account under only :path*
+  matcher: ["/account", "/account/:path*", "/login", "/register"],
 }
