@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { getVendureMailboxUrl } from "../../lib/vendure"
 
 type Props = {
@@ -13,7 +12,6 @@ type Props = {
 }
 
 export function LoginForm({ redirectTo, initialError, confirmed, resetSuccess }: Props) {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState(initialError ?? "")
@@ -42,8 +40,9 @@ export function LoginForm({ redirectTo, initialError, confirmed, resetSuccess }:
       if (data.success) {
         const target =
           redirectTo?.trim() && redirectTo.startsWith("/") ? redirectTo : "/account"
-        router.push(target)
-        router.refresh()
+        window.location.href = target
+      } else if (res.ok) {
+        setError("Unexpected response from server. Please try again.")
       }
     } catch {
       setError("Network error. Please try again.")

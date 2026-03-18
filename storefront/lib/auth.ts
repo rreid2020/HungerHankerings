@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
 import { getCurrentCustomer, refreshToken } from "./vendure"
+import { cookieSecureFromHeaders } from "./cookie-secure"
 
 export type AuthUser = {
   id: string
@@ -30,6 +31,7 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
       return { user: null, hasToken: false }
     }
 
+    const cookieSecure = await cookieSecureFromHeaders()
     let customer: Awaited<ReturnType<typeof getCurrentCustomer>> = null
     try {
       customer = await getCurrentCustomer(token)
@@ -41,7 +43,7 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
           const refreshed = await refreshToken(refreshTokenValue)
           cookieStore.set("vendure_token", refreshed.token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: cookieSecure,
             sameSite: "lax",
             maxAge: 60 * 60 * 24 * 7,
             path: "/",
@@ -66,7 +68,7 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
           const refreshed = await refreshToken(refreshTokenValue)
           cookieStore.set("vendure_token", refreshed.token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: cookieSecure,
             sameSite: "lax",
             maxAge: 60 * 60 * 24 * 7,
             path: "/",

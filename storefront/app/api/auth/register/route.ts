@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { customerRegister, customerLogin, refreshCustomerVerification } from "../../../../lib/vendure"
 import { cookies } from "next/headers"
+import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,20 +78,22 @@ export async function POST(request: NextRequest) {
     // Try to auto-login after registration (only if account is confirmed)
     try {
       const loginResult = await customerLogin(email, password)
+      const secure = cookieSecureFromRequest(request)
 
-      // Set HTTP-only cookies for tokens
       const cookieStore = await cookies()
       cookieStore.set("vendure_token", loginResult.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7 // 7 days
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
       })
       cookieStore.set("vendure_refresh_token", loginResult.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure,
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30 // 30 days
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
       })
 
       return NextResponse.json({

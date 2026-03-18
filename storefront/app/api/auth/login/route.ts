@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { customerLogin } from "../../../../lib/vendure"
 import { cookies } from "next/headers"
+import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
 
 async function getLoginPayload(request: NextRequest): Promise<{
   email: string
@@ -43,18 +44,19 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await customerLogin(email.trim(), password)
+    const secure = cookieSecureFromRequest(request)
 
     const cookieStore = await cookies()
     cookieStore.set("vendure_token", result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     })
     cookieStore.set("vendure_refresh_token", result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 30,
       path: "/",

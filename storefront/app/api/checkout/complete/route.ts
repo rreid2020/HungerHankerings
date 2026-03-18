@@ -14,6 +14,7 @@ import {
   customerLogin,
   type SaleorAddressInput
 } from "../../../../lib/vendure"
+import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
 
 // Vendure: active order is from session (cookie). Forward request cookie to all Vendure calls.
 
@@ -197,17 +198,18 @@ export async function POST(request: NextRequest) {
     })
 
     if (authToken && refreshToken) {
+      const secure = cookieSecureFromRequest(request)
       const cookieStore = await cookies()
       cookieStore.set("vendure_token", authToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure,
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
       })
       cookieStore.set("vendure_refresh_token", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure,
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
