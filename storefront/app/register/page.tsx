@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Button from "../../components/Button"
@@ -19,6 +19,14 @@ const RegisterPage = () => {
   })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [verificationSent, setVerificationSent] = useState<{ message: string } | null>(null)
+  const successRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (verificationSent && successRef.current) {
+      successRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [verificationSent])
 
   // Redirect if already logged in
   if (user) {
@@ -41,6 +49,7 @@ const RegisterPage = () => {
     }
 
     setLoading(true)
+    setVerificationSent(null)
 
     try {
       const result = await register({
@@ -49,19 +58,15 @@ const RegisterPage = () => {
         firstName: formData.firstName,
         lastName: formData.lastName
       })
-      
+
       if (result?.requiresConfirmation) {
-        // Show success message for email confirmation
-        setError("") // Clear any errors
-        const message = result.message || "Account created! Please check your email to confirm your account."
-        if (process.env.NODE_ENV === "development") {
-          alert(`${message}\n\nIn development, open the Vendure mailbox to get the verification link:\n${getVendureMailboxUrl()}\nThen click the link to confirm and log in.`)
-        } else {
-          alert(message)
-        }
-        router.push("/login")
+        setError("")
+        setVerificationSent({
+          message:
+            result.message ||
+            "Account created! Check your email for a verification link, then sign in.",
+        })
       } else {
-        // Auto-logged in, redirect to account
         router.push("/account")
       }
     } catch (err) {
@@ -82,6 +87,53 @@ const RegisterPage = () => {
           </p>
         </div>
 
+        {verificationSent && (
+          <div
+            ref={successRef}
+            className="rounded-xl border-2 border-green-300 bg-green-50/90 p-6 text-green-950 shadow-sm space-y-4"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg text-white" aria-hidden>
+                ✓
+              </span>
+              <div className="min-w-0 space-y-2">
+                <h2 className="text-lg font-semibold text-green-900">Almost done — check your email</h2>
+                <p className="text-sm leading-relaxed text-green-900">{verificationSent.message}</p>
+              </div>
+            </div>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-green-800 border-t border-green-200 pt-4">
+              <li>Look in your <strong>spam</strong> or promotions folder.</li>
+              <li>Wait a few minutes — delivery can be delayed.</li>
+              <li>
+                No message? Submit this form again with the <strong>same email</strong> to resend the link.
+              </li>
+            </ul>
+            {process.env.NODE_ENV === "development" && (
+              <p className="text-sm text-green-800 border-t border-green-200 pt-3">
+                <strong>Local dev:</strong> Open the{" "}
+                <a
+                  href={getVendureMailboxUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline font-semibold"
+                >
+                  Vendure mailbox
+                </a>{" "}
+                for the link if SMTP isn&apos;t set up.
+              </p>
+            )}
+            <Link
+              href="/login"
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
+            >
+              Continue to sign in
+            </Link>
+          </div>
+        )}
+
+        {!verificationSent && (
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800 space-y-2">
@@ -191,7 +243,9 @@ const RegisterPage = () => {
             {loading ? "Creating account..." : "Create Account"}
           </Button>
         </form>
+        )}
 
+        {!verificationSent && (
         <div className="text-center text-sm text-muted-foreground">
           <p>
             Already have an account?{" "}
@@ -200,6 +254,7 @@ const RegisterPage = () => {
             </Link>
           </p>
         </div>
+        )}
       </div>
     </div>
   )

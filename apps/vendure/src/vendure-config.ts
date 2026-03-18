@@ -142,6 +142,9 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
                 (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
               verifyEmailAddressUrl:
                 (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+              // Resend rejects unverified domains; use SMTP_FROM=noreply@yourverifieddomain.com in prod
+              fromAddress:
+                process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
             },
           }
         : {
@@ -156,6 +159,8 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
                 (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
               verifyEmailAddressUrl:
                 (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+              fromAddress:
+                process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
             },
           }
     ),
