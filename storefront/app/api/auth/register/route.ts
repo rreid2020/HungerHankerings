@@ -98,19 +98,22 @@ export async function POST(request: NextRequest) {
         user: loginResult.user
       })
     } catch (loginError) {
-      // Login failed - likely due to email confirmation requirement
+      // After register, Vendure often returns "Please verify this email address before logging in" (not "confirm")
       const errorMessage = loginError instanceof Error ? loginError.message : "Login failed"
-      
-      if (errorMessage.includes("confirm") || errorMessage.includes("confirmation")) {
+      const em = errorMessage.toLowerCase()
+      if (
+        em.includes("confirm") ||
+        em.includes("confirmation") ||
+        em.includes("verify")
+      ) {
         return NextResponse.json({
           success: true,
           requiresConfirmation: true,
-          message: "Account created successfully. Please check your email to confirm your account before logging in.",
-          user: result.user
+          message:
+            "Account created. Check your email for the verification link, then sign in. (Check spam if you don’t see it.)",
         })
       }
-      
-      // Re-throw other login errors
+
       throw loginError
     }
   } catch (error) {
