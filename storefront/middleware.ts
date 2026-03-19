@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { getPublicOrigin } from "./lib/public-origin"
 
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
@@ -27,7 +28,7 @@ export function middleware(request: NextRequest) {
     }
     
     // No token and no confirmation token - redirect to login
-    const loginUrl = new URL("/login", request.url)
+    const loginUrl = new URL("/login", getPublicOrigin(request))
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
   }
@@ -40,7 +41,7 @@ export function middleware(request: NextRequest) {
     // This prevents loops when token is invalid
     const hasRedirect = searchParams.has("redirect")
     if (!hasRedirect) {
-      return NextResponse.redirect(new URL("/account", request.url))
+      return NextResponse.redirect(new URL("/account", getPublicOrigin(request)))
     }
   }
 

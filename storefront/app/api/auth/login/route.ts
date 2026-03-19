@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { customerLogin, getCurrentCustomer } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
+import { getPublicOrigin } from "../../../../lib/public-origin"
 
 const cookieOpts = (secure: boolean) =>
   ({
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     if (!email?.trim() || !password) {
       const message = "Email and password are required"
       if (isForm) {
-        const origin = request.nextUrl.origin
+        const origin = getPublicOrigin(request)
         const url = new URL("/login", origin)
         url.searchParams.set("error", encodeURIComponent(message))
         if (redirectTo) url.searchParams.set("redirect", redirectTo)
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     if (isForm) {
       const target = redirectTo?.trim() && redirectTo.startsWith("/") ? redirectTo : "/account"
-      const origin = request.nextUrl.origin
+      const origin = getPublicOrigin(request)
       const res = NextResponse.redirect(new URL(target, origin))
       res.cookies.set("vendure_token", result.token, { ...cookieOpts(secure), maxAge: maxAgeAccess })
       res.cookies.set("vendure_refresh_token", result.refreshToken, {
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")
 
     if (isForm) {
-      const origin = request.nextUrl.origin
+      const origin = getPublicOrigin(request)
       const url = new URL("/login", origin)
       url.searchParams.set("error", encodeURIComponent(message))
       return NextResponse.redirect(url)
