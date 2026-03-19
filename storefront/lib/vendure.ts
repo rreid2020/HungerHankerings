@@ -1284,14 +1284,16 @@ export async function getCustomerOrders(
   first: number = 20,
   after?: string
 ): Promise<{ orders: StorefrontOrder[]; hasNextPage: boolean; endCursor?: string }> {
-  const data = await fetchVendure<{
-    activeCustomer: {
-      orders: {
-        items: Parameters<typeof mapVendureOrderToOrder>[0][];
-        totalItems: number;
-      };
-    } | null;
-  }>(`
+  const empty = { orders: [] as StorefrontOrder[], hasNextPage: false, endCursor: "0" };
+  try {
+    const data = await fetchVendure<{
+      activeCustomer: {
+        orders: {
+          items: Parameters<typeof mapVendureOrderToOrder>[0][];
+          totalItems: number;
+        };
+      } | null;
+    }>(`
     query CustomerOrders($take: Int!, $skip: Int!) {
       activeCustomer {
         orders(options: { take: $take, skip: $skip }) {
@@ -1324,12 +1326,18 @@ export async function getCustomerOrders(
       }
     }
   `, { take: first, skip: after ? parseInt(after, 10) : 0 }, { authToken: token });
-  const items = data.activeCustomer?.orders?.items ?? [];
-  return {
-    orders: items.map(mapVendureOrderToOrder),
-    hasNextPage: (data.activeCustomer?.orders?.totalItems ?? 0) > first,
-    endCursor: String((data.activeCustomer?.orders?.totalItems ?? 0)),
-  };
+    const items = data?.activeCustomer?.orders?.items;
+    const list = Array.isArray(items) ? items : [];
+    const totalItems = data?.activeCustomer?.orders?.totalItems ?? 0;
+    return {
+      orders: list.map(mapVendureOrderToOrder),
+      hasNextPage: totalItems > first,
+      endCursor: String(totalItems),
+    };
+  } catch (err) {
+    console.error("[getCustomerOrders]", err);
+    return empty;
+  }
 }
 
 /** Get order by code (Vendure uses code; use this for confirmation and account order detail) */
