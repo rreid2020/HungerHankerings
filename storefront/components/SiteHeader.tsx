@@ -14,7 +14,9 @@ const navLinks = [
 
 const SiteHeader = () => {
   const router = useRouter()
+  const pathname = usePathname()
   const { user, logout } = useAuth()
+  const showAccountActions = Boolean(user) || (pathname != null && pathname.startsWith("/account"))
 
   const handleLogout = async () => {
     await logout()
