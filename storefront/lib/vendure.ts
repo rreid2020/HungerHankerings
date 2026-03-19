@@ -888,6 +888,7 @@ export async function customerLogin(
       body,
       cache: "no-store",
       signal: controller.signal,
+      credentials: "include",
     });
     clearTimeout(timeoutId);
     const authToken = res.headers.get(VENDURE_AUTH_HEADER);

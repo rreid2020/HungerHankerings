@@ -35,13 +35,16 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
     let customer: Awaited<ReturnType<typeof getCurrentCustomer>> = null
     try {
       customer = await getCurrentCustomer(token)
+      // Often null right after redirect: session may not be visible to the next request yet. Retry once.
+      if (!customer) {
+        await new Promise((r) => setTimeout(r, 400))
+        customer = await getCurrentCustomer(token)
+      }
     } catch {
-      // Network / Vendure error — refreshToken() only calls activeCustomer again with the same value; do not wipe cookies.
+      // Network / Vendure error — do not wipe cookies (avoids login loop).
       return { user: null, hasToken: true }
     }
 
-    // activeCustomer null (e.g. cookie race right after login, or expired session) — do not call refreshToken:
-    // it repeats the same query and on failure deleted all cookies, causing a login → /account → login loop.
     if (!customer) {
       return { user: null, hasToken: true }
     }
