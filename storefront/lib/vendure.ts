@@ -1021,7 +1021,7 @@ export async function getCurrentCustomer(
         streetLine2?: string;
         city?: string;
         postalCode?: string;
-        country?: { code: string };
+        country?: string;
         province?: string;
         phoneNumber?: string;
         defaultShippingAddress?: boolean;
@@ -1043,7 +1043,7 @@ export async function getCurrentCustomer(
           streetLine2
           city
           postalCode
-          country { code }
+          country
           province
           phoneNumber
           defaultShippingAddress
@@ -1066,7 +1066,7 @@ export async function getCurrentCustomer(
     addresses:
       c.addresses?.map((a) => {
         const [f = "", l = ""] = (a.fullName ?? "").split(" ");
-        const code = a.country?.code ?? "";
+        const code = (typeof a.country === "string" ? a.country : "").trim();
         return {
           id: a.id,
           firstName: f,
@@ -1211,7 +1211,7 @@ function mapVendureOrderToOrder(order: {
     streetLine2?: string;
     city?: string;
     postalCode?: string;
-    country?: { code: string; name?: string };
+    country?: string;
     province?: string;
     phoneNumber?: string;
   } | null;
@@ -1243,10 +1243,10 @@ function mapVendureOrderToOrder(order: {
           streetAddress2: order.shippingAddress.streetLine2 ?? null,
           city: order.shippingAddress.city ?? "",
           postalCode: order.shippingAddress.postalCode ?? "",
-          country: {
-            code: order.shippingAddress.country?.code ?? "",
-            country: order.shippingAddress.country?.name ?? "",
-          },
+          country: (() => {
+            const code = (order.shippingAddress.country ?? "").trim()
+            return { code, country: code }
+          })(),
           countryArea: order.shippingAddress.province ?? null,
           phone: order.shippingAddress.phoneNumber ?? null,
         }
@@ -1274,7 +1274,7 @@ async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promi
     streetLine2?: string;
     city?: string;
     postalCode?: string;
-    country?: { code: string; name?: string };
+    country?: string;
     province?: string;
     phoneNumber?: string;
   } | null;
@@ -1302,7 +1302,7 @@ async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promi
           streetLine2
           city
           postalCode
-          country { code name }
+          country
           province
           phoneNumber
         }
@@ -1349,7 +1349,7 @@ export async function getCustomerOrders(
               streetLine2
               city
               postalCode
-              country { code name }
+              country
               province
               phoneNumber
             }
