@@ -1132,14 +1132,27 @@ export async function accountUpdate(
   token: string,
   input: { firstName: string; lastName: string }
 ): Promise<{ errors?: { message: string; field?: string }[] }> {
-  await fetchVendure(`
+  // Shop API returns Customer (not Customer | ErrorResult) — do not spread ErrorResult here.
+  try {
+    await fetchVendure<{
+      updateCustomer: { id: string; firstName?: string; lastName?: string };
+    }>(
+      `
     mutation UpdateCustomer($input: UpdateCustomerInput!) {
       updateCustomer(input: $input) {
         id
-        ... on ErrorResult { message }
+        firstName
+        lastName
       }
     }
-  `, { input }, { authToken: token });
+  `,
+      { input },
+      { authToken: token }
+    );
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to update profile";
+    return { errors: [{ message }] };
+  }
   return {};
 }
 
