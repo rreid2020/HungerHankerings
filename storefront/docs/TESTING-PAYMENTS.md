@@ -57,6 +57,8 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51Abc...rest_of_key
 
 | Symptom | Things to check |
 |--------|------------------|
+| CSP blocks `applepay.cdn-apple.com` | Nginx **`Content-Security-Policy`** must allow `script-src` for `https://applepay.cdn-apple.com` (and Stripe-related `connect-src` / `frame-src`). See `nginx/nginx.conf`; redeploy/reload nginx after changes. |
+| `POST /api/checkout/complete` **500** | Check **`docker compose ... logs storefront --tail=80`** at checkout time; often Vendure/Stripe error message in logs. Fix CSP first if the browser blocked Stripe scripts, then retry. |
 | “No such payment method” / handler error | Payment method **code** in Admin matches `VENDURE_STRIPE_METHOD_CODE` or `VENDURE_DUMMY_PAYMENT_METHOD_CODE`. |
 | Stripe Elements don’t load | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` set and storefront **rebuilt**. |
 | Webhook failures | Vendure logs; Stripe **Developers → Webhooks** → delivery attempts; URL must hit Vendure `/payments/stripe`. |
