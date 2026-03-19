@@ -1002,7 +1002,7 @@ export async function getCurrentCustomer(
         streetLine2?: string;
         city?: string;
         postalCode?: string;
-        countryCode?: string;
+        country?: { code: string };
         province?: string;
         phoneNumber?: string;
         defaultShippingAddress?: boolean;
@@ -1024,7 +1024,7 @@ export async function getCurrentCustomer(
           streetLine2
           city
           postalCode
-          countryCode
+          country { code }
           province
           phoneNumber
           defaultShippingAddress
@@ -1047,7 +1047,7 @@ export async function getCurrentCustomer(
     addresses:
       c.addresses?.map((a) => {
         const [f = "", l = ""] = (a.fullName ?? "").split(" ");
-        const code = a.countryCode ?? "";
+        const code = a.country?.code ?? "";
         return {
           id: a.id,
           firstName: f,
@@ -1243,8 +1243,7 @@ async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promi
     streetLine2?: string;
     city?: string;
     postalCode?: string;
-    countryCode?: string;
-    country?: { name: string };
+    country?: { code: string; name?: string };
     province?: string;
     phoneNumber?: string;
   } | null;
@@ -1272,8 +1271,7 @@ async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promi
           streetLine2
           city
           postalCode
-          countryCode
-          country { name }
+          country { code name }
           province
           phoneNumber
         }
@@ -1318,8 +1316,7 @@ export async function getCustomerOrders(
               streetLine2
               city
               postalCode
-              countryCode
-              country { name }
+              country { code name }
               province
               phoneNumber
             }
