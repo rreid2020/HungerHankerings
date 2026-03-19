@@ -146,5 +146,29 @@ Remove the `console.log` once you’ve finished diagnosing.
 | Request 500 or logs show error | C – handler or Saleor error |
 | Request 302 but page doesn’t change | D – redirect not followed |
 | No `[LOGIN]` in container logs | A or B – request not reaching app |
+| **`net::ERR_CONNECTION_REFUSED`** on `POST …/api/auth/login` | Nothing accepting TCP on that host:port (see below) |
+
+### E. `ERR_CONNECTION_REFUSED` (droplet / production)
+
+The browser could not open a TCP connection to `http://<host>/api/auth/login`. That is **not** a wrong password or a 401 — the request never reached nginx/Next.js.
+
+**Typical causes**
+
+1. **Deploy failed** (e.g. Docker “No such container”) — nginx or the whole stack is down; port 80 has no listener. You may still see an **old cached** `/login` page; the POST then fails.
+2. **Firewall** — port 80 blocked to the droplet (less common if the HTML page loaded in the same session from the same network).
+
+**Checks on the droplet**
+
+```bash
+cd /root/HungerHankerings && set -a && . ./.env && set +a
+comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
+$comp ps
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1/api/auth/login \
+  -H "Content-Type: application/json" -d '{"email":"a@b.c","password":"x"}'
+```
+
+Expect **401** or **400** from curl if the stack is up; **connection refused** if nothing is listening on 80.
+
+**Fix**: Redeploy until the workflow passes; hard-refresh the browser (Ctrl+Shift+R) after the site is up.
 
 Use this to decide where to focus the fix (form submit, URL, handler/Saleor, or redirect).

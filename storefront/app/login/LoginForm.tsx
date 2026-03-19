@@ -32,19 +32,28 @@ export function LoginForm({ redirectTo, initialError, confirmed, resetSuccess }:
           redirect: redirectTo,
         }),
       })
-      const data = (await res.json().catch(() => ({}))) as { error?: string; success?: boolean }
+      const data = (await res.json().catch((err) => {
+        console.warn("[Login] response was not JSON", err)
+        return {}
+      })) as { error?: string; success?: boolean }
+      console.log("[Login] status", res.status, "ok", res.ok, "data", { ...data, user: data.user ? "(present)" : undefined })
       if (!res.ok) {
-        setError(data.error || "Login failed")
+        const msg = data.error || "Login failed"
+        setError(msg)
         return
       }
       if (data.success) {
         const target =
           redirectTo?.trim() && redirectTo.startsWith("/") ? redirectTo : "/account"
-        window.location.href = target
-      } else if (res.ok) {
+        console.log("[Login] redirecting to", target)
+        // Let the browser commit Set-Cookie before navigation; immediate href can race and /account loads without token.
+        await new Promise((r) => setTimeout(r, 150))
+        window.location.replace(target)
+      } else {
         setError("Unexpected response from server. Please try again.")
       }
-    } catch {
+    } catch (err) {
+      console.error("[Login] error", err)
       setError("Network error. Please try again.")
     } finally {
       setLoading(false)

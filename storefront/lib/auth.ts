@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { getCurrentCustomer, refreshToken } from "./vendure"
+import { getCurrentCustomer } from "./vendure"
 import { cookieSecureFromHeaders } from "./cookie-secure"
 
 export type AuthUser = {
@@ -36,51 +36,14 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
     try {
       customer = await getCurrentCustomer(token)
     } catch {
-      // API error (e.g. network) - try refresh once
-      const refreshTokenValue = cookieStore.get("vendure_refresh_token")?.value ?? cookieStore.get("saleor_refresh_token")?.value
-      if (refreshTokenValue) {
-        try {
-          const refreshed = await refreshToken(refreshTokenValue)
-          cookieStore.set("vendure_token", refreshed.token, {
-            httpOnly: true,
-            secure: cookieSecure,
-            sameSite: "lax",
-            maxAge: 60 * 60 * 24 * 7,
-            path: "/",
-          })
-          customer = await getCurrentCustomer(refreshed.token)
-        } catch {
-          cookieStore.delete("vendure_token")
-          cookieStore.delete("vendure_refresh_token")
-          cookieStore.delete("saleor_token")
-          cookieStore.delete("saleor_refresh_token")
-          return { user: null, hasToken: false }
-        }
-      } else {
-        return { user: null, hasToken: true }
-      }
+      // Network / Vendure error — refreshToken() only calls activeCustomer again with the same value; do not wipe cookies.
+      return { user: null, hasToken: true }
     }
 
+    // activeCustomer null (e.g. cookie race right after login, or expired session) — do not call refreshToken:
+    // it repeats the same query and on failure deleted all cookies, causing a login → /account → login loop.
     if (!customer) {
-      const refreshTokenValue = cookieStore.get("vendure_refresh_token")?.value ?? cookieStore.get("saleor_refresh_token")?.value
-      if (refreshTokenValue) {
-        try {
-          const refreshed = await refreshToken(refreshTokenValue)
-          cookieStore.set("vendure_token", refreshed.token, {
-            httpOnly: true,
-            secure: cookieSecure,
-            sameSite: "lax",
-            maxAge: 60 * 60 * 24 * 7,
-            path: "/",
-          })
-          customer = await getCurrentCustomer(refreshed.token)
-        } catch {
-          cookieStore.delete("saleor_token")
-          cookieStore.delete("saleor_refresh_token")
-          return { user: null, hasToken: false }
-        }
-      }
-      if (!customer) return { user: null, hasToken: true }
+      return { user: null, hasToken: true }
     }
 
     return {

@@ -38,13 +38,13 @@ jobs:
             set -a && . ./.env && set +a
             echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
             comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
-            # Stop stack first so prune does not leave Compose pointing at deleted container IDs (redis/mailpit "No such container")
-            echo "Stopping existing stack..."
-            $comp down --remove-orphans 2>/dev/null || true
-            echo "Freeing disk space before build (prune images, containers, build cache)..."
-            docker system prune -af 2>/dev/null || true
-            docker builder prune -af 2>/dev/null || true
+            # Build while old stack still serves traffic (avoids ~40m downtime). Then swap containers.
+            echo "Building images (site stays up until swap)..."
             $comp build --no-cache
+            echo "Stopping stack for swap..."
+            $comp down --remove-orphans 2>/dev/null || true
+            echo "Pruning build cache (optional disk recovery)..."
+            docker builder prune -af 2>/dev/null || true
             # Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
             # the "creating a new table" logs are TypeORM's diff only—tables are not created when synchronize is false.
             # So: if administrator table is missing, run one-time schema creation (synchronize) against that DB.
@@ -121,4 +121,7 @@ jobs:
               exit 1
             fi
             echo "  GET / (storefront): 200"
+            echo "Pruning unused images (frees disk; new stack already running)..."
+            docker image prune -af 2>/dev/null || true
             echo "Health checks passed."
+            echo "Tip: on the droplet always use: export COMPOSE_PROJECT_NAME=hungerhankerings"

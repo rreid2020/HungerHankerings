@@ -35,6 +35,7 @@ export async function fetchVendure<T>(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (options?.authToken) {
     headers.Authorization = `Bearer ${options.authToken}`;
+    headers["vendure-auth-token"] = options.authToken;
   } else if (options?.cookie) {
     headers.Cookie = options.cookie;
   }
