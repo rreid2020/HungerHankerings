@@ -60,6 +60,9 @@ const CheckoutPage = () => {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [createAccount, setCreateAccount] = useState(false)
   const [createAccountPassword, setCreateAccountPassword] = useState("")
+  /** Shown above Stripe Card Element; falls back to billing first + last name if left blank. */
+  const [nameOnCard, setNameOnCard] = useState("")
+  const nameOnCardEditedByUser = useRef(false)
   const stripeRef = useRef<Awaited<ReturnType<typeof loadStripe>>>(null)
   const cardElementRef = useRef<StripeCardElement | null>(null)
   const cardMountRef = useRef<HTMLDivElement | null>(null)
@@ -96,6 +99,8 @@ const CheckoutPage = () => {
         stripeRef.current = stripe
         const elements = stripe.elements()
         const card = elements.create("card", {
+          // Use billing address postal code (CA/US/international) instead of Stripe's US-style "ZIP" field
+          hidePostalCode: true,
           style: {
             base: {
               fontSize: "16px",
@@ -121,6 +126,7 @@ const CheckoutPage = () => {
       const draft = JSON.parse(raw) as {
         billing?: Partial<AddressFields>
         shipping?: Partial<AddressFields>
+        nameOnCard?: string
         giftByLineUnit?: Record<string, { enabled: boolean; message: string }>
         customAddresses?: AddressFields[]
         assignment?: Assignment
@@ -128,6 +134,10 @@ const CheckoutPage = () => {
       if (!draft || typeof draft !== "object") return
       if (draft.billing && typeof draft.billing === "object") {
         setBilling((prev) => ({ ...emptyAddress, ...prev, ...draft.billing }))
+      }
+      if (typeof draft.nameOnCard === "string" && draft.nameOnCard.trim()) {
+        nameOnCardEditedByUser.current = true
+        setNameOnCard(draft.nameOnCard.trim())
       }
       if (draft.shipping && typeof draft.shipping === "object") {
         setShipping((prev) => ({ ...emptyAddress, ...prev, ...draft.shipping }))
@@ -200,6 +210,13 @@ const CheckoutPage = () => {
     return () => { cancelled = true }
   }, [])
 
+  // Prefill name on card from billing until the user edits the field (or draft restored a value)
+  useEffect(() => {
+    if (nameOnCardEditedByUser.current) return
+    const fromBilling = `${billing.first_name ?? ""} ${billing.last_name ?? ""}`.trim()
+    setNameOnCard(fromBilling)
+  }, [billing.first_name, billing.last_name])
+
   useEffect(() => {
     if (typeof window === "undefined") return
     if (!draftSavedOnce.current) {
@@ -212,6 +229,7 @@ const CheckoutPage = () => {
         JSON.stringify({
           billing,
           shipping,
+          nameOnCard,
           giftByLineUnit,
           customAddresses,
           assignment
@@ -220,7 +238,7 @@ const CheckoutPage = () => {
     } catch {
       /* ignore */
     }
-  }, [billing, shipping, giftByLineUnit, customAddresses, assignment])
+  }, [billing, shipping, nameOnCard, giftByLineUnit, customAddresses, assignment])
 
   // Sync main shipping address to Vendure so tax/shipping are calculated by province; then refetch cart
   const syncAddressToVendureRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -840,11 +858,16 @@ const CheckoutPage = () => {
       }
       let paymentMethodId: string | undefined
       if (STRIPE_PUBLISHABLE_KEY && stripeRef.current && cardElementRef.current) {
+        const cardholderName =
+          nameOnCard.trim() || `${billing.first_name ?? ""} ${billing.last_name ?? ""}`.trim()
+        if (!cardholderName) {
+          throw new Error("Enter the name on your card (or complete billing first and last name).")
+        }
         const { paymentMethod, error } = await stripeRef.current.createPaymentMethod({
           type: "card",
           card: cardElementRef.current,
           billing_details: {
-            name: `${billing.first_name ?? ""} ${billing.last_name ?? ""}`.trim(),
+            name: cardholderName,
             email: billing.email?.trim() || undefined,
             address: {
               line1: billing.address_1?.trim() || undefined,
@@ -1389,12 +1412,35 @@ const CheckoutPage = () => {
               our servers.
             </p>
             {STRIPE_PUBLISHABLE_KEY ? (
-              <div className="mt-4">
-                <label className="mb-1 block text-sm font-medium text-foreground">Card</label>
-                <div
-                  ref={setCardMountNode}
-                  className="min-h-[52px] rounded-md border border-gray-300 bg-white px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
-                />
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label htmlFor="checkout-name-on-card" className="mb-1 block text-sm font-medium text-foreground">
+                    Name on card
+                  </label>
+                  <input
+                    id="checkout-name-on-card"
+                    type="text"
+                    autoComplete="cc-name"
+                    placeholder="As shown on your card"
+                    className={inputClass + " w-full"}
+                    value={nameOnCard}
+                    onChange={(e) => {
+                      nameOnCardEditedByUser.current = true
+                      setNameOnCard(e.target.value)
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Card details</label>
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Card number, expiry, and CVC only. Postal code for verification is taken from your{" "}
+                    <strong>billing address</strong> above (Canadian postal codes and US ZIP both work).
+                  </p>
+                  <div
+                    ref={setCardMountNode}
+                    className="min-h-[52px] rounded-md border border-gray-300 bg-white px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
+                  />
+                </div>
               </div>
             ) : (
               <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
