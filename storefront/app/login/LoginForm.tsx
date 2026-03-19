@@ -35,7 +35,7 @@ export function LoginForm({ redirectTo, initialError, confirmed, resetSuccess }:
       const data = (await res.json().catch((err) => {
         console.warn("[Login] response was not JSON", err)
         return {}
-      })) as { error?: string; success?: boolean }
+      })) as { error?: string; success?: boolean; user?: unknown }
       console.log("[Login] status", res.status, "ok", res.ok, "data", { ...data, user: data.user ? "(present)" : undefined })
       if (!res.ok) {
         const msg = data.error || "Login failed"
