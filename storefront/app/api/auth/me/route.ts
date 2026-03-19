@@ -5,7 +5,7 @@ import { getCurrentCustomer } from "../../../../lib/vendure"
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get("vendure_token")?.value ?? cookieStore.get("saleor_token")?.value
+    const token = cookieStore.get("vendure_token")?.value
     const cookieHeader = request.headers.get("cookie") ?? undefined
 
     if (!token && !cookieHeader) {

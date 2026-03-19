@@ -11,7 +11,7 @@ const HomePage = async () => {
   try {
     products = await listProducts()
   } catch (err) {
-    console.error("Saleor products fetch failed:", err)
+    console.error("Products fetch failed:", err)
   }
 
   return (

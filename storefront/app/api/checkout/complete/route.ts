@@ -11,7 +11,7 @@ import {
   checkoutCustomerAttach,
   customerRegister,
   customerLogin,
-  type SaleorAddressInput
+  type StorefrontAddressInput
 } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
 
@@ -45,7 +45,7 @@ function toCountryCode(c: string | { code?: string; name?: string } | undefined)
   return "CA"
 }
 
-function toSaleorAddress(a: AddressPayload): SaleorAddressInput {
+function toStorefrontAddressInput(a: AddressPayload): StorefrontAddressInput {
   return {
     firstName: a.first_name?.trim() ?? "",
     lastName: a.last_name?.trim() ?? "",
@@ -121,12 +121,12 @@ export async function POST(request: NextRequest) {
 
     await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
     try {
-      await checkoutShippingAddressUpdate("", toSaleorAddress(shipping), opts)
+      await checkoutShippingAddressUpdate("", toStorefrontAddressInput(shipping), opts)
     } catch (shippingErr) {
       const msg = shippingErr instanceof Error ? shippingErr.message : ""
       if (!msg.includes("doesn't need shipping")) throw shippingErr
     }
-    await checkoutBillingAddressUpdate("", toSaleorAddress(billing), opts)
+    await checkoutBillingAddressUpdate("", toStorefrontAddressInput(billing), opts)
 
     const shippingMethods = await getCheckoutShippingMethods("", opts)
     const firstMethod = shippingMethods[0]

@@ -7,7 +7,7 @@ import type {
   AddressFields
 } from "../../../components/CartContext"
 
-const ORDER_STORAGE_KEY = "saleor_last_order_v1"
+const ORDER_STORAGE_KEY = "last_order_v1"
 
 type CartItem = {
   lineId: string

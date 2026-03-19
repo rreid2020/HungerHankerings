@@ -25,7 +25,7 @@ export type GetAuthUserResult = {
 export async function getAuthUser(): Promise<GetAuthUserResult> {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get("vendure_token")?.value ?? cookieStore.get("saleor_token")?.value
+    const token = cookieStore.get("vendure_token")?.value
 
     if (!token) {
       return { user: null, hasToken: false }
@@ -70,5 +70,5 @@ export async function getAuthUser(): Promise<GetAuthUserResult> {
  */
 export async function getAuthToken(): Promise<string | null> {
   const cookieStore = await cookies()
-  return cookieStore.get("vendure_token")?.value ?? cookieStore.get("saleor_token")?.value ?? null
+  return cookieStore.get("vendure_token")?.value ?? null
 }

@@ -1,4 +1,4 @@
-import { getProductByHandle, type SaleorProduct } from "../../../lib/vendure"
+import { getProductByHandle, type StorefrontProduct } from "../../../lib/vendure"
 import { getPlainDescription } from "../../../lib/description"
 import ProductPurchase, {
   type AttributeDefinition
@@ -6,7 +6,7 @@ import ProductPurchase, {
 
 /** Build attribute definitions from variant attributes (e.g. Size, Gift option) for per-attribute selectors */
 function buildAttributeDefinitions(
-  variants: SaleorProduct["variants"]
+  variants: StorefrontProduct["variants"]
 ): AttributeDefinition[] {
   if (!variants?.length) return []
   const byName = new Map<string, Set<string>>()
@@ -40,7 +40,7 @@ const ProductDetailPage = async ({
   try {
     product = await getProductByHandle(handle)
   } catch (err) {
-    console.error("Saleor product fetch failed:", err)
+    console.error("Product fetch failed:", err)
   }
 
   if (!product) {

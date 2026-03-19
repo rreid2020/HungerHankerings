@@ -5,8 +5,6 @@ export async function POST() {
   const cookieStore = await cookies()
   cookieStore.delete("vendure_token")
   cookieStore.delete("vendure_refresh_token")
-  cookieStore.delete("saleor_token")
-  cookieStore.delete("saleor_refresh_token")
   
   return NextResponse.json({ success: true })
 }

@@ -6,7 +6,7 @@
 2. **User** fills email/password and clicks “Sign In”.
 3. **Browser** does a **full-page POST** to `POST /api/auth/login` (same origin), body: `application/x-www-form-urlencoded` with `email`, `password`, `redirect`.
 4. **Next.js** runs `storefront/app/api/auth/login/route.ts` `POST` handler.
-5. **Handler** reads body, calls Saleor `tokenCreate` (via `customerLogin()` in `lib/saleor.ts`), sets `saleor_token` and `saleor_refresh_token` cookies, then returns **302 redirect** to `/account` (success) or `/login?error=...` (failure).
+5. **Handler** reads body, calls Vendure `login` (via `customerLogin()` in `lib/vendure.ts`), sets `vendure_token` and `vendure_refresh_token` cookies, then returns **302 redirect** to `/account` (success) or `/login?error=...` (failure).
 6. **Browser** follows the redirect and loads the new URL (account page or login with error).
 
 If “nothing happens” (no redirect, no error, no console logs), the failure is at one of these points.
@@ -63,7 +63,7 @@ If “nothing happens” (no redirect, no error, no console logs), the failure i
 **Possible causes**
 
 - Unhandled exception in the route (e.g. `customerLogin` throws, or `cookies()`/`redirect` misbehaves).
-- Saleor API unreachable from the container (e.g. wrong `SALEOR_API_URL` or network), leading to timeout/error.
+- Vendure API unreachable from the container (e.g. wrong `NEXT_PUBLIC_VENDURE_SHOP_API_URL` or network), leading to timeout/error.
 
 **Check**
 
@@ -143,7 +143,7 @@ Remove the `console.log` once you’ve finished diagnosing.
 |------------|----------------------|
 | No request in Network on “Sign In” | A – form not submitting |
 | Request URL wrong or 404 | B – wrong action / host |
-| Request 500 or logs show error | C – handler or Saleor error |
+| Request 500 or logs show error | C – handler or Vendure error |
 | Request 302 but page doesn’t change | D – redirect not followed |
 | No `[LOGIN]` in container logs | A or B – request not reaching app |
 | **`net::ERR_CONNECTION_REFUSED`** on `POST …/api/auth/login` | Nothing accepting TCP on that host:port (see below) |
@@ -171,4 +171,4 @@ Expect **401** or **400** from curl if the stack is up; **connection refused** i
 
 **Fix**: Redeploy until the workflow passes; hard-refresh the browser (Ctrl+Shift+R) after the site is up.
 
-Use this to decide where to focus the fix (form submit, URL, handler/Saleor, or redirect).
+Use this to decide where to focus the fix (form submit, URL, handler/Vendure, or redirect).

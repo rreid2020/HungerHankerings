@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useCart } from "./CartContext"
-import type { SaleorProduct } from "../lib/vendure"
+import type { StorefrontProduct } from "../lib/vendure"
 
 const formatPrice = (amount?: number) => {
   if (amount === undefined || amount === null) return ""
@@ -13,7 +13,7 @@ const formatPrice = (amount?: number) => {
   }).format(amount)
 }
 
-const ProductCard = ({ product }: { product: SaleorProduct }) => {
+const ProductCard = ({ product }: { product: StorefrontProduct }) => {
   const { addItem, loading, updating } = useCart()
   const variants = product.variants?.filter((v) => v.id) ?? []
   const firstVariant = variants[0]

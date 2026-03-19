@@ -14,7 +14,7 @@ export type CheckoutAddressPayload = {
   country: string
 }
 
-function saleorAddressToCheckout(
+function customerAddressToCheckoutPayload(
   addr: {
     firstName: string
     lastName: string
@@ -70,10 +70,10 @@ export async function GET() {
     // When user has no default billing but has a (default) shipping address, use it for billing too so both pre-fill
     const billingAddress = defaultBilling ?? defaultShipping
     const billing = billingAddress
-      ? saleorAddressToCheckout(billingAddress, customer.email)
+      ? customerAddressToCheckoutPayload(billingAddress, customer.email)
       : null
     const shipping = defaultShipping
-      ? saleorAddressToCheckout(defaultShipping, customer.email)
+      ? customerAddressToCheckoutPayload(defaultShipping, customer.email)
       : null
 
     return NextResponse.json({

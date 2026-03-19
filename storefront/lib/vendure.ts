@@ -1,6 +1,5 @@
 /**
- * Vendure Shop API client. Replaces Saleor; types and function names are kept
- * compatible where possible so the rest of the storefront can switch with minimal changes.
+ * Vendure Shop API client. Types represent the storefront’s domain model (orders, products, checkout, customer).
  */
 
 const shopApiUrl =
@@ -113,23 +112,23 @@ export async function getAvailableCountries(
 }
 
 // ---------------------------------------------------------------------------
-// Types (compatible with existing Saleor type names for minimal storefront changes)
+// Storefront domain types (Vendure API responses mapped to these shapes)
 // ---------------------------------------------------------------------------
 
-export type SaleorVariantAttribute = {
+export type StorefrontVariantAttribute = {
   attribute: { name: string };
   values: { name: string }[];
 };
 
-export type SaleorProductVariant = {
+export type StorefrontProductVariant = {
   id: string;
   name: string;
   pricing?: { price?: { gross?: { amount: number; currency: string } } };
-  attributes?: SaleorVariantAttribute[];
+  attributes?: StorefrontVariantAttribute[];
   quantityAvailable?: number;
 };
 
-export type SaleorProduct = {
+export type StorefrontProduct = {
   id: string;
   name: string;
   slug: string;
@@ -140,10 +139,10 @@ export type SaleorProduct = {
       start?: { gross?: { amount: number; currency: string } };
     };
   };
-  variants?: SaleorProductVariant[];
+  variants?: StorefrontProductVariant[];
 };
 
-export type SaleorCheckout = {
+export type StorefrontCheckout = {
   id: string;
   email?: string | null;
   lines: {
@@ -163,7 +162,7 @@ export type SaleorCheckout = {
   shippingPrice?: { gross?: { amount: number; currency: string } };
 };
 
-export type SaleorAddressInput = {
+export type StorefrontAddressInput = {
   firstName: string;
   lastName: string;
   streetAddress1: string;
@@ -175,7 +174,7 @@ export type SaleorAddressInput = {
   phone?: string | null;
 };
 
-export type SaleorCustomer = {
+export type StorefrontCustomer = {
   id: string;
   email: string;
   firstName: string;
@@ -200,7 +199,7 @@ export type SaleorCustomer = {
   }[];
 };
 
-export type SaleorOrder = {
+export type StorefrontOrder = {
   id: string;
   token: string;
   number: string;
@@ -240,7 +239,7 @@ export type SaleorOrder = {
 };
 
 export type CheckoutCompleteResult = {
-  order: SaleorOrder | null;
+  order: StorefrontOrder | null;
   confirmationNeeded: boolean;
   confirmationData?: string | null;
   errors: { message?: string }[];
@@ -265,7 +264,7 @@ const productFields = `
   }
 `;
 
-function mapVendureProductToSaleor(p: {
+function mapVendureProductToStorefront(p: {
   id: string;
   name: string;
   slug: string;
@@ -278,7 +277,7 @@ function mapVendureProductToSaleor(p: {
     priceWithTax: number;
     stockLevel?: string;
   }>;
-}): SaleorProduct {
+}): StorefrontProduct {
   const amount = p.variants?.[0]?.price ?? 0;
   const currency = "CAD";
   return {
@@ -308,7 +307,7 @@ function mapVendureProductToSaleor(p: {
   };
 }
 
-export async function listProducts(): Promise<SaleorProduct[]> {
+export async function listProducts(): Promise<StorefrontProduct[]> {
   const data = await fetchVendure<{
     products: {
       items: Array<{
@@ -336,12 +335,12 @@ export async function listProducts(): Promise<SaleorProduct[]> {
     }
   `);
   const items = data.products?.items ?? [];
-  return items.map(mapVendureProductToSaleor);
+  return items.map(mapVendureProductToStorefront);
 }
 
 export async function getProductByHandle(
   slug: string
-): Promise<SaleorProduct | null> {
+): Promise<StorefrontProduct | null> {
   const data = await fetchVendure<{
     product: {
       id: string;
@@ -374,8 +373,8 @@ export async function getProductByHandle(
     }
   `, { slug });
   if (!data.product) return null;
-  const p = data.product as Parameters<typeof mapVendureProductToSaleor>[0];
-  return mapVendureProductToSaleor(p);
+  const p = data.product as Parameters<typeof mapVendureProductToStorefront>[0];
+  return mapVendureProductToStorefront(p);
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +404,7 @@ const activeOrderFragment = `
   totalWithTax
 `;
 
-function mapVendureOrderToSaleorCheckout(order: {
+function mapVendureOrderToCheckout(order: {
   id: string;
   code: string;
   lines?: Array<{
@@ -424,7 +423,7 @@ function mapVendureOrderToSaleorCheckout(order: {
   subTotalWithTax?: number;
   shippingWithTax?: number;
   totalWithTax?: number;
-} | null): SaleorCheckout | null {
+} | null): StorefrontCheckout | null {
   if (!order) return null;
   const currency = "CAD";
   return {
@@ -469,9 +468,9 @@ function mapVendureOrderToSaleorCheckout(order: {
   };
 }
 
-export async function getActiveOrder(opts?: VendureRequestOptions): Promise<SaleorCheckout | null> {
+export async function getActiveOrder(opts?: VendureRequestOptions): Promise<StorefrontCheckout | null> {
   const data = await fetchVendure<{
-    activeOrder: Parameters<typeof mapVendureOrderToSaleorCheckout>[0];
+    activeOrder: Parameters<typeof mapVendureOrderToCheckout>[0];
   }>(`
     query ActiveOrder {
       activeOrder {
@@ -479,13 +478,13 @@ export async function getActiveOrder(opts?: VendureRequestOptions): Promise<Sale
       }
     }
   `, undefined, opts);
-  return mapVendureOrderToSaleorCheckout(data.activeOrder);
+  return mapVendureOrderToCheckout(data.activeOrder);
 }
 
 /** For compatibility: in Vendure we use session; id is ignored and we return activeOrder */
 export async function getCheckout(
   _id: string
-): Promise<SaleorCheckout | null> {
+): Promise<StorefrontCheckout | null> {
   return getActiveOrder();
 }
 
@@ -493,7 +492,7 @@ export async function getCheckout(
 export async function createCheckout(params: {
   email?: string;
   lines: { variantId: string; quantity: number }[];
-}): Promise<SaleorCheckout> {
+}): Promise<StorefrontCheckout> {
   type AddItemResult = { addItemToOrder: unknown };
   for (const line of params.lines) {
     const result = await fetchVendure<AddItemResult>(`
@@ -522,7 +521,7 @@ export async function createCheckout(params: {
 export async function addItemToOrder(
   variantId: string,
   quantity: number
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   const data = await fetchVendure<{ addItemToOrder: unknown }>(`
     mutation AddItemToOrder($variantId: ID!, $quantity: Int!) {
       addItemToOrder(productVariantId: $variantId, quantity: $quantity) {
@@ -548,7 +547,7 @@ export async function addItemToOrder(
 export async function checkoutLinesAdd(
   _checkoutId: string,
   lines: { variantId: string; quantity: number }[]
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   for (const line of lines) {
     await addItemToOrder(line.variantId, line.quantity);
   }
@@ -561,7 +560,7 @@ export async function checkoutLineUpdate(
   _checkoutId: string,
   lineId: string,
   quantity: number
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   const data = await fetchVendure<{
     adjustOrderLine?: { __typename: string } & Record<string, unknown>;
   }>(`
@@ -589,7 +588,7 @@ export async function checkoutLineUpdate(
 export async function checkoutLineDelete(
   _checkoutId: string,
   lineId: string
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   const data = await fetchVendure<{
     removeOrderLine?: { __typename: string } & Record<string, unknown>;
   }>(`
@@ -618,7 +617,7 @@ export async function checkoutLineDelete(
 // Checkout flow: address, shipping method, payment
 // ---------------------------------------------------------------------------
 
-function toVendureAddress(addr: SaleorAddressInput) {
+function toVendureAddress(addr: StorefrontAddressInput) {
   return {
     fullName: `${addr.firstName} ${addr.lastName}`.trim(),
     streetLine1: addr.streetAddress1,
@@ -637,7 +636,7 @@ export async function checkoutEmailUpdate(
   opts?: VendureRequestOptions,
   firstName?: string,
   lastName?: string
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   await fetchVendure(`
     mutation SetCustomerForOrder($input: CreateCustomerInput!) {
       setCustomerForOrder(input: $input) {
@@ -659,9 +658,9 @@ export async function checkoutEmailUpdate(
 
 export async function checkoutShippingAddressUpdate(
   _checkoutId: string,
-  address: SaleorAddressInput,
+  address: StorefrontAddressInput,
   opts?: VendureRequestOptions
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   await fetchVendure(`
     mutation SetOrderShippingAddress($input: CreateAddressInput!) {
       setOrderShippingAddress(input: $input) {
@@ -677,9 +676,9 @@ export async function checkoutShippingAddressUpdate(
 
 export async function checkoutBillingAddressUpdate(
   _checkoutId: string,
-  address: SaleorAddressInput,
+  address: StorefrontAddressInput,
   opts?: VendureRequestOptions
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   await fetchVendure(`
     mutation SetOrderBillingAddress($input: CreateAddressInput!) {
       setOrderBillingAddress(input: $input) {
@@ -697,8 +696,8 @@ export async function checkoutCustomerAttach(
   _checkoutId: string,
   _authToken: string,
   opts?: VendureRequestOptions
-): Promise<SaleorCheckout> {
-  return getActiveOrder(opts) as Promise<SaleorCheckout>;
+): Promise<StorefrontCheckout> {
+  return getActiveOrder(opts) as Promise<StorefrontCheckout>;
 }
 
 /** Returns shipping price in dollars (CAD) from Vendure postal code zones. Used for checkout order summary. */
@@ -740,7 +739,7 @@ export async function checkoutDeliveryMethodUpdate(
   _checkoutId: string,
   deliveryMethodId: string,
   opts?: VendureRequestOptions
-): Promise<SaleorCheckout> {
+): Promise<StorefrontCheckout> {
   await fetchVendure(`
     mutation SetOrderShippingMethod($shippingMethodId: [ID!]!) {
       setOrderShippingMethod(shippingMethodId: $shippingMethodId) {
@@ -843,7 +842,7 @@ export async function checkoutComplete(
   }
   const fullOrder = await getOrderByCode(orderCode, opts);
   return {
-    order: fullOrder ? mapVendureOrderToSaleorOrder(fullOrder) : null,
+    order: fullOrder ? mapVendureOrderToOrder(fullOrder) : null,
     confirmationNeeded: false,
     errors: [],
   };
@@ -924,7 +923,7 @@ export async function customerRegister(params: {
   firstName: string;
   lastName: string;
   redirectUrl?: string;
-}): Promise<{ user?: SaleorCustomer; errors?: { message: string; field?: string }[] }> {
+}): Promise<{ user?: StorefrontCustomer; errors?: { message: string; field?: string }[] }> {
   const data = await fetchVendure<{
     registerCustomerAccount: {
       success?: boolean;
@@ -986,7 +985,7 @@ export async function refreshCustomerVerification(emailAddress: string): Promise
 
 export async function getCurrentCustomer(
   tokenOrCookie?: string
-): Promise<SaleorCustomer | null> {
+): Promise<StorefrontCustomer | null> {
   const opts = tokenOrCookie ? { authToken: tokenOrCookie } : undefined
   const data = await fetchVendure<{
     activeCustomer: {
@@ -1068,7 +1067,7 @@ export async function getCurrentCustomer(
 
 export async function accountAddressCreate(
   token: string,
-  input: SaleorAddressInput,
+  input: StorefrontAddressInput,
   _type?: "BILLING" | "SHIPPING"
 ): Promise<{ addressId?: string; errors?: { message: string; field?: string }[] }> {
   const data = await fetchVendure<{
@@ -1094,7 +1093,7 @@ export async function accountAddressCreate(
 export async function accountAddressUpdate(
   token: string,
   addressId: string,
-  input: SaleorAddressInput
+  input: StorefrontAddressInput
 ): Promise<{ errors?: { message: string; field?: string }[] }> {
   const data = await fetchVendure<{
     updateCustomerAddress: { message?: string };
@@ -1160,7 +1159,7 @@ export async function refreshToken(
 // Orders
 // ---------------------------------------------------------------------------
 
-function mapVendureOrderToSaleorOrder(order: {
+function mapVendureOrderToOrder(order: {
   id: string;
   code: string;
   createdAt: string;
@@ -1184,7 +1183,7 @@ function mapVendureOrderToSaleorOrder(order: {
     phoneNumber?: string;
   } | null;
   billingAddress?: Record<string, unknown> | null;
-}): SaleorOrder {
+}): StorefrontOrder {
   const currency = "CAD";
   const [first = "", last = ""] = (order.shippingAddress?.fullName ?? "").split(" ");
   return {
@@ -1248,7 +1247,7 @@ async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promi
   } | null;
 } | null> {
   const data = await fetchVendure<{
-    orderByCode: Parameters<typeof mapVendureOrderToSaleorOrder>[0] | null;
+    orderByCode: Parameters<typeof mapVendureOrderToOrder>[0] | null;
   }>(`
     query OrderByCode($code: String!) {
       orderByCode(code: $code) {
@@ -1277,18 +1276,18 @@ async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promi
       }
     }
   `, { code }, opts);
-  return data.orderByCode as Parameters<typeof mapVendureOrderToSaleorOrder>[0] | null;
+  return data.orderByCode as Parameters<typeof mapVendureOrderToOrder>[0] | null;
 }
 
 export async function getCustomerOrders(
   token: string,
   first: number = 20,
   after?: string
-): Promise<{ orders: SaleorOrder[]; hasNextPage: boolean; endCursor?: string }> {
+): Promise<{ orders: StorefrontOrder[]; hasNextPage: boolean; endCursor?: string }> {
   const data = await fetchVendure<{
     activeCustomer: {
       orders: {
-        items: Parameters<typeof mapVendureOrderToSaleorOrder>[0][];
+        items: Parameters<typeof mapVendureOrderToOrder>[0][];
         totalItems: number;
       };
     } | null;
@@ -1327,16 +1326,16 @@ export async function getCustomerOrders(
   `, { take: first, skip: after ? parseInt(after, 10) : 0 }, { authToken: token });
   const items = data.activeCustomer?.orders?.items ?? [];
   return {
-    orders: items.map(mapVendureOrderToSaleorOrder),
+    orders: items.map(mapVendureOrderToOrder),
     hasNextPage: (data.activeCustomer?.orders?.totalItems ?? 0) > first,
     endCursor: String((data.activeCustomer?.orders?.totalItems ?? 0)),
   };
 }
 
 /** Get order by code (Vendure uses code; use this for confirmation and account order detail) */
-export async function getOrderByToken(tokenOrCode: string): Promise<SaleorOrder | null> {
+export async function getOrderByToken(tokenOrCode: string): Promise<StorefrontOrder | null> {
   const order = await getOrderByCode(tokenOrCode);
-  return order ? mapVendureOrderToSaleorOrder(order) : null;
+  return order ? mapVendureOrderToOrder(order) : null;
 }
 
 export async function requestPasswordReset(
@@ -1386,7 +1385,7 @@ export async function resetPassword(
 export async function confirmAccount(
   _email: string,
   token: string
-): Promise<{ user?: SaleorCustomer; errors?: { message: string; field?: string }[] }> {
+): Promise<{ user?: StorefrontCustomer; errors?: { message: string; field?: string }[] }> {
   if (!token?.trim()) {
     return { errors: [{ message: "Verification token is required." }] };
   }

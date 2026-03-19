@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthToken } from "../../../../lib/auth"
 import { accountAddressCreate } from "../../../../lib/vendure"
-import type { SaleorAddressInput } from "../../../../lib/vendure"
+import type { StorefrontAddressInput } from "../../../../lib/vendure"
 
-function parseBody(body: unknown): (SaleorAddressInput & { setAsDefaultShipping?: boolean; setAsDefaultBilling?: boolean }) | null {
+function parseBody(body: unknown): (StorefrontAddressInput & { setAsDefaultShipping?: boolean; setAsDefaultBilling?: boolean }) | null {
   if (!body || typeof body !== "object") return null
   const b = body as Record<string, unknown>
   const firstName = typeof b.firstName === "string" ? b.firstName.trim() : ""
