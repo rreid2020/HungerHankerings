@@ -20,7 +20,18 @@ export default async function OrdersPage() {
   }
 
   const token = await getAuthToken()
-  const ordersData = token ? await getCustomerOrders(token, 20) : { orders: [], hasNextPage: false }
+  let ordersData: Awaited<ReturnType<typeof getCustomerOrders>>
+  try {
+    ordersData = token ? await getCustomerOrders(token, 20) : { orders: [], hasNextPage: false }
+  } catch (err) {
+    console.error("[account/orders] getCustomerOrders failed:", err)
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-800">
+        <p className="font-medium">Couldn’t load orders.</p>
+        <p className="mt-1 text-sm">Please refresh the page or try again later.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -57,12 +68,12 @@ export default async function OrdersPage() {
                     })}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {order.lines.length} item{order.lines.length !== 1 ? "s" : ""}
+                    {(order.lines?.length ?? 0)} item{(order.lines?.length ?? 0) !== 1 ? "s" : ""}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-foreground">
-                    ${order.total.gross.amount.toFixed(2)} {order.total.gross.currency}
+                    ${(order.total?.gross?.amount ?? 0).toFixed(2)} {order.total?.gross?.currency ?? ""}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">View Details →</p>
                 </div>

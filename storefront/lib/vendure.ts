@@ -1196,10 +1196,10 @@ function mapVendureOrderToOrder(order: {
     lines:
       order.lines?.map((l) => ({
         id: l.id,
-        productName: l.productVariant.product.name,
-        variantName: l.productVariant.name,
+        productName: l.productVariant?.product?.name ?? "",
+        variantName: l.productVariant?.name ?? "",
         quantity: l.quantity,
-        unitPrice: { gross: { amount: l.unitPriceWithTax / 100, currency } },
+        unitPrice: { gross: { amount: (l.unitPriceWithTax ?? 0) / 100, currency } },
         thumbnail: l.featuredAsset?.preview != null ? { url: l.featuredAsset.preview } : null,
       })) ?? [],
     shippingAddress: order.shippingAddress
