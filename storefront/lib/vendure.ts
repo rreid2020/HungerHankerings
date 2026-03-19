@@ -1179,8 +1179,7 @@ function mapVendureOrderToSaleorOrder(order: {
     streetLine2?: string;
     city?: string;
     postalCode?: string;
-    countryCode?: string;
-    country?: { name: string };
+    country?: { code: string; name?: string };
     province?: string;
     phoneNumber?: string;
   } | null;
@@ -1213,7 +1212,7 @@ function mapVendureOrderToSaleorOrder(order: {
           city: order.shippingAddress.city ?? "",
           postalCode: order.shippingAddress.postalCode ?? "",
           country: {
-            code: order.shippingAddress.countryCode ?? "",
+            code: order.shippingAddress.country?.code ?? "",
             country: order.shippingAddress.country?.name ?? "",
           },
           countryArea: order.shippingAddress.province ?? null,
