@@ -88,7 +88,11 @@ export async function POST(request: NextRequest) {
     }
 
     const cookieHeader = request.headers.get("cookie") ?? undefined
-    const opts = { cookie: cookieHeader }
+    const bearer = request.cookies.get("vendure_token")?.value
+    const opts = {
+      ...(cookieHeader ? { cookie: cookieHeader } : {}),
+      ...(bearer ? { authToken: bearer } : {}),
+    }
 
     const origin = request.nextUrl.origin
     const redirectUrl = `${origin}/order/complete`

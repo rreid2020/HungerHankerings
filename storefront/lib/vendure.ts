@@ -32,10 +32,13 @@ export async function fetchVendure<T>(
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
+  // Send Bearer when we have a token (logged-in) and still forward Cookie so the shop session
+  // (active cart) stays attached — Vendure prefers session cookie then falls back to Bearer.
   if (options?.authToken) {
     headers.Authorization = `Bearer ${options.authToken}`;
     headers["vendure-auth-token"] = options.authToken;
-  } else if (options?.cookie) {
+  }
+  if (options?.cookie) {
     headers.Cookie = options.cookie;
   }
 
@@ -817,14 +820,18 @@ export async function checkoutComplete(
     }
   }
 
-  let orderCode: string | null = null;
   try {
     const paymentResult = await fetchVendure<{
-      addPaymentToOrder?: { __typename: string; code?: string; id?: string } & Record<string, unknown>;
+      addPaymentToOrder?: Parameters<typeof mapVendureOrderToOrder>[0] & {
+        message?: string;
+        __typename?: string;
+      };
     }>(`
       mutation AddPaymentToOrder($input: PaymentInput!) {
         addPaymentToOrder(input: $input) {
-          ... on Order { id code state }
+          ... on Order {
+            ${shopOrderFieldsForStorefront}
+          }
           ... on ErrorResult { message errorCode }
           ... on PaymentFailedError { message }
           ... on PaymentDeclinedError { message }
@@ -836,9 +843,22 @@ export async function checkoutComplete(
         metadata,
       },
     }, opts);
-    const order = (paymentResult as { addPaymentToOrder?: { code?: string } }).addPaymentToOrder;
-    if (order && typeof order === "object" && "code" in order) {
-      orderCode = order.code ?? null;
+
+    const raw = paymentResult.addPaymentToOrder;
+    if (raw && typeof raw === "object" && "message" in raw && (raw as { message?: string }).message) {
+      return {
+        order: null,
+        confirmationNeeded: false,
+        errors: [{ message: (raw as { message: string }).message }],
+      };
+    }
+    if (raw && typeof raw === "object" && "code" in raw && (raw as { code?: string }).code) {
+      const mapped = mapVendureOrderToOrder(raw as Parameters<typeof mapVendureOrderToOrder>[0]);
+      return {
+        order: mapped,
+        confirmationNeeded: false,
+        errors: [],
+      };
     }
   } catch (e) {
     return {
@@ -847,11 +867,15 @@ export async function checkoutComplete(
       errors: [{ message: e instanceof Error ? e.message : "Payment failed" }],
     };
   }
-  if (!orderCode) {
+
+  let orderCode: string | null = null;
+  try {
     const orderData = await fetchVendure<{
       activeOrder: { code: string } | null;
     }>(`query { activeOrder { code } }`, undefined, opts);
     orderCode = orderData.activeOrder?.code ?? null;
+  } catch {
+    /* ignore */
   }
   if (!orderCode) {
     return {
@@ -860,12 +884,31 @@ export async function checkoutComplete(
       errors: [{ message: "Could not get order after payment" }],
     };
   }
-  const fullOrder = await getOrderByCode(orderCode, opts);
-  return {
-    order: fullOrder ? mapVendureOrderToOrder(fullOrder) : null,
-    confirmationNeeded: false,
-    errors: [],
-  };
+  // Fallback: orderByCode fails for logged-in shoppers on guest-checkout orders (Vendure access strategy).
+  try {
+    const fullOrder = await getOrderByCode(orderCode, opts);
+    return {
+      order: fullOrder ? mapVendureOrderToOrder(fullOrder) : null,
+      confirmationNeeded: false,
+      errors: [],
+    };
+  } catch {
+    return {
+      order: {
+        id: orderCode,
+        token: orderCode,
+        number: orderCode,
+        created: new Date().toISOString(),
+        status: "PaymentSettled",
+        total: { gross: { amount: 0, currency: "CAD" } },
+        lines: [],
+        shippingAddress: null,
+        billingAddress: undefined,
+      },
+      confirmationNeeded: false,
+      errors: [],
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1191,6 +1234,32 @@ export async function refreshToken(
 // ---------------------------------------------------------------------------
 // Orders
 // ---------------------------------------------------------------------------
+
+/** Shop API Order fields needed by mapVendureOrderToOrder (also used after addPaymentToOrder). */
+const shopOrderFieldsForStorefront = `
+  id
+  code
+  createdAt
+  state
+  totalWithTax
+  lines {
+    id
+    quantity
+    unitPriceWithTax
+    productVariant { product { name } name }
+    featuredAsset { preview }
+  }
+  shippingAddress {
+    fullName
+    streetLine1
+    streetLine2
+    city
+    postalCode
+    country
+    province
+    phoneNumber
+  }
+`;
 
 function mapVendureOrderToOrder(order: {
   id: string;
