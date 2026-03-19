@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import Button from "../../components/Button"
 import { AddressAutocomplete } from "../../components/AddressAutocomplete"
 import { useCart } from "../../components/CartContext"
@@ -62,30 +62,56 @@ const CheckoutPage = () => {
   const [createAccountPassword, setCreateAccountPassword] = useState("")
   const stripeRef = useRef<Awaited<ReturnType<typeof loadStripe>>>(null)
   const cardElementRef = useRef<StripeCardElement | null>(null)
-  const cardMountRef = useRef<HTMLDivElement>(null)
+  const cardMountRef = useRef<HTMLDivElement | null>(null)
+  /** Invalidates in-flight loadStripe when mount node is cleared (Strict Mode / navigation). */
+  const stripeCardMountSessionRef = useRef(0)
 
-  useLayoutEffect(() => {
-    if (!STRIPE_PUBLISHABLE_KEY || typeof window === "undefined") return
-    const mountEl = cardMountRef.current
-    if (!mountEl) return
-    let cancelled = false
-    void loadStripe(STRIPE_PUBLISHABLE_KEY).then((stripe) => {
-      if (cancelled || !stripe) return
-      const el = cardMountRef.current
-      if (!el) return
-      stripeRef.current = stripe
-      cardElementRef.current?.unmount()
-      const elements = stripe.elements()
-      const card = elements.create("card", { style: { base: { fontSize: "16px" } } })
-      card.mount(el)
-      cardElementRef.current = card
-    })
-    return () => {
-      cancelled = true
+  /**
+   * Mount Stripe Card Element only after the DOM node exists (ref callback).
+   * useLayoutEffect + async loadStripe often saw ref still null or was cancelled by Strict Mode
+   * before mount, leaving an empty box.
+   */
+  const setCardMountNode = useCallback(
+    (node: HTMLDivElement | null) => {
       cardElementRef.current?.unmount()
       cardElementRef.current = null
-    }
-  }, [STRIPE_PUBLISHABLE_KEY])
+      cardMountRef.current = node
+
+      if (typeof window === "undefined" || !STRIPE_PUBLISHABLE_KEY) {
+        stripeCardMountSessionRef.current += 1
+        return
+      }
+
+      if (!node) {
+        stripeCardMountSessionRef.current += 1
+        return
+      }
+
+      const session = stripeCardMountSessionRef.current + 1
+      stripeCardMountSessionRef.current = session
+
+      void loadStripe(STRIPE_PUBLISHABLE_KEY).then((stripe) => {
+        if (session !== stripeCardMountSessionRef.current || !stripe) return
+        if (cardMountRef.current !== node) return
+        stripeRef.current = stripe
+        const elements = stripe.elements()
+        const card = elements.create("card", {
+          style: {
+            base: {
+              fontSize: "16px",
+              color: "#111827",
+              fontFamily: "system-ui, sans-serif",
+              "::placeholder": { color: "#9ca3af" }
+            },
+            invalid: { color: "#b91c1c" }
+          }
+        })
+        card.mount(node)
+        cardElementRef.current = card
+      })
+    },
+    [STRIPE_PUBLISHABLE_KEY]
+  )
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -1366,8 +1392,8 @@ const CheckoutPage = () => {
               <div className="mt-4">
                 <label className="mb-1 block text-sm font-medium text-foreground">Card</label>
                 <div
-                  ref={cardMountRef}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
+                  ref={setCardMountNode}
+                  className="min-h-[52px] rounded-md border border-gray-300 bg-white px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
                 />
               </div>
             ) : (
