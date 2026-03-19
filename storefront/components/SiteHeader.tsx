@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import CartButton from "./CartButton"
 import { useAuth } from "./AuthContext"
 
@@ -43,7 +43,7 @@ const SiteHeader = () => {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          {user ? (
+          {showAccountActions ? (
             <>
               <Link
                 href="/account"

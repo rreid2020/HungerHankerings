@@ -6,7 +6,8 @@ const navConfig = [
   { label: "Dashboard", href: "/account", icon: "dashboard" },
   { label: "Orders", href: "/account/orders", icon: "orders" },
   { label: "Profile", href: "/account/profile", icon: "profile" },
-  { label: "Addresses", href: "/account/addresses", icon: "addresses" }
+  { label: "Addresses", href: "/account/addresses", icon: "addresses" },
+  { label: "Sign out", href: "/api/auth/logout", icon: "logout" }
 ] as const
 
 function NavIcon({ name, active }: { name: (typeof navConfig)[number]["icon"]; active: boolean }) {
@@ -39,6 +40,12 @@ function NavIcon({ name, active }: { name: (typeof navConfig)[number]["icon"]; a
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       )
+    case "logout":
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={strokeWidth} aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      )
     default:
       return null
   }
@@ -48,7 +55,8 @@ const iconByHref: Record<string, (typeof navConfig)[number]["icon"]> = {
   "/account": "dashboard",
   "/account/orders": "orders",
   "/account/profile": "profile",
-  "/account/addresses": "addresses"
+  "/account/addresses": "addresses",
+  "/api/auth/logout": "logout"
 }
 
 export default function AccountNav({

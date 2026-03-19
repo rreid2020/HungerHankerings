@@ -6,7 +6,8 @@ const accountNav = [
   { label: "Dashboard", href: "/account" },
   { label: "Orders", href: "/account/orders" },
   { label: "Profile", href: "/account/profile" },
-  { label: "Addresses", href: "/account/addresses" }
+  { label: "Addresses", href: "/account/addresses" },
+  { label: "Sign out", href: "/api/auth/logout" }
 ]
 
 export const dynamic = "force-dynamic"

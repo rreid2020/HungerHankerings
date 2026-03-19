@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import Button from "../../components/Button"
+import { AccountLoadError } from "./AccountLoadError"
 import { getAuthUser, getAuthToken } from "../../lib/auth"
 import { getCustomerOrders, confirmAccount } from "../../lib/vendure"
 
@@ -36,12 +37,7 @@ export default async function AccountPage({
   }
 
   if (!user) {
-    return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-800">
-        <p className="font-medium">Couldn't load your account.</p>
-        <p className="mt-1 text-sm">Please refresh the page or try again later.</p>
-      </div>
-    )
+    return <AccountLoadError />
   }
 
   const authToken = await getAuthToken()

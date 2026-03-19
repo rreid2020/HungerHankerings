@@ -13,23 +13,15 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const customer = await getCurrentCustomer(cookieHeader ?? token ?? undefined)
+      const customer = await getCurrentCustomer(token ?? cookieHeader ?? undefined)
 
       if (!customer) {
-        cookieStore.delete("vendure_token")
-        cookieStore.delete("vendure_refresh_token")
-        cookieStore.delete("saleor_token")
-        cookieStore.delete("saleor_refresh_token")
         return NextResponse.json({ user: null }, { status: 200 })
       }
 
       return NextResponse.json({ user: customer })
     } catch (apiError) {
       console.error("Failed to get current customer:", apiError)
-      cookieStore.delete("vendure_token")
-      cookieStore.delete("vendure_refresh_token")
-      cookieStore.delete("saleor_token")
-      cookieStore.delete("saleor_refresh_token")
       return NextResponse.json({ user: null }, { status: 200 })
     }
   } catch (error) {
