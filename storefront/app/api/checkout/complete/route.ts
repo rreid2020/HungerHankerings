@@ -5,8 +5,6 @@ import {
   checkoutBillingAddressUpdate,
   getCheckoutShippingMethods,
   checkoutDeliveryMethodUpdate,
-  getCheckoutTotalPrice,
-  checkoutPaymentCreate,
   checkoutComplete,
   checkoutCustomerAttach,
   customerRegister,
@@ -140,16 +138,6 @@ export async function POST(request: NextRequest) {
     }
     if (storefrontShippingLabel?.trim()) {
       metadata.push({ key: "storefront_shipping_label", value: storefrontShippingLabel.trim() })
-    }
-
-    const stripeGateway = process.env.VENDURE_STRIPE_METHOD_CODE || "stripe"
-    if (paymentMethodId?.trim()) {
-      const amount = await getCheckoutTotalPrice("", opts)
-      await checkoutPaymentCreate("", {
-        gateway: stripeGateway,
-        amount,
-        token: paymentMethodId.trim()
-      })
     }
 
     const paymentData =

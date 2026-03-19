@@ -796,7 +796,27 @@ export async function checkoutComplete(
   options?: { paymentData?: string; metadata?: { key: string; value: string }[] },
   opts?: VendureRequestOptions
 ): Promise<CheckoutCompleteResult> {
-  const method = "dummy-payment-method";
+  const baseMeta =
+    options?.metadata?.reduce<Record<string, string>>(
+      (acc, { key, value }) => ({ ...acc, [key]: value }),
+      {}
+    ) ?? {};
+
+  let method = process.env.VENDURE_DUMMY_PAYMENT_METHOD_CODE || "dummy-payment-method";
+  let metadata: Record<string, string> = { ...baseMeta };
+
+  if (options?.paymentData?.trim()) {
+    try {
+      const pd = JSON.parse(options.paymentData) as { payment_method_id?: string };
+      if (pd.payment_method_id?.trim()) {
+        method = process.env.VENDURE_STRIPE_METHOD_CODE || "stripe";
+        metadata = { ...baseMeta, token: pd.payment_method_id.trim() };
+      }
+    } catch {
+      /* invalid JSON — fall through to dummy */
+    }
+  }
+
   let orderCode: string | null = null;
   try {
     const paymentResult = await fetchVendure<{
@@ -813,7 +833,7 @@ export async function checkoutComplete(
     `, {
       input: {
         method,
-        metadata: options?.metadata?.reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {}) ?? {},
+        metadata,
       },
     }, opts);
     const order = (paymentResult as { addPaymentToOrder?: { code?: string } }).addPaymentToOrder;
