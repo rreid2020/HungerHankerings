@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react"
 import Button from "../../components/Button"
 import { AddressAutocomplete } from "../../components/AddressAutocomplete"
 import { useCart } from "../../components/CartContext"
@@ -15,10 +15,8 @@ import {
   getShippingQuoteDollars
 } from "../../lib/vendure"
 import Link from "next/link"
-import Image from "next/image"
-import Script from "next/script"
 import { useRouter } from "next/navigation"
-import { loadStripe } from "@stripe/stripe-js"
+import { loadStripe, type StripeCardElement } from "@stripe/stripe-js"
 
 const GIFT_BOX_FEE = 3.99
 const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
@@ -58,57 +56,36 @@ const CheckoutPage = () => {
   type Assignment = { main: Record<string, number>; custom: Record<string, number>[] }
   const [customAddresses, setCustomAddresses] = useState<AddressFields[]>([])
   const [assignment, setAssignment] = useState<Assignment>({ main: {}, custom: [] })
-  type PaymentMethod = "credit_card" | "paypal" | "google_pay" | "apple_pay" | "shop_pay"
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("credit_card")
-  const [cardNumber, setCardNumber] = useState("")
-  const [nameOnCard, setNameOnCard] = useState("")
-  const [cardExpiry, setCardExpiry] = useState("")
-  const [cardCvc, setCardCvc] = useState("")
-  const [applePayReady, setApplePayReady] = useState(false)
-  const applePayButtonRef = useRef<HTMLDivElement>(null)
   const draftSavedOnce = useRef(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [createAccount, setCreateAccount] = useState(false)
   const [createAccountPassword, setCreateAccountPassword] = useState("")
   const stripeRef = useRef<Awaited<ReturnType<typeof loadStripe>>>(null)
-  const cardElementRef = useRef<{ mount: (el: HTMLElement) => void } | null>(null)
+  const cardElementRef = useRef<StripeCardElement | null>(null)
   const cardMountRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!STRIPE_PUBLISHABLE_KEY || !cardMountRef.current) return
-    let mounted = true
-    loadStripe(STRIPE_PUBLISHABLE_KEY).then((stripe) => {
-      if (!mounted || !stripe || !cardMountRef.current) return
+  useLayoutEffect(() => {
+    if (!STRIPE_PUBLISHABLE_KEY || typeof window === "undefined") return
+    const mountEl = cardMountRef.current
+    if (!mountEl) return
+    let cancelled = false
+    void loadStripe(STRIPE_PUBLISHABLE_KEY).then((stripe) => {
+      if (cancelled || !stripe) return
+      const el = cardMountRef.current
+      if (!el) return
       stripeRef.current = stripe
+      cardElementRef.current?.unmount()
       const elements = stripe.elements()
       const card = elements.create("card", { style: { base: { fontSize: "16px" } } })
-      card.mount(cardMountRef.current)
+      card.mount(el)
       cardElementRef.current = card
     })
     return () => {
-      mounted = false
+      cancelled = true
+      cardElementRef.current?.unmount()
       cardElementRef.current = null
     }
-  }, [])
-
-  useEffect(() => {
-    if (!applePayReady || !applePayButtonRef.current) return
-    const mount = () => {
-      if (!applePayButtonRef.current) return
-      const el = document.createElement("apple-pay-button")
-      el.setAttribute("buttonstyle", "black")
-      el.setAttribute("type", "plain")
-      el.setAttribute("locale", "en")
-      el.addEventListener("click", () => setPaymentMethod("apple_pay"))
-      applePayButtonRef.current.innerHTML = ""
-      applePayButtonRef.current.appendChild(el)
-    }
-    if (typeof customElements !== "undefined" && customElements.get("apple-pay-button")) {
-      mount()
-    } else if (typeof customElements !== "undefined") {
-      customElements.whenDefined("apple-pay-button").then(mount)
-    }
-  }, [applePayReady])
+  }, [STRIPE_PUBLISHABLE_KEY])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -839,7 +816,21 @@ const CheckoutPage = () => {
       if (STRIPE_PUBLISHABLE_KEY && stripeRef.current && cardElementRef.current) {
         const { paymentMethod, error } = await stripeRef.current.createPaymentMethod({
           type: "card",
-          card: cardElementRef.current as any
+          card: cardElementRef.current,
+          billing_details: {
+            name: `${billing.first_name ?? ""} ${billing.last_name ?? ""}`.trim(),
+            email: billing.email?.trim() || undefined,
+            address: {
+              line1: billing.address_1?.trim() || undefined,
+              city: billing.city?.trim() || undefined,
+              state: billing.province?.trim() || undefined,
+              postal_code: billing.postal_code?.trim() || undefined,
+              country:
+                typeof billing.country === "string"
+                  ? billing.country.trim().slice(0, 2).toUpperCase()
+                  : (billing.country as { code?: string })?.code?.trim().slice(0, 2).toUpperCase() || "CA"
+            }
+          }
         })
         if (error) throw new Error(error.message ?? "Payment method failed")
         if (paymentMethod?.id) paymentMethodId = paymentMethod.id
@@ -1367,143 +1358,23 @@ const CheckoutPage = () => {
 
           <section>
             <h2 className="text-base font-semibold text-foreground">Payment</h2>
-            <div className="mt-4 flex flex-wrap gap-6">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="credit_card"
-                  checked={paymentMethod === "credit_card"}
-                  onChange={() => setPaymentMethod("credit_card")}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className="text-sm font-medium text-foreground">Credit card</span>
-              </label>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="paypal"
-                  checked={paymentMethod === "paypal"}
-                  onChange={() => setPaymentMethod("paypal")}
-                  className="h-4 w-4 border-gray-300 text-brand-600 focus:ring-brand-500"
-                />
-                <span className="text-sm font-medium text-foreground">PayPal</span>
-              </label>
-            </div>
-            <div className="mt-4">
-              <p className="mb-3 text-sm font-medium text-muted-foreground">Or pay with</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("google_pay")}
-                  className={`flex h-10 items-center rounded-md border px-3 transition focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${paymentMethod === "google_pay" ? "border-brand-500 ring-2 ring-brand-500 ring-offset-2" : "border-gray-300 bg-white hover:border-gray-400"}`}
-                  aria-pressed={paymentMethod === "google_pay"}
-                  aria-label="Pay with Google Pay"
-                >
-                  <Image
-                    src="https://upload.wikimedia.org/wikipedia/commons/9/9d/Buy_with_GPay_button.png"
-                    alt=""
-                    width={120}
-                    height={40}
-                    unoptimized
-                    className="h-8 w-auto object-contain"
-                  />
-                </button>
-                <Script
-                  src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"
-                  strategy="lazyOnload"
-                  onLoad={() => setApplePayReady(true)}
-                />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Pay securely with your card. Your details are processed by Stripe; we do not store full card numbers on
+              our servers.
+            </p>
+            {STRIPE_PUBLISHABLE_KEY ? (
+              <div className="mt-4">
+                <label className="mb-1 block text-sm font-medium text-foreground">Card</label>
                 <div
-                  ref={applePayButtonRef}
-                  className={`flex h-10 items-center rounded-md border transition focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 ${paymentMethod === "apple_pay" ? "border-brand-500 ring-2 ring-brand-500 ring-offset-2" : "border-gray-300"}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setPaymentMethod("apple_pay")}
-                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setPaymentMethod("apple_pay")}
-                  aria-pressed={paymentMethod === "apple_pay"}
-                  aria-label="Pay with Apple Pay"
+                  ref={cardMountRef}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
                 />
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("shop_pay")}
-                  className={`flex h-10 items-center rounded-md border px-4 transition focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${paymentMethod === "shop_pay" ? "border-brand-500 ring-2 ring-brand-500 ring-offset-2" : "border-[#2d2d2d] bg-[#2d2d2d] hover:bg-[#1a1a1a]"}`}
-                  aria-pressed={paymentMethod === "shop_pay"}
-                  aria-label="Pay with Shop Pay"
-                >
-                  <span className="text-sm font-semibold tracking-tight text-white">Shop Pay</span>
-                </button>
               </div>
-            </div>
-            {paymentMethod === "credit_card" && (
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label htmlFor="checkout-card-number" className="mb-1 block text-sm font-medium text-foreground">
-                    Card number
-                  </label>
-                  <input
-                    id="checkout-card-number"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="cc-number"
-                    placeholder="1234 5678 9012 3456"
-                    className={inputClass + " w-full"}
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, "").slice(0, 16))}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="checkout-name-on-card" className="mb-1 block text-sm font-medium text-foreground">
-                    Name on card
-                  </label>
-                  <input
-                    id="checkout-name-on-card"
-                    type="text"
-                    autoComplete="cc-name"
-                    placeholder="Name on card"
-                    className={inputClass + " w-full"}
-                    value={nameOnCard}
-                    onChange={(e) => setNameOnCard(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="checkout-card-expiry" className="mb-1 block text-sm font-medium text-foreground">
-                    Expiration date (MM/YY)
-                  </label>
-                  <input
-                    id="checkout-card-expiry"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="cc-exp"
-                    placeholder="MM/YY"
-                    maxLength={5}
-                    className={inputClass + " w-full"}
-                    value={cardExpiry}
-                    onChange={(e) => {
-                      const v = e.target.value.replace(/\D/g, "")
-                      if (v.length <= 2) setCardExpiry(v)
-                      else if (v.length <= 4) setCardExpiry(v.slice(0, 2) + "/" + v.slice(2))
-                    }}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="checkout-card-cvc" className="mb-1 block text-sm font-medium text-foreground">
-                    CVC
-                  </label>
-                  <input
-                    id="checkout-card-cvc"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="cc-csc"
-                    placeholder="CVC"
-                    maxLength={4}
-                    className={inputClass + " w-full"}
-                    value={cardCvc}
-                    onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  />
-                </div>
-              </div>
+            ) : (
+              <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Card payments are not configured (missing <code className="text-xs">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>
+                ). Checkout may use the test payment method configured in Vendure.
+              </p>
             )}
           </section>
 
