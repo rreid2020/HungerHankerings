@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { customerLogin } from "../../../../lib/vendure"
+import { customerLogin, getCurrentCustomer } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
 
 const cookieOpts = (secure: boolean) =>
@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
     const secure = cookieSecureFromRequest(request)
     const maxAgeAccess = 60 * 60 * 24 * 7
     const maxAgeRefresh = 60 * 60 * 24 * 30
+
+    // Warm the session so /account's getAuthUser sees it (Vendure session can be invisible until first use).
+    for (let i = 0; i < 3; i++) {
+      const customer = await getCurrentCustomer(result.token)
+      if (customer) break
+      if (i < 2) await new Promise((r) => setTimeout(r, 250))
+    }
 
     if (isForm) {
       const target = redirectTo?.trim() && redirectTo.startsWith("/") ? redirectTo : "/account"
