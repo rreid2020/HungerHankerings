@@ -147,6 +147,8 @@ export type StorefrontProduct = {
 
 export type StorefrontCheckout = {
   id: string;
+  /** Vendure order code (e.g. for redirects after Stripe Payment Intent) */
+  code?: string;
   email?: string | null;
   lines: {
     id: string;
@@ -760,6 +762,28 @@ export async function checkoutDeliveryMethodUpdate(
  * Vendure only allows addPaymentToOrder when the order is in `ArrangingPayment`.
  * After addresses + shipping method, the order usually stays in `AddingItems` until this transition.
  */
+/**
+ * Vendure Stripe plugin: creates a Payment Intent for the active order (Shop API).
+ * Do not use addPaymentToOrder with Stripe from the storefront — the webhook settles payment using Admin API.
+ * @see https://docs.vendure.io/current/core/reference/core-plugins/payments-plugin/stripe-plugin
+ */
+export async function createStripePaymentIntent(opts?: VendureRequestOptions): Promise<string> {
+  const data = await fetchVendure<{ createStripePaymentIntent: string }>(
+    `
+    mutation CreateStripePaymentIntent {
+      createStripePaymentIntent
+    }
+  `,
+    undefined,
+    opts
+  );
+  const secret = data.createStripePaymentIntent;
+  if (!secret?.trim()) {
+    throw new Error("Failed to create Stripe payment intent");
+  }
+  return secret;
+}
+
 export async function checkoutTransitionToArrangingPayment(opts?: VendureRequestOptions): Promise<void> {
   const { activeOrder } = await fetchVendure<{
     activeOrder: { state: string } | null;
@@ -844,20 +868,9 @@ export async function checkoutComplete(
       {}
     ) ?? {};
 
-  let method = process.env.VENDURE_DUMMY_PAYMENT_METHOD_CODE || "dummy-payment-method";
-  let metadata: Record<string, string> = { ...baseMeta };
-
-  if (options?.paymentData?.trim()) {
-    try {
-      const pd = JSON.parse(options.paymentData) as { payment_method_id?: string };
-      if (pd.payment_method_id?.trim()) {
-        method = process.env.VENDURE_STRIPE_METHOD_CODE || "stripe";
-        metadata = { ...baseMeta, token: pd.payment_method_id.trim() };
-      }
-    } catch {
-      /* invalid JSON — fall through to dummy */
-    }
-  }
+  // Stripe must use createStripePaymentIntent + client confirm + webhook (createPayment is admin-only in the handler).
+  const method = process.env.VENDURE_DUMMY_PAYMENT_METHOD_CODE || "dummy-payment-method";
+  const metadata: Record<string, string> = { ...baseMeta };
 
   try {
     const paymentResult = await fetchVendure<{

@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import Button from "../../components/Button"
 import { AddressAutocomplete } from "../../components/AddressAutocomplete"
-import { useCart } from "../../components/CartContext"
+import { useCart, VENDURE_ORDER_STORAGE_KEY, type StripePaymentPending } from "../../components/CartContext"
 import type { AddressFields, ShippingOverridesByUnit } from "../../components/CartContext"
 import { useAuth } from "../../components/AuthContext"
 import { useGooglePlacesScript } from "../../hooks/useGooglePlacesScript"
@@ -38,7 +38,7 @@ const inputClass =
   "rounded-md border border-gray-300 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
 const CheckoutPage = () => {
-  const { cart, loading, updating, completeCart, updateItem, removeItem, refreshCart } = useCart()
+  const { cart, loading, updating, completeCart, clearCart, updateItem, removeItem, refreshCart } = useCart()
   const { user, login: authLogin } = useAuth()
   const router = useRouter()
   const isLoggedIn = !!user
@@ -856,50 +856,87 @@ const CheckoutPage = () => {
             ? { password: createAccountPassword.trim() }
             : undefined
       }
-      let paymentMethodId: string | undefined
-      if (STRIPE_PUBLISHABLE_KEY && stripeRef.current && cardElementRef.current) {
+
+      if (STRIPE_PUBLISHABLE_KEY) {
+        if (!stripeRef.current || !cardElementRef.current) {
+          throw new Error("Card form is still loading. Wait a moment and try again.")
+        }
+      }
+
+      const result = await completeCart(options)
+
+      const isStripePending = (r: unknown): r is StripePaymentPending =>
+        !!r &&
+        typeof r === "object" &&
+        "confirmationNeeded" in r &&
+        (r as StripePaymentPending).confirmationNeeded === true &&
+        typeof (r as StripePaymentPending).clientSecret === "string" &&
+        typeof (r as StripePaymentPending).orderCode === "string"
+
+      if (isStripePending(result)) {
+        if (!stripeRef.current || !cardElementRef.current) {
+          throw new Error("Card form is not ready. Refresh the page and try again.")
+        }
         const cardholderName =
           nameOnCard.trim() || `${billing.first_name ?? ""} ${billing.last_name ?? ""}`.trim()
         if (!cardholderName) {
           throw new Error("Enter the name on your card (or complete billing first and last name).")
         }
-        const { paymentMethod, error } = await stripeRef.current.createPaymentMethod({
-          type: "card",
-          card: cardElementRef.current,
-          billing_details: {
-            name: cardholderName,
-            email: billing.email?.trim() || undefined,
-            address: {
-              line1: billing.address_1?.trim() || undefined,
-              city: billing.city?.trim() || undefined,
-              state: billing.province?.trim() || undefined,
-              postal_code: billing.postal_code?.trim() || undefined,
-              country:
-                typeof billing.country === "string"
-                  ? billing.country.trim().slice(0, 2).toUpperCase()
-                  : (billing.country as { code?: string })?.code?.trim().slice(0, 2).toUpperCase() || "CA"
+        const billingCountry =
+          typeof billing.country === "string"
+            ? billing.country.trim().slice(0, 2).toUpperCase()
+            : (billing.country as { code?: string })?.code?.trim().slice(0, 2).toUpperCase() || "CA"
+        const { error: confirmError, paymentIntent } = await stripeRef.current.confirmCardPayment(
+          result.clientSecret,
+          {
+            payment_method: {
+              card: cardElementRef.current,
+              billing_details: {
+                name: cardholderName,
+                email: billing.email?.trim() || undefined,
+                address: {
+                  line1: billing.address_1?.trim() || undefined,
+                  city: billing.city?.trim() || undefined,
+                  state: billing.province?.trim() || undefined,
+                  postal_code: billing.postal_code?.trim() || undefined,
+                  country: billingCountry
+                }
+              }
             }
           }
-        })
-        if (error) throw new Error(error.message ?? "Payment method failed")
-        if (paymentMethod?.id) paymentMethodId = paymentMethod.id
+        )
+        if (confirmError) {
+          throw new Error(confirmError.message ?? "Payment confirmation failed")
+        }
+        if (paymentIntent && paymentIntent.status !== "succeeded" && paymentIntent.status !== "processing") {
+          throw new Error(`Payment could not be completed (status: ${paymentIntent.status}).`)
+        }
+        try {
+          window.localStorage.setItem(
+            VENDURE_ORDER_STORAGE_KEY,
+            JSON.stringify({
+              orderToken: result.orderCode,
+              orderNumber: result.orderCode,
+              createdAccount: result.createdAccount,
+              orderSummary: result.orderSummary
+            })
+          )
+          window.localStorage.removeItem(CHECKOUT_DRAFT_KEY)
+        } catch {
+          /* ignore */
+        }
+        clearCart()
+        router.push(`/order/${encodeURIComponent(result.orderCode)}`)
+        return
       }
-      let result = await completeCart({
-        ...options,
-        paymentMethodId
-      })
-      if (result && typeof result === "object" && "confirmationNeeded" in result && result.confirmationNeeded && result.clientSecret && stripeRef.current) {
-        const { error } = await stripeRef.current.confirmCardPayment(result.clientSecret)
-        if (error) throw new Error(error.message ?? "Payment confirmation failed")
-        result = await completeCart({ ...options, paymentMethodId })
-      }
+
       if (result && typeof result === "string") {
         try {
           window.localStorage.removeItem(CHECKOUT_DRAFT_KEY)
         } catch {
           /* ignore */
         }
-        router.push(`/order/${result}`)
+        router.push(`/order/${encodeURIComponent(result)}`)
       }
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : "Checkout failed. Please try again.")

@@ -59,8 +59,34 @@ export type CheckoutOptions = {
   shippingOverridesByUnit?: ShippingOverridesByUnit
   createAccount?: { password: string }
   shippingLabel?: string
-  /** Stripe payment method id (pm_xxx); required when Stripe is enabled. Guest and logged-in users can both pass this. */
-  paymentMethodId?: string
+}
+
+/** First API response when Stripe Payment Intents flow is used (server creates PI, client confirms). */
+export type StripePaymentPending = {
+  confirmationNeeded: true
+  clientSecret: string
+  /** Vendure order code for `/order/[code]` and webhooks. */
+  orderCode: string
+  createdAccount?: boolean
+  orderSummary?: {
+    email: string
+    total: number
+    currency: string
+    lines: {
+      productName: string
+      variantName: string | null
+      quantity: number
+      unitPrice: number
+    }[]
+    shippingAddress?: {
+      firstName: string
+      lastName: string
+      streetAddress1: string
+      city: string
+      postalCode: string
+      countryArea?: string | null
+    }
+  }
 }
 
 type CartContextValue = {
@@ -75,12 +101,13 @@ type CartContextValue = {
   refreshCart: () => Promise<void>
   completeCart: (
     options?: CheckoutOptions
-  ) => Promise<string | { confirmationNeeded: true; clientSecret: string } | null>
+  ) => Promise<string | StripePaymentPending | null>
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
-const ORDER_STORAGE_KEY = "vendure_last_order_v1"
+export const VENDURE_ORDER_STORAGE_KEY = "vendure_last_order_v1"
+const ORDER_STORAGE_KEY = VENDURE_ORDER_STORAGE_KEY
 
 const buildCart = (items: CartItem[], totals?: { subtotal?: number; shipping?: number; total?: number }): Cart => {
   const subtotal = totals?.subtotal ?? items.reduce(
@@ -232,7 +259,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const completeCart = async (
     options?: CheckoutOptions
-  ): Promise<string | { confirmationNeeded: true; clientSecret: string } | null> => {
+  ): Promise<string | StripePaymentPending | null> => {
     if (!cart?.items?.length) return null
 
     const email = options?.billing?.email?.trim() ?? options?.shipping?.email?.trim()
@@ -280,8 +307,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
           },
           createAccount: options?.createAccount,
           storefrontShippingAmount: options?.shippingAmount,
-          storefrontShippingLabel: options?.shippingLabel,
-          paymentMethodId: options?.paymentMethodId
+          storefrontShippingLabel: options?.shippingLabel
         })
       })
 
@@ -291,7 +317,17 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.confirmationNeeded && data.clientSecret) {
-        return { confirmationNeeded: true as const, clientSecret: data.clientSecret }
+        const orderCode = typeof data.orderCode === "string" ? data.orderCode.trim() : ""
+        if (!orderCode) {
+          throw new Error("Stripe checkout started but order code was missing. Try again.")
+        }
+        return {
+          confirmationNeeded: true as const,
+          clientSecret: data.clientSecret,
+          orderCode,
+          createdAccount: data.createdAccount === true ? true : undefined,
+          orderSummary: data.orderSummary
+        }
       }
 
       const orderToken = data?.orderToken

@@ -6,6 +6,8 @@ import {
   getCheckoutShippingMethods,
   checkoutDeliveryMethodUpdate,
   checkoutTransitionToArrangingPayment,
+  createStripePaymentIntent,
+  getActiveOrder,
   checkoutComplete,
   customerRegister,
   customerLoginWithCookies,
@@ -67,8 +69,7 @@ export async function POST(request: NextRequest) {
       shipping,
       createAccount,
       storefrontShippingAmount,
-      storefrontShippingLabel,
-      paymentMethodId
+      storefrontShippingLabel
     }: {
       checkoutId?: string
       email: string
@@ -77,7 +78,6 @@ export async function POST(request: NextRequest) {
       createAccount?: { password: string }
       storefrontShippingAmount?: number
       storefrontShippingLabel?: string
-      paymentMethodId?: string
     } = body
 
     if (!email?.trim()) {
@@ -164,14 +164,77 @@ export async function POST(request: NextRequest) {
       metadata.push({ key: "storefront_shipping_label", value: storefrontShippingLabel.trim() })
     }
 
-    const paymentData =
-      paymentMethodId?.trim() ?
-        JSON.stringify({ payment_method_id: paymentMethodId.trim() })
-      : undefined
-    const result = await checkoutComplete("", redirectUrl, {
-      metadata: metadata.length ? metadata : undefined,
-      paymentData
-    }, opts)
+    const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
+
+    /** @see https://docs.vendure.io/current/core/reference/core-plugins/payments-plugin/stripe-plugin */
+    if (stripePublishable) {
+      try {
+        const clientSecret = await createStripePaymentIntent(opts)
+        const preview = await getActiveOrder(opts)
+        const orderCode = preview?.code
+        if (!orderCode) {
+          return NextResponse.json(
+            { error: "Could not read order after preparing payment. Try again." },
+            { status: 400 }
+          )
+        }
+        const json = NextResponse.json({
+          confirmationNeeded: true,
+          clientSecret,
+          orderCode,
+          createdAccount: authToken ? true : undefined,
+          orderSummary: {
+            email: email.trim(),
+            total: preview?.totalPrice?.gross?.amount ?? 0,
+            currency: preview?.totalPrice?.gross?.currency ?? "CAD",
+            lines: (preview?.lines ?? []).map((l) => ({
+              productName: l.variant.product.name,
+              variantName: l.variant.name || null,
+              quantity: l.quantity,
+              unitPrice: l.variant.pricing?.price?.gross?.amount ?? 0
+            })),
+            shippingAddress: {
+              firstName: shipping.first_name?.trim() ?? "",
+              lastName: shipping.last_name?.trim() ?? "",
+              streetAddress1: shipping.address_1?.trim() ?? "",
+              city: shipping.city?.trim() ?? "",
+              postalCode: shipping.postal_code?.trim() ?? "",
+              countryArea: shipping.province?.trim() || null
+            }
+          }
+        })
+        if (authToken && refreshToken) {
+          const secure = cookieSecureFromRequest(request)
+          json.cookies.set("vendure_token", authToken, {
+            httpOnly: true,
+            secure,
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 7,
+            path: "/"
+          })
+          json.cookies.set("vendure_refresh_token", refreshToken, {
+            httpOnly: true,
+            secure,
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 30,
+            path: "/"
+          })
+        }
+        return json
+      } catch (stripeErr) {
+        const msg = stripeErr instanceof Error ? stripeErr.message : "Stripe checkout failed"
+        return NextResponse.json({ error: msg }, { status: 400 })
+      }
+    }
+
+    const result = await checkoutComplete(
+      "",
+      redirectUrl,
+      {
+        metadata: metadata.length ? metadata : undefined
+      },
+      opts
+    )
 
     if (result.errors?.length) {
       const message = result.errors[0]?.message ?? "Checkout could not be completed"
