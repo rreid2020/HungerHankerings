@@ -42,12 +42,17 @@ This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback)
 
 The storefront can charge **$3.99 per box** for gift wrap + card. For that fee to be a **real Vendure line** (correct tax, Stripe total, Admin order lines):
 
-1. In **Admin** → **Catalog** create a product, e.g. **Gift box (wrap + card)**.
+1. In **Admin** → **Catalog** create a product, e.g. **Gift box (wrap + card)**. Use a **slug** you will treat as internal only (e.g. `internal-gift-box`).
 2. Add one **variant**, price **$3.99** (or your amount), **tax category Standard** (same as snack boxes).
-3. Publish to the channel; copy the variant’s **ID** from the variant detail page.
+3. Publish to the channel. Open the **variant** (not only the product): the **ID** is in the right-hand **Metadata** / details panel (same place you see Created at). Copy that value — it is what you pass as `VENDURE_GIFT_BOX_VARIANT_ID` (not the product id).
 4. Set on the **Next.js server** (e.g. `storefront/.env` or Compose env for the storefront service):
 
    `VENDURE_GIFT_BOX_VARIANT_ID=<paste variant id>`
+
+   To **hide** this product from the storefront grid and product pages while keeping it available for checkout:
+
+   `STOREFRONT_HIDDEN_PRODUCT_SLUGS=<the product slug from step 1>`  
+   (comma-separated if you hide more than one.)
 
 5. Redeploy the storefront. On **Confirm order**, the checkout API adds that variant with quantity = number of gift selections **before** payment; Vendure applies provincial tax like any other line. Gift messages are also sent as JSON in payment metadata key `gift_by_line_unit_json` when under the size limit.
 

@@ -268,6 +268,25 @@ export type CheckoutCompleteResult = {
 // Products
 // ---------------------------------------------------------------------------
 
+/**
+ * Comma-separated product **slugs** to omit from storefront grids and PDP (e.g. internal gift add-on).
+ * Set the gift product’s slug in Admin when creating it; it can still be added via Shop API by variant id.
+ */
+function hiddenProductSlugSet(): Set<string> {
+  const raw = process.env.STOREFRONT_HIDDEN_PRODUCT_SLUGS?.trim() ?? "";
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function isCatalogProductSlug(slug: string): boolean {
+  const h = hiddenProductSlugSet();
+  return h.size === 0 || !h.has(slug.trim().toLowerCase());
+}
+
 const productFields = `
   id
   name
@@ -353,13 +372,16 @@ export async function listProducts(): Promise<StorefrontProduct[]> {
       }
     }
   `);
-  const items = data.products?.items ?? [];
+  const items = (data.products?.items ?? []).filter((p) =>
+    isCatalogProductSlug(p.slug)
+  );
   return items.map(mapVendureProductToStorefront);
 }
 
 export async function getProductByHandle(
   slug: string
 ): Promise<StorefrontProduct | null> {
+  if (!isCatalogProductSlug(slug)) return null;
   const data = await fetchVendure<{
     product: {
       id: string;
