@@ -5,8 +5,9 @@ import Link from "next/link"
 import { useCart } from "./CartContext"
 import type { StorefrontProduct } from "../lib/vendure"
 import {
-  buildAttributeDefinitionsFromVariants,
-  findVariantByAttributes
+  buildCatalogAttributeDefinitions,
+  findVariantForCatalogSelection,
+  getDefaultSelectedByAttribute
 } from "../lib/build-attribute-definitions"
 
 const formatPrice = (amount?: number) => {
@@ -28,7 +29,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
     firstVariant?.id ?? null
   )
   const attributeDefinitions = useMemo(
-    () => buildAttributeDefinitionsFromVariants(variants),
+    () => buildCatalogAttributeDefinitions(variants),
     [variants]
   )
   const hasOptionGroupSelectors =
@@ -39,11 +40,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
   >({})
 
   useEffect(() => {
-    const sel: Record<string, string> = {}
-    for (const def of attributeDefinitions) {
-      sel[def.name] = def.values[0] ?? ""
-    }
-    setSelectedByAttribute(sel)
+    setSelectedByAttribute(getDefaultSelectedByAttribute(attributeDefinitions))
     setSelectedVariantId(firstVariant?.id ?? null)
   }, [product.id, attributeDefinitions, firstVariant?.id])
 
@@ -53,7 +50,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
 
   const resolvedVariant = useMemo(() => {
     if (hasOptionGroupSelectors) {
-      return findVariantByAttributes(
+      return findVariantForCatalogSelection(
         variants,
         attributeDefinitions,
         selectedByAttribute

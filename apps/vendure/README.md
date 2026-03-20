@@ -38,41 +38,25 @@ This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback)
 
 - **Shipping:** Vendure does not store a separate “tax category” on shipping methods. The **postal shipping calculator** looks up the provincial rate using the **Standard** category (fallback: default category), i.e. the same **Settings → Tax rates** rows you use for products. After variants use Standard and zones/rates are seeded, product and shipping lines both align to those **Standard** rates for the active province zone (e.g. CA-ON).
 
-## Gift box add-on (storefront)
+## Gift wrap + card (checkout add-on — recommended)
 
-The storefront can charge **$3.99 per box** for gift wrap + card. For that fee to be a **real Vendure line** (correct tax, Stripe total, Admin order lines):
+Snack boxes use **one variant dimension in the catalog (e.g. size only)**. Gift wrap + card is a **per-box add-on at checkout** ($3.99), not a second dropdown on the product page.
 
-1. In **Admin** → **Catalog** create a product, e.g. **Gift box (wrap + card)**. Use a **slug** you will treat as internal only (e.g. `internal-gift-box`).
-2. Add one **variant**, price **$3.99** (or your amount), **tax category Standard** (same as snack boxes).
-3. Publish to the channel. Open the **variant** (not only the product): the **ID** is in the right-hand **Metadata** / details panel (same place you see Created at). Copy that value — it is what you pass as `VENDURE_GIFT_BOX_VARIANT_ID` (not the product id).
-4. Set on the **Next.js server** (e.g. `storefront/.env` or Compose env for the storefront service):
+### Storefront behavior
 
-   `VENDURE_GIFT_BOX_VARIANT_ID=<paste variant id>`
+- **Product grid / PDP:** Option groups whose names match **gift / wrap / card** (case-insensitive) are **hidden**. Shoppers only pick **size** (and any other non-gift groups).
+- If you still have **old variants** in Vendure (size × gift), the storefront picks the **cheapest** matching variant for the selected size (usually base price without gift). **Prefer cleaning up Admin** (below) so each size is a single variant.
+- **Checkout:** Per-unit checkboxes + message; fee is shown in the order summary. Set **`VENDURE_GIFT_BOX_VARIANT_ID`** so the fee is added as a real order line before payment (tax + Stripe).
 
-   To **hide** this product from the storefront grid and product pages while keeping it available for checkout, set **one or both** on the storefront server (rebuild/restart after changing):
+### Vendure setup
 
-   - `STOREFRONT_HIDDEN_PRODUCT_SLUGS=<slug>` — exact slug from Admin → product (comma-separated for several).
-   - `STOREFRONT_HIDDEN_PRODUCT_IDS=<id>` — product **ID** from Admin → product sidebar (easiest if slug is wrong or auto-generated).
+1. **Sellable products:** Only **size** (or similar) in the option matrix — **remove** the gift option group and **regenerate variants** so you have one row per size at the **base** price. Easiest long-term.
+2. **Hidden gift SKU:** One product (e.g. *Gift box — wrap + card*), one variant at **$3.99**, **Standard** tax, slug/internal id hidden via `STOREFRONT_HIDDEN_PRODUCT_SLUGS` / `STOREFRONT_HIDDEN_PRODUCT_IDS`.
+3. **Env (storefront server):** `VENDURE_GIFT_BOX_VARIANT_ID=<variant id>` (from variant detail sidebar in Admin).
 
-5. Redeploy the storefront. On **Confirm order**, the checkout API adds that variant with quantity = number of gift selections **before** payment; Vendure applies provincial tax like any other line. Gift messages are also sent as JSON in payment metadata key `gift_by_line_unit_json` when under the size limit.
+Do **not** also bake gift into variant prices **and** use checkout add-on — that **double-charges**. Use either priced gift variants **or** checkout add-on + hidden SKU.
 
-If this variable is **unset**, the UI still shows the gift fee using storefront math only; the Vendure order total (and Stripe) will **not** include that fee until you set the variant id.
-
-**Stale checkout drafts:** Gift selections are keyed by `lineId-unitIndex`. If the cart’s order lines get new IDs, old draft keys are dropped so you are not charged for a gift that no longer applies to the current cart.
-
-### Alternative: gift as a Yes/No **variant** on each box (no separate product)
-
-If you prefer **not** to maintain a hidden add-on product:
-
-1. In Admin, open each sellable snack **product** (e.g. Test Box Two).
-2. Add a **Product option group**, e.g. `Gift packaging`, with two options: **No** and **Yes** (or `None` / `Gift wrap + card`).
-3. **Regenerate variants** so every size exists twice: e.g. `Small + No` at \$39.99 and `Small + Yes` at \$43.98 (base + \$3.99). Set **Standard** tax on all variants.
-4. Customers pick gift in the same dropdown as size; **no separate “gift box” product** and no `VENDURE_GIFT_BOX_VARIANT_ID` line at checkout.
-5. You can then **disable or delete** the standalone gift product, remove `VENDURE_GIFT_BOX_VARIANT_ID` from `.env`, and simplify checkout (gift **messages** only, if you still need them — e.g. order note or custom field).
-
-Trade-off: more variants to manage (each size × 2). Trade-off: pricing and tax stay entirely inside Vendure with no extra API logic.
-
-The storefront reads each variant’s **options** and shows **one dropdown per option group** (e.g. “size” + “Gift packaging”). Use clear **option group names** in Admin so labels read well on the grid and PDP. If you use this model, disable the separate checkout gift fee / `VENDURE_GIFT_BOX_VARIANT_ID` flow so customers are not charged twice.
+**Stale checkout drafts:** Gift keys use `lineId-unitIndex`; orphaned keys are pruned when the cart changes.
 
 ## Guest checkout & customers
 

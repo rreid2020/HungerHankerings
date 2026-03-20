@@ -5,7 +5,8 @@ import AddToCart from "./AddToCart"
 import type { StorefrontProductVariant } from "../lib/vendure"
 import {
   type AttributeDefinition,
-  findVariantByAttributes
+  findVariantForCatalogSelection,
+  getDefaultSelectedByAttribute
 } from "../lib/build-attribute-definitions"
 
 export type VariantAttribute = {
@@ -61,21 +62,22 @@ const ProductPurchase = ({
     attributeDefinitions.length > 0 &&
     variants.length > 1
 
-  const initialSelected = useMemo(() => {
-    const sel: Record<string, string> = {}
-    for (const def of attributeDefinitions) {
-      sel[def.name] = def.values[0] ?? ""
-    }
-    return sel
-  }, [attributeDefinitions])
+  const defaultByAttribute = useMemo(
+    () => getDefaultSelectedByAttribute(attributeDefinitions),
+    [attributeDefinitions]
+  )
 
   const [selectedByAttribute, setSelectedByAttribute] =
-    useState<Record<string, string>>(initialSelected)
+    useState<Record<string, string>>(defaultByAttribute)
   const [selectedId, setSelectedId] = useState<string>(variants[0]?.id ?? "")
+
+  useEffect(() => {
+    setSelectedByAttribute(defaultByAttribute)
+  }, [defaultByAttribute])
 
   const resolvedVariant = useMemo(() => {
     if (hasAttributeSelectors) {
-      return findVariantByAttributes(
+      return findVariantForCatalogSelection(
         variants as StorefrontProductVariant[],
         attributeDefinitions,
         selectedByAttribute

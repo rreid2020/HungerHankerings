@@ -328,8 +328,20 @@ const CheckoutPage = () => {
     return out
   }, [giftByLineUnit, validGiftUnitKeys])
 
-  const giftCount = Object.keys(giftUnits).length
-  const giftFee = giftCount * GIFT_BOX_FEE
+  /** Fee applies when the gift checkbox is on (message still required to place order). */
+  const giftEnabledCount = useMemo(() => {
+    let n = 0
+    for (const item of cart?.items ?? []) {
+      for (let i = 0; i < item.quantity; i++) {
+        const key = unitKey(item.lineId, i)
+        if (!validGiftUnitKeys.has(key)) continue
+        if (giftByLineUnit[key]?.enabled) n++
+      }
+    }
+    return n
+  }, [cart?.items, giftByLineUnit, validGiftUnitKeys])
+
+  const giftFee = giftEnabledCount * GIFT_BOX_FEE
 
   useEffect(() => {
     const valid = new Set<string>()
@@ -565,7 +577,7 @@ const CheckoutPage = () => {
             lineId: item.lineId,
             unitIndex: i,
             unitPrice: item.unitPrice,
-            gift: !!(g?.enabled && g?.message?.trim())
+            gift: !!g?.enabled
           })
         }
       }
@@ -880,9 +892,9 @@ const CheckoutPage = () => {
             ? "United States"
             : "International"
       const options = {
-        giftByLineUnit: giftCount ? giftUnits : undefined,
-        giftFee: giftCount ? giftFee : undefined,
-        giftBoxCount: giftCount > 0 ? giftCount : undefined,
+        giftByLineUnit: giftEnabledCount ? giftUnits : undefined,
+        giftFee: giftEnabledCount ? giftFee : undefined,
+        giftBoxCount: giftEnabledCount > 0 ? giftEnabledCount : undefined,
         shippingAmount: displayShipping,
         taxAmount: displayTax,
         billing,
@@ -1659,9 +1671,9 @@ const CheckoutPage = () => {
                 <span>Boxes total</span>
                 <span>${(cart?.subtotal ?? 0).toFixed(2)}</span>
               </div>
-              {giftCount > 0 && (
+              {giftEnabledCount > 0 && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Gift box ({giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
+                  <span>Gift box ({giftEnabledCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
                   <span>${giftFee.toFixed(2)}</span>
                 </div>
               )}

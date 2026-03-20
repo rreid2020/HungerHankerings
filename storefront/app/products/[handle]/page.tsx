@@ -1,6 +1,6 @@
 import { getProductByHandle } from "../../../lib/vendure"
 import { getPlainDescription } from "../../../lib/description"
-import { buildAttributeDefinitionsFromVariants } from "../../../lib/build-attribute-definitions"
+import { buildCatalogAttributeDefinitions } from "../../../lib/build-attribute-definitions"
 import ProductPurchase from "../../../components/ProductPurchase"
 
 const ProductDetailPage = async ({
@@ -32,7 +32,7 @@ const ProductDetailPage = async ({
       price: variant.pricing?.price?.gross?.amount,
       attributes: variant.attributes
     })) ?? []
-  const attributeDefinitions = buildAttributeDefinitionsFromVariants(product?.variants)
+  const attributeDefinitions = buildCatalogAttributeDefinitions(product?.variants)
   const description = getPlainDescription(product?.description)
 
   return (
