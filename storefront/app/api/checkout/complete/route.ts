@@ -5,6 +5,7 @@ import {
   checkoutBillingAddressUpdate,
   getCheckoutShippingMethods,
   checkoutDeliveryMethodUpdate,
+  checkoutTransitionToArrangingPayment,
   checkoutComplete,
   customerRegister,
   customerLoginWithCookies,
@@ -152,6 +153,8 @@ export async function POST(request: NextRequest) {
     if (firstMethod) {
       await checkoutDeliveryMethodUpdate("", firstMethod.id, opts)
     }
+
+    await checkoutTransitionToArrangingPayment(opts)
 
     const metadata: { key: string; value: string }[] = []
     if (typeof storefrontShippingAmount === "number") {

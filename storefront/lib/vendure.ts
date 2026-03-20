@@ -756,6 +756,45 @@ export async function checkoutDeliveryMethodUpdate(
   return order;
 }
 
+/**
+ * Vendure only allows addPaymentToOrder when the order is in `ArrangingPayment`.
+ * After addresses + shipping method, the order usually stays in `AddingItems` until this transition.
+ */
+export async function checkoutTransitionToArrangingPayment(opts?: VendureRequestOptions): Promise<void> {
+  const { activeOrder } = await fetchVendure<{
+    activeOrder: { state: string } | null;
+  }>(`query ActiveOrderState { activeOrder { state } }`, undefined, opts);
+  const state = activeOrder?.state;
+  if (
+    state === "ArrangingPayment" ||
+    state === "PaymentAuthorized" ||
+    state === "PaymentSettled"
+  ) {
+    return;
+  }
+  const data = await fetchVendure<{
+    transitionOrderToState:
+      | { state?: string }
+      | { message?: string; transitionError?: string; fromState?: string; toState?: string };
+  }>(
+    `
+    mutation TransitionToArrangingPayment {
+      transitionOrderToState(state: "ArrangingPayment") {
+        ... on Order { id state }
+        ... on OrderStateTransitionError { message transitionError fromState toState }
+      }
+    }
+  `,
+    undefined,
+    opts
+  );
+  const r = data.transitionOrderToState;
+  if (r && typeof r === "object" && "transitionError" in r && (r as { transitionError?: string }).transitionError) {
+    const err = r as { message?: string; transitionError: string; fromState?: string; toState?: string };
+    throw new Error(err.message || err.transitionError);
+  }
+}
+
 export async function getCheckoutTotalPrice(
   _checkoutId: string,
   opts?: VendureRequestOptions
