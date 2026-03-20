@@ -556,7 +556,7 @@ export async function createCheckout(params: {
         }
       }
     }
-    `, { variantId: line.variantId, quantity: line.quantity });
+    `, { variantId: line.variantId, quantity: line.quantity }, undefined);
     const addResult = result.addItemToOrder;
     if (addResult && typeof addResult === "object" && "message" in addResult && (addResult as { errorCode?: string }).errorCode) {
       throw new Error((addResult as { message?: string }).message || "Failed to add item");
@@ -569,7 +569,8 @@ export async function createCheckout(params: {
 
 export async function addItemToOrder(
   variantId: string,
-  quantity: number
+  quantity: number,
+  opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
   const data = await fetchVendure<{ addItemToOrder: unknown }>(`
     mutation AddItemToOrder($variantId: ID!, $quantity: Int!) {
@@ -583,7 +584,7 @@ export async function addItemToOrder(
         }
       }
     }
-  `, { variantId, quantity });
+  `, { variantId, quantity }, opts);
   const result = data.addItemToOrder;
   if (result && typeof result === "object" && "errorCode" in result) {
     throw new Error((result as { message?: string }).message || "Failed to add item");

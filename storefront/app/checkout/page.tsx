@@ -22,6 +22,8 @@ const GIFT_BOX_FEE = 3.99
 const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
 const CHECKOUT_DRAFT_KEY = "hungerhankerings_checkout_draft_v1"
 
+const unitKey = (lineId: string, unitIndex: number) => `${lineId}-${unitIndex}`
+
 /** Fallback when Vendure countries are not yet loaded or API fails */
 const emptyAddress: AddressFields = {
   first_name: "",
@@ -306,18 +308,48 @@ const CheckoutPage = () => {
     })
   }, [])
 
+  /** Only keys for units that still exist on the current cart (stale draft keys must not affect fees). */
+  const validGiftUnitKeys = useMemo(() => {
+    const s = new Set<string>()
+    for (const item of cart?.items ?? []) {
+      for (let i = 0; i < item.quantity; i++) {
+        s.add(unitKey(item.lineId, i))
+      }
+    }
+    return s
+  }, [cart?.items])
+
   const giftUnits = useMemo(() => {
     const out: Record<string, { giftMessage: string }> = {}
     for (const [key, { enabled, message }] of Object.entries(giftByLineUnit)) {
+      if (!validGiftUnitKeys.has(key)) continue
       if (enabled && message.trim()) out[key] = { giftMessage: message.trim() }
     }
     return out
-  }, [giftByLineUnit])
+  }, [giftByLineUnit, validGiftUnitKeys])
 
   const giftCount = Object.keys(giftUnits).length
   const giftFee = giftCount * GIFT_BOX_FEE
 
-  const unitKey = (lineId: string, unitIndex: number) => `${lineId}-${unitIndex}`
+  useEffect(() => {
+    const valid = new Set<string>()
+    for (const item of cart?.items ?? []) {
+      for (let i = 0; i < item.quantity; i++) {
+        valid.add(unitKey(item.lineId, i))
+      }
+    }
+    setGiftByLineUnit((prev) => {
+      const next = { ...prev }
+      let changed = false
+      for (const k of Object.keys(next)) {
+        if (!valid.has(k)) {
+          delete next[k]
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [cart?.items])
 
   useEffect(() => {
     const items = cart?.items ?? []
@@ -850,6 +882,7 @@ const CheckoutPage = () => {
       const options = {
         giftByLineUnit: giftCount ? giftUnits : undefined,
         giftFee: giftCount ? giftFee : undefined,
+        giftBoxCount: giftCount > 0 ? giftCount : undefined,
         shippingAmount: displayShipping,
         taxAmount: displayTax,
         billing,

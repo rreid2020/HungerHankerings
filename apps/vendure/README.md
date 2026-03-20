@@ -38,6 +38,23 @@ This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback)
 
 - **Shipping:** Vendure does not store a separate “tax category” on shipping methods. The **postal shipping calculator** looks up the provincial rate using the **Standard** category (fallback: default category), i.e. the same **Settings → Tax rates** rows you use for products. After variants use Standard and zones/rates are seeded, product and shipping lines both align to those **Standard** rates for the active province zone (e.g. CA-ON).
 
+## Gift box add-on (storefront)
+
+The storefront can charge **$3.99 per box** for gift wrap + card. For that fee to be a **real Vendure line** (correct tax, Stripe total, Admin order lines):
+
+1. In **Admin** → **Catalog** create a product, e.g. **Gift box (wrap + card)**.
+2. Add one **variant**, price **$3.99** (or your amount), **tax category Standard** (same as snack boxes).
+3. Publish to the channel; copy the variant’s **ID** from the variant detail page.
+4. Set on the **Next.js server** (e.g. `storefront/.env` or Compose env for the storefront service):
+
+   `VENDURE_GIFT_BOX_VARIANT_ID=<paste variant id>`
+
+5. Redeploy the storefront. On **Confirm order**, the checkout API adds that variant with quantity = number of gift selections **before** payment; Vendure applies provincial tax like any other line. Gift messages are also sent as JSON in payment metadata key `gift_by_line_unit_json` when under the size limit.
+
+If this variable is **unset**, the UI still shows the gift fee using storefront math only; the Vendure order total (and Stripe) will **not** include that fee until you set the variant id.
+
+**Stale checkout drafts:** Gift selections are keyed by `lineId-unitIndex`. If the cart’s order lines get new IDs, old draft keys are dropped so you are not charged for a gift that no longer applies to the current cart.
+
 ## Guest checkout & customers
 
 If a guest uses an **email that already belongs to a registered account**, Vendure’s default is to block `setCustomerForOrder` (**EmailAddressConflictError**), which leaves the order showing **Guest** with no linked customer. This project sets **`allowGuestCheckoutForRegisteredCustomers: true`** so the order attaches to the existing customer record. Deploy the updated `vendure-config` and retry checkout.

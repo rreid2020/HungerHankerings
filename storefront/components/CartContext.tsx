@@ -57,6 +57,8 @@ export type ShippingOverridesByUnit = Record<string, AddressFields | null>
 export type CheckoutOptions = {
   giftByLineUnit?: GiftByLineUnit
   giftFee?: number
+  /** Boxes with gift wrap/card; sent to API for Vendure gift variant lines + metadata. */
+  giftBoxCount?: number
   shippingAmount?: number
   taxAmount?: number
   billing?: AddressFields
@@ -308,6 +310,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({
           checkoutId,
           email,
+          ...(options?.giftByLineUnit && Object.keys(options.giftByLineUnit).length > 0
+            ? { giftByLineUnit: options.giftByLineUnit }
+            : {}),
+          ...(typeof options?.giftBoxCount === "number" && options.giftBoxCount > 0
+            ? { giftBoxCount: options.giftBoxCount }
+            : {}),
           billing: {
             first_name: billing.first_name,
             last_name: billing.last_name,

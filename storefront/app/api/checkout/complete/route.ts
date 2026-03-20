@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
+  addItemToOrder,
   checkoutEmailUpdate,
   checkoutShippingAddressUpdate,
   checkoutBillingAddressUpdate,
@@ -78,6 +79,10 @@ export async function POST(request: NextRequest) {
       createAccount?: { password: string }
       storefrontShippingAmount?: number
       storefrontShippingLabel?: string
+      /** Number of boxes with gift option; capped to order quantity server-side. */
+      giftBoxCount?: number
+      /** Per-unit gift messages for fulfillment (stored on payment metadata when possible). */
+      giftByLineUnit?: Record<string, { giftMessage?: string }>
     } = body
 
     if (!email?.trim()) {
@@ -164,15 +169,44 @@ export async function POST(request: NextRequest) {
     }
     await checkoutDeliveryMethodUpdate("", shippingMethods[0].id, opts)
 
-    await checkoutTransitionToArrangingPayment(opts)
-
     const metadata: { key: string; value: string }[] = []
+
+    const giftBoxCountRaw = body.giftBoxCount
+    const giftBoxCount =
+      typeof giftBoxCountRaw === "number" && Number.isFinite(giftBoxCountRaw)
+        ? Math.max(0, Math.floor(giftBoxCountRaw))
+        : 0
+    const giftVariantId = process.env.VENDURE_GIFT_BOX_VARIANT_ID?.trim()
+    if (giftVariantId && giftBoxCount > 0) {
+      const preview = await getActiveOrder(opts)
+      const maxBoxes =
+        preview?.lines?.reduce((sum, l) => sum + l.quantity, 0) ?? 0
+      const n = Math.min(giftBoxCount, maxBoxes > 0 ? maxBoxes : giftBoxCount)
+      if (n > 0) {
+        await addItemToOrder(giftVariantId, n, opts)
+      }
+    }
+
+    const gbu = body.giftByLineUnit
+    if (gbu && typeof gbu === "object" && Object.keys(gbu).length > 0) {
+      try {
+        const json = JSON.stringify(gbu)
+        if (json.length < 12_000) {
+          metadata.push({ key: "gift_by_line_unit_json", value: json })
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     if (typeof storefrontShippingAmount === "number") {
       metadata.push({ key: "storefront_shipping_amount", value: String(storefrontShippingAmount) })
     }
     if (storefrontShippingLabel?.trim()) {
       metadata.push({ key: "storefront_shipping_label", value: storefrontShippingLabel.trim() })
     }
+
+    await checkoutTransitionToArrangingPayment(opts)
 
     const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
 
