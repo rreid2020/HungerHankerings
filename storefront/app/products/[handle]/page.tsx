@@ -1,34 +1,7 @@
-import { getProductByHandle, type StorefrontProduct } from "../../../lib/vendure"
+import { getProductByHandle } from "../../../lib/vendure"
 import { getPlainDescription } from "../../../lib/description"
-import ProductPurchase, {
-  type AttributeDefinition
-} from "../../../components/ProductPurchase"
-
-/** Build attribute definitions from variant attributes (e.g. Size, Gift option) for per-attribute selectors */
-function buildAttributeDefinitions(
-  variants: StorefrontProduct["variants"]
-): AttributeDefinition[] {
-  if (!variants?.length) return []
-  const byName = new Map<string, Set<string>>()
-  const order: string[] = []
-  for (const v of variants) {
-    for (const a of v?.attributes ?? []) {
-      const name = a.attribute?.name
-      if (!name) continue
-      if (!byName.has(name)) {
-        byName.set(name, new Set())
-        order.push(name)
-      }
-      for (const val of a.values ?? []) {
-        if (val?.name) byName.get(name)!.add(val.name)
-      }
-    }
-  }
-  return order.map((name) => ({
-    name,
-    values: Array.from(byName.get(name) ?? [])
-  }))
-}
+import { buildAttributeDefinitionsFromVariants } from "../../../lib/build-attribute-definitions"
+import ProductPurchase from "../../../components/ProductPurchase"
 
 const ProductDetailPage = async ({
   params
@@ -59,7 +32,7 @@ const ProductDetailPage = async ({
       price: variant.pricing?.price?.gross?.amount,
       attributes: variant.attributes
     })) ?? []
-  const attributeDefinitions = buildAttributeDefinitions(product?.variants)
+  const attributeDefinitions = buildAttributeDefinitionsFromVariants(product?.variants)
   const description = getPlainDescription(product?.description)
 
   return (

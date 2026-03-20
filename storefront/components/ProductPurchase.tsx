@@ -2,6 +2,11 @@
 
 import { useMemo, useState, useEffect } from "react"
 import AddToCart from "./AddToCart"
+import type { StorefrontProductVariant } from "../lib/vendure"
+import {
+  type AttributeDefinition,
+  findVariantByAttributes
+} from "../lib/build-attribute-definitions"
 
 export type VariantAttribute = {
   attribute: { name: string }
@@ -15,10 +20,7 @@ type Variant = {
   attributes?: VariantAttribute[]
 }
 
-export type AttributeDefinition = {
-  name: string
-  values: string[]
-}
+export type { AttributeDefinition }
 
 type ProductPurchaseProps = {
   variants: Variant[]
@@ -33,36 +35,6 @@ const formatPrice = (amount?: number) => {
     style: "currency",
     currency: "CAD"
   }).format(amount)
-}
-
-/** Check if a variant has the given attribute value */
-function variantHasAttributeValue(
-  variant: Variant,
-  attributeName: string,
-  valueName: string
-): boolean {
-  const attr = variant.attributes?.find(
-    (a) => a.attribute.name === attributeName
-  )
-  return attr?.values.some((v) => v.name === valueName) ?? false
-}
-
-/** Find variant that matches all selected attribute values */
-function findVariantByAttributes(
-  variants: Variant[],
-  attributeDefinitions: AttributeDefinition[],
-  selectedByAttribute: Record<string, string>
-): Variant | undefined {
-  return variants.find((v) =>
-    attributeDefinitions.every(
-      (def) =>
-        variantHasAttributeValue(
-          v,
-          def.name,
-          selectedByAttribute[def.name] ?? ""
-        )
-    )
-  )
 }
 
 const LABEL_CLASS =
@@ -104,10 +76,10 @@ const ProductPurchase = ({
   const resolvedVariant = useMemo(() => {
     if (hasAttributeSelectors) {
       return findVariantByAttributes(
-        variants,
+        variants as StorefrontProductVariant[],
         attributeDefinitions,
         selectedByAttribute
-      )
+      ) as Variant | undefined
     }
     return variants.find((v) => v.id === selectedId)
   }, [

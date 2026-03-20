@@ -270,7 +270,7 @@ export type CheckoutCompleteResult = {
 
 /**
  * Comma-separated product **slugs** to omit from storefront grids and PDP (e.g. internal gift add-on).
- * Set the gift product’s slug in Admin when creating it; it can still be added via Shop API by variant id.
+ * Must match Admin → product → **slug** exactly (case-insensitive).
  */
 function hiddenProductSlugSet(): Set<string> {
   const raw = process.env.STOREFRONT_HIDDEN_PRODUCT_SLUGS?.trim() ?? "";
@@ -282,9 +282,31 @@ function hiddenProductSlugSet(): Set<string> {
   );
 }
 
-function isCatalogProductSlug(slug: string): boolean {
-  const h = hiddenProductSlugSet();
-  return h.size === 0 || !h.has(slug.trim().toLowerCase());
+/**
+ * Comma-separated Vendure **product** ids (Admin product detail → ID in sidebar).
+ * Use when slug is awkward or you want a sure match.
+ */
+function hiddenProductIdSet(): Set<string> {
+  const raw = process.env.STOREFRONT_HIDDEN_PRODUCT_IDS?.trim() ?? "";
+  return new Set(raw.split(",").map((s) => s.trim()).filter(Boolean));
+}
+
+/** True = show in catalog / PDP */
+function isCatalogProduct(p: { id: string; slug: string }): boolean {
+  const hiddenIds = hiddenProductIdSet();
+  if (hiddenIds.size > 0 && hiddenIds.has(String(p.id))) {
+    return false;
+  }
+  const hiddenSlugs = hiddenProductSlugSet();
+  if (hiddenSlugs.size > 0 && hiddenSlugs.has(p.slug.trim().toLowerCase())) {
+    return false;
+  }
+  return true;
+}
+
+function isCatalogProductSlugKnownHidden(slug: string): boolean {
+  const hiddenSlugs = hiddenProductSlugSet();
+  return hiddenSlugs.size > 0 && hiddenSlugs.has(slug.trim().toLowerCase());
 }
 
 const productFields = `
@@ -299,8 +321,34 @@ const productFields = `
     price
     priceWithTax
     stockLevel
+    options {
+      name
+      code
+      group { name code }
+    }
   }
 `;
+
+/** Map Vendure ProductVariant.options → storefront attributes (one group = one dropdown). */
+function vendureOptionsToAttributes(
+  options?: Array<{
+    name: string;
+    code?: string;
+    group?: { name?: string; code?: string } | null;
+  }>
+): StorefrontVariantAttribute[] {
+  if (!options?.length) return [];
+  return options.map((o) => {
+    const groupLabel =
+      (o.group?.name && o.group.name.trim()) ||
+      (o.group?.code && o.group.code.trim()) ||
+      "Option";
+    return {
+      attribute: { name: groupLabel },
+      values: [{ name: o.name }],
+    };
+  });
+}
 
 function mapVendureProductToStorefront(p: {
   id: string;
@@ -314,6 +362,11 @@ function mapVendureProductToStorefront(p: {
     price: number;
     priceWithTax: number;
     stockLevel?: string;
+    options?: Array<{
+      name: string;
+      code?: string;
+      group?: { name?: string; code?: string } | null;
+    }>;
   }>;
 }): StorefrontProduct {
   const amount = p.variants?.[0]?.price ?? 0;
@@ -341,6 +394,7 @@ function mapVendureProductToStorefront(p: {
           },
         },
         quantityAvailable: v.stockLevel === "IN_STOCK" ? 999 : 0,
+        attributes: vendureOptionsToAttributes(v.options),
       })) ?? [],
   };
 }
@@ -360,6 +414,11 @@ export async function listProducts(): Promise<StorefrontProduct[]> {
           price: number;
           priceWithTax: number;
           stockLevel?: string;
+          options?: Array<{
+            name: string;
+            code?: string;
+            group?: { name?: string; code?: string } | null;
+          }>;
         }>;
       }>;
     };
@@ -372,16 +431,14 @@ export async function listProducts(): Promise<StorefrontProduct[]> {
       }
     }
   `);
-  const items = (data.products?.items ?? []).filter((p) =>
-    isCatalogProductSlug(p.slug)
-  );
+  const items = (data.products?.items ?? []).filter((p) => isCatalogProduct(p));
   return items.map(mapVendureProductToStorefront);
 }
 
 export async function getProductByHandle(
   slug: string
 ): Promise<StorefrontProduct | null> {
-  if (!isCatalogProductSlug(slug)) return null;
+  if (isCatalogProductSlugKnownHidden(slug)) return null;
   const data = await fetchVendure<{
     product: {
       id: string;
@@ -395,26 +452,23 @@ export async function getProductByHandle(
         price: number;
         priceWithTax: number;
         stockLevel?: string;
-        options?: Array<{ name: string; group?: { name: string }; code: string }>;
+        options?: Array<{
+          name: string;
+          code?: string;
+          group?: { name?: string; code?: string } | null;
+        }>;
       }>;
     } | null;
   }>(`
     query ProductBySlug($slug: String!) {
       product(slug: $slug) {
         ${productFields}
-        variants {
-          id
-          name
-          price
-          priceWithTax
-          stockLevel
-          options { name group { name } code }
-        }
       }
     }
   `, { slug });
   if (!data.product) return null;
   const p = data.product as Parameters<typeof mapVendureProductToStorefront>[0];
+  if (!isCatalogProduct({ id: p.id, slug: p.slug })) return null;
   return mapVendureProductToStorefront(p);
 }
 

@@ -1,9 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { useCart } from "./CartContext"
 import type { StorefrontProduct } from "../lib/vendure"
+import {
+  buildAttributeDefinitionsFromVariants,
+  findVariantByAttributes
+} from "../lib/build-attribute-definitions"
 
 const formatPrice = (amount?: number) => {
   if (amount === undefined || amount === null) return ""
@@ -15,31 +19,72 @@ const formatPrice = (amount?: number) => {
 
 const ProductCard = ({ product }: { product: StorefrontProduct }) => {
   const { addItem, loading, updating } = useCart()
-  const variants = product.variants?.filter((v) => v.id) ?? []
+  const variants = useMemo(
+    () => product.variants?.filter((v) => v.id) ?? [],
+    [product.variants]
+  )
   const firstVariant = variants[0]
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     firstVariant?.id ?? null
   )
+  const attributeDefinitions = useMemo(
+    () => buildAttributeDefinitionsFromVariants(variants),
+    [variants]
+  )
+  const hasOptionGroupSelectors =
+    attributeDefinitions.length > 0 && variants.length > 1
+
+  const [selectedByAttribute, setSelectedByAttribute] = useState<
+    Record<string, string>
+  >({})
+
+  useEffect(() => {
+    const sel: Record<string, string> = {}
+    for (const def of attributeDefinitions) {
+      sel[def.name] = def.values[0] ?? ""
+    }
+    setSelectedByAttribute(sel)
+    setSelectedVariantId(firstVariant?.id ?? null)
+  }, [product.id, attributeDefinitions, firstVariant?.id])
+
   const [quantity, setQuantity] = useState(1)
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
 
-  const selectedVariant = variants.find((v) => v.id === selectedVariantId)
-  const price = selectedVariant?.pricing?.price?.gross?.amount ??
+  const resolvedVariant = useMemo(() => {
+    if (hasOptionGroupSelectors) {
+      return findVariantByAttributes(
+        variants,
+        attributeDefinitions,
+        selectedByAttribute
+      )
+    }
+    return variants.find((v) => v.id === selectedVariantId)
+  }, [
+    hasOptionGroupSelectors,
+    variants,
+    attributeDefinitions,
+    selectedByAttribute,
+    selectedVariantId
+  ])
+
+  const effectiveVariantId = resolvedVariant?.id ?? ""
+  const price =
+    resolvedVariant?.pricing?.price?.gross?.amount ??
     product.pricing?.priceRange?.start?.gross?.amount
   const outOfStock =
-    selectedVariant != null &&
-    typeof selectedVariant.quantityAvailable === "number" &&
-    selectedVariant.quantityAvailable < 1
+    resolvedVariant != null &&
+    typeof resolvedVariant.quantityAvailable === "number" &&
+    resolvedVariant.quantityAvailable < 1
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!selectedVariantId) return
+    if (!effectiveVariantId) return
     setAddError(null)
     setAdding(true)
     try {
-      await addItem(selectedVariantId, quantity)
+      await addItem(effectiveVariantId, quantity)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Could not add to cart."
@@ -62,6 +107,8 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
     setQuantity(qty)
     setAddError(null)
   }
+
+  const showVariantUi = variants.length > 1
 
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow-md">
@@ -96,32 +143,56 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
           </Link>
         ) : (
           <>
-            {variants.length > 1 && (
-              <label className="block text-xs font-medium text-foreground">
-                Box size
-              </label>
-            )}
-            {variants.length > 1 ? (
-              <select
-                value={selectedVariantId ?? ""}
-                onChange={(e) => handleVariantChange(e.target.value || null)}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="">Select size</option>
-                {variants.map((v) => {
-                  const stock = v.quantityAvailable
-                  const isOut = typeof stock === "number" && stock < 1
-                  return (
-                    <option key={v.id} value={v.id} disabled={isOut}>
-                      {v.name}
-                      {v.pricing?.price?.gross?.amount != null
-                        ? ` — ${formatPrice(v.pricing.price.gross.amount)}`
-                        : ""}
-                      {isOut ? " (Out of stock)" : ""}
-                    </option>
-                  )
-                })}
-              </select>
+            {hasOptionGroupSelectors ? (
+              <div className="space-y-2">
+                {attributeDefinitions.map((def) => (
+                  <label key={def.name} className="block text-xs font-medium text-foreground">
+                    {def.name}
+                    <select
+                      value={selectedByAttribute[def.name] ?? ""}
+                      onChange={(e) =>
+                        setSelectedByAttribute((prev) => ({
+                          ...prev,
+                          [def.name]: e.target.value
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {def.values.map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            ) : showVariantUi ? (
+              <>
+                <label className="block text-xs font-medium text-foreground">
+                  Options
+                </label>
+                <select
+                  value={selectedVariantId ?? ""}
+                  onChange={(e) => handleVariantChange(e.target.value || null)}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">Select</option>
+                  {variants.map((v) => {
+                    const stock = v.quantityAvailable
+                    const isOut = typeof stock === "number" && stock < 1
+                    return (
+                      <option key={v.id} value={v.id} disabled={isOut}>
+                        {v.name}
+                        {v.pricing?.price?.gross?.amount != null
+                          ? ` — ${formatPrice(v.pricing.price.gross.amount)}`
+                          : ""}
+                        {isOut ? " (Out of stock)" : ""}
+                      </option>
+                    )
+                  })}
+                </select>
+              </>
             ) : null}
             {outOfStock && (
               <p className="mt-2 text-sm font-medium text-light_coral-600">
@@ -129,7 +200,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
               </p>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {variants.length > 1 ? (
+              {showVariantUi ? (
                 <label className="sr-only">Quantity</label>
               ) : null}
               <input
@@ -148,7 +219,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
                 type="button"
                 onClick={handleAddToCart}
                 disabled={
-                  !selectedVariantId || loading || updating || adding || outOfStock
+                  !effectiveVariantId || loading || updating || adding || outOfStock
                 }
                 className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
