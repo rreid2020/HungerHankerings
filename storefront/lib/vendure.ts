@@ -980,6 +980,73 @@ export async function customerLogin(
   }
 }
 
+/**
+ * Login with the browser's Shop API session cookie so Vendure merges the guest cart into the account.
+ * Server-side checkout must use this (not {@link customerLogin}) when "create account" is checked.
+ */
+export async function customerLoginWithCookies(
+  email: string,
+  password: string,
+  cookieHeader: string
+): Promise<AuthTokenResponse> {
+  const trimmed = cookieHeader.trim();
+  if (!trimmed) {
+    throw new Error("Checkout session missing. Enable cookies, refresh the page, and try again.");
+  }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Cookie: trimmed,
+  };
+  const body = JSON.stringify({
+    query: `
+      mutation Login($username: String!, $password: String!, $rememberMe: Boolean) {
+        login(username: $username, password: $password, rememberMe: $rememberMe) {
+          ... on CurrentUser { id identifier }
+          ... on InvalidCredentialsError { message errorCode }
+          ... on ErrorResult { message errorCode }
+        }
+      }
+    `,
+    variables: { username: email.trim(), password, rememberMe: true },
+  });
+  try {
+    const res = await fetch(shopApiUrl, {
+      method: "POST",
+      headers,
+      body,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const authToken = res.headers.get(VENDURE_AUTH_HEADER);
+    const json = (await res.json()) as {
+      data?: { login?: { id?: string; identifier?: string; message?: string } };
+      errors?: { message: string }[];
+    };
+    if (json.errors?.length) {
+      throw new Error(json.errors[0].message || "Login failed");
+    }
+    const login = json.data?.login;
+    if (login && "message" in login && login.message) {
+      throw new Error(login.message);
+    }
+    if (!authToken || !login?.id) {
+      throw new Error("Login failed");
+    }
+    return {
+      token: authToken,
+      refreshToken: authToken,
+      user: { id: login.id, email: (login.identifier as string) ?? email },
+    };
+  } catch (e) {
+    clearTimeout(timeoutId);
+    if (e instanceof Error) throw e;
+    throw new Error("Login failed");
+  }
+}
+
 export async function customerRegister(params: {
   email: string;
   password: string;
@@ -1443,8 +1510,11 @@ export async function getCustomerOrders(
 }
 
 /** Get order by code (Vendure uses code; use this for confirmation and account order detail) */
-export async function getOrderByToken(tokenOrCode: string): Promise<StorefrontOrder | null> {
-  const order = await getOrderByCode(tokenOrCode);
+export async function getOrderByToken(
+  tokenOrCode: string,
+  opts?: VendureRequestOptions
+): Promise<StorefrontOrder | null> {
+  const order = await getOrderByCode(tokenOrCode, opts);
   return order ? mapVendureOrderToOrder(order) : null;
 }
 

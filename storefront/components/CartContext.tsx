@@ -305,7 +305,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
           JSON.stringify({
             orderToken,
             orderNumber: data?.orderNumber,
-            createdAccount: data?.createdAccount
+            createdAccount: data?.createdAccount,
+            orderSummary: data?.orderSummary,
           })
         )
       }

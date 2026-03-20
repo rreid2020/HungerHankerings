@@ -6,9 +6,8 @@ import {
   getCheckoutShippingMethods,
   checkoutDeliveryMethodUpdate,
   checkoutComplete,
-  checkoutCustomerAttach,
   customerRegister,
-  customerLogin,
+  customerLoginWithCookies,
   type StorefrontAddressInput
 } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
@@ -89,8 +88,20 @@ export async function POST(request: NextRequest) {
 
     const cookieHeader = request.headers.get("cookie") ?? undefined
     const bearer = request.cookies.get("vendure_token")?.value
-    const opts = {
-      ...(cookieHeader ? { cookie: cookieHeader } : {}),
+
+    /** Vendure active cart lives on the Shop API session cookie — it is not sent to /shop-api if missing here. */
+    if (!cookieHeader?.trim()) {
+      return NextResponse.json(
+        {
+          error:
+            "Your checkout session was lost (no cart cookie). Enable cookies, refresh the page, and try again."
+        },
+        { status: 400 }
+      )
+    }
+
+    let opts: { cookie?: string; authToken?: string } = {
+      cookie: cookieHeader,
       ...(bearer ? { authToken: bearer } : {}),
     }
 
@@ -111,10 +122,16 @@ export async function POST(request: NextRequest) {
         // User may already exist; continue to login
       }
       try {
-        const loginResult = await customerLogin(email.trim(), createAccount.password.trim())
+        // Must use the browser session cookie so Vendure merges the guest cart with the new account.
+        const loginResult = await customerLoginWithCookies(
+          email.trim(),
+          createAccount.password.trim(),
+          cookieHeader
+        )
         authToken = loginResult.token
         refreshToken = loginResult.refreshToken
-        await checkoutCustomerAttach("", loginResult.token, opts)
+        // After login, use Bearer only for the rest of this request — merged order is tied to this token.
+        opts = { authToken: loginResult.token }
       } catch (attachErr) {
         const msg = attachErr instanceof Error ? attachErr.message : "Could not attach account to order"
         return NextResponse.json({ error: msg }, { status: 400 })
@@ -185,7 +202,28 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       orderToken: result.order.token,
       orderNumber: result.order.number,
-      createdAccount: createdAccount || undefined
+      createdAccount: createdAccount || undefined,
+      orderSummary: {
+        email: email.trim(),
+        total: result.order.total?.gross?.amount ?? 0,
+        currency: result.order.total?.gross?.currency ?? "CAD",
+        lines: (result.order.lines ?? []).map((l) => ({
+          productName: l.productName,
+          variantName: l.variantName ?? null,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice?.gross?.amount ?? 0
+        })),
+        shippingAddress: result.order.shippingAddress
+          ? {
+              firstName: result.order.shippingAddress.firstName,
+              lastName: result.order.shippingAddress.lastName,
+              streetAddress1: result.order.shippingAddress.streetAddress1,
+              city: result.order.shippingAddress.city,
+              postalCode: result.order.shippingAddress.postalCode,
+              countryArea: result.order.shippingAddress.countryArea ?? null
+            }
+          : null
+      }
     })
 
     if (authToken && refreshToken) {

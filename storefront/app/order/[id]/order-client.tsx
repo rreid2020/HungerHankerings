@@ -7,7 +7,8 @@ import type {
   AddressFields
 } from "../../../components/CartContext"
 
-const ORDER_STORAGE_KEY = "last_order_v1"
+/** Must match CartContext ORDER_STORAGE_KEY */
+const ORDER_STORAGE_KEY = "vendure_last_order_v1"
 
 type CartItem = {
   lineId: string
@@ -49,8 +50,8 @@ const OrderClient = ({ fallbackId }: { fallbackId: string }) => {
       return
     }
     try {
-      const parsed = JSON.parse(raw) as StoredOrder
-      setOrderId(parsed.id || fallbackId)
+      const parsed = JSON.parse(raw) as StoredOrder & { orderToken?: string }
+      setOrderId(parsed.orderToken ?? parsed.id ?? fallbackId)
     } catch {
       setOrderId(fallbackId)
     }

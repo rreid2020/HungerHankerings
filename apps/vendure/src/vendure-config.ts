@@ -107,6 +107,10 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     tokenMethod: ["bearer", "cookie"],
     cookieOptions: {
       secret: process.env.COOKIE_SECRET ?? "dev-cookie-secret",
+      path: "/",
+      sameSite: "lax",
+      // Default false so sessions work over HTTP (e.g. IP address before TLS). Set VENDURE_COOKIE_SECURE=true when you only serve HTTPS.
+      secure: process.env.VENDURE_COOKIE_SECURE === "true",
     },
     superadminCredentials: {
       identifier: process.env.SUPERADMIN_USERNAME ?? "superadmin",
