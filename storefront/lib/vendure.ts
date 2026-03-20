@@ -158,13 +158,27 @@ export type StorefrontCheckout = {
       id: string;
       name: string;
       product: { name: string; thumbnail?: { url: string | null } | null };
-      pricing?: { price?: { gross?: { amount: number; currency: string } } };
+      pricing?: {
+        /** Unit price ex tax (from order line; use for pre–tax checkout math). */
+        price?: {
+          net?: { amount: number; currency: string };
+          /** Unit price inc tax (customer-facing). */
+          gross?: { amount: number; currency: string };
+        };
+      };
       media?: { url: string }[];
     };
   }[];
-  subtotalPrice?: { gross?: { amount: number; currency: string } };
+  /** Line subtotals: net = ex tax, gross = inc tax (Vendure Money / 100). */
+  subtotalPrice?: {
+    net?: { amount: number; currency: string };
+    gross?: { amount: number; currency: string };
+  };
   totalPrice?: { gross?: { amount: number; currency: string } };
-  shippingPrice?: { gross?: { amount: number; currency: string } };
+  shippingPrice?: {
+    net?: { amount: number; currency: string };
+    gross?: { amount: number; currency: string };
+  };
 };
 
 export type StorefrontAddressInput = {
@@ -394,6 +408,10 @@ const activeOrderFragment = `
   lines {
     id
     quantity
+    discountedUnitPrice
+    discountedUnitPriceWithTax
+    discountedLinePrice
+    discountedLinePriceWithTax
     linePriceWithTax
     productVariant {
       id
@@ -404,8 +422,11 @@ const activeOrderFragment = `
       featuredAsset { preview }
     }
   }
+  subTotal
   subTotalWithTax
+  shipping
   shippingWithTax
+  total
   totalWithTax
 `;
 
@@ -415,6 +436,10 @@ function mapVendureOrderToCheckout(order: {
   lines?: Array<{
     id: string;
     quantity: number;
+    discountedUnitPrice: number;
+    discountedUnitPriceWithTax: number;
+    discountedLinePrice: number;
+    discountedLinePriceWithTax: number;
     linePriceWithTax: number;
     productVariant: {
       id: string;
@@ -425,8 +450,11 @@ function mapVendureOrderToCheckout(order: {
       featuredAsset?: { preview?: string } | null;
     };
   }>;
+  subTotal?: number;
   subTotalWithTax?: number;
+  shipping?: number;
   shippingWithTax?: number;
+  total?: number;
   totalWithTax?: number;
 } | null): StorefrontCheckout | null {
   if (!order) return null;
@@ -440,7 +468,7 @@ function mapVendureOrderToCheckout(order: {
         quantity: line.quantity,
         totalPrice: {
           gross: {
-            amount: line.linePriceWithTax / 100,
+            amount: line.discountedLinePriceWithTax / 100,
             currency,
           },
         },
@@ -456,8 +484,12 @@ function mapVendureOrderToCheckout(order: {
           },
           pricing: {
             price: {
+              net: {
+                amount: line.discountedUnitPrice / 100,
+                currency,
+              },
               gross: {
-                amount: line.productVariant.priceWithTax / 100,
+                amount: line.discountedUnitPriceWithTax / 100,
                 currency,
               },
             },
@@ -467,8 +499,20 @@ function mapVendureOrderToCheckout(order: {
             : undefined,
         },
       })) ?? [],
-    subtotalPrice: order.subTotalWithTax != null ? { gross: { amount: order.subTotalWithTax / 100, currency } } : undefined,
-    shippingPrice: order.shippingWithTax != null ? { gross: { amount: order.shippingWithTax / 100, currency } } : undefined,
+    subtotalPrice:
+      order.subTotal != null && order.subTotalWithTax != null
+        ? {
+            net: { amount: order.subTotal / 100, currency },
+            gross: { amount: order.subTotalWithTax / 100, currency },
+          }
+        : undefined,
+    shippingPrice:
+      order.shipping != null && order.shippingWithTax != null
+        ? {
+            net: { amount: order.shipping / 100, currency },
+            gross: { amount: order.shippingWithTax / 100, currency },
+          }
+        : undefined,
     totalPrice: order.totalWithTax != null ? { gross: { amount: order.totalWithTax / 100, currency } } : undefined,
   };
 }
@@ -635,6 +679,57 @@ function toVendureAddress(addr: StorefrontAddressInput) {
   };
 }
 
+/** Shop API mutations return Order | ErrorResult; ensure we got an order id. */
+function assertShopOrderMutationPayload(
+  payload: { id?: string; message?: string; errorCode?: string } | null | undefined,
+  action: string
+): void {
+  if (payload && typeof payload.id === "string" && payload.id.length > 0) {
+    return;
+  }
+  const msg =
+    payload && typeof payload.message === "string" && payload.message.trim()
+      ? payload.message.trim()
+      : `${action} failed`;
+  throw new Error(msg);
+}
+
+async function shopTransitionOrderToState(
+  state: string,
+  opts?: VendureRequestOptions
+): Promise<void> {
+  const data = await fetchVendure<{
+    transitionOrderToState:
+      | { id?: string; state?: string }
+      | { message?: string; transitionError?: string }
+      | null;
+  }>(
+    `
+    mutation ShopTransitionOrder($state: String!) {
+      transitionOrderToState(state: $state) {
+        ... on Order { id state }
+        ... on OrderStateTransitionError { message transitionError fromState toState }
+      }
+    }
+  `,
+    { state },
+    opts
+  );
+  const r = data.transitionOrderToState;
+  if (r == null) {
+    throw new Error(
+      "Could not change order state (empty response). If you are logged in, try logging out and using guest checkout, or clear cookies and retry."
+    );
+  }
+  if ("transitionError" in r && (r as { transitionError?: string }).transitionError) {
+    const err = r as { message?: string; transitionError: string };
+    throw new Error(err.message || err.transitionError);
+  }
+  if (!("id" in r) || !(r as { id?: string }).id) {
+    throw new Error("Order state transition did not return an order.");
+  }
+}
+
 export async function checkoutEmailUpdate(
   _checkoutId: string,
   email: string,
@@ -642,20 +737,27 @@ export async function checkoutEmailUpdate(
   firstName?: string,
   lastName?: string
 ): Promise<StorefrontCheckout> {
-  await fetchVendure(`
+  const data = await fetchVendure<{
+    setCustomerForOrder: { id?: string; message?: string; errorCode?: string } | null;
+  }>(
+    `
     mutation SetCustomerForOrder($input: CreateCustomerInput!) {
       setCustomerForOrder(input: $input) {
         ... on Order { id }
         ... on ErrorResult { message errorCode }
       }
     }
-  `, {
-    input: {
-      emailAddress: email,
-      firstName: (firstName ?? "").trim() || "Guest",
-      lastName: (lastName ?? "").trim() || "Guest",
+  `,
+    {
+      input: {
+        emailAddress: email,
+        firstName: (firstName ?? "").trim() || "Guest",
+        lastName: (lastName ?? "").trim() || "Guest",
+      },
     },
-  }, opts);
+    opts
+  );
+  assertShopOrderMutationPayload(data.setCustomerForOrder, "Set customer for order");
   const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
@@ -666,14 +768,21 @@ export async function checkoutShippingAddressUpdate(
   address: StorefrontAddressInput,
   opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
-  await fetchVendure(`
+  const data = await fetchVendure<{
+    setOrderShippingAddress: { id?: string; message?: string; errorCode?: string } | null;
+  }>(
+    `
     mutation SetOrderShippingAddress($input: CreateAddressInput!) {
       setOrderShippingAddress(input: $input) {
         ... on Order { id }
         ... on ErrorResult { message errorCode }
       }
     }
-  `, { input: toVendureAddress(address) }, opts);
+  `,
+    { input: toVendureAddress(address) },
+    opts
+  );
+  assertShopOrderMutationPayload(data.setOrderShippingAddress, "Set shipping address");
   const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
@@ -684,14 +793,21 @@ export async function checkoutBillingAddressUpdate(
   address: StorefrontAddressInput,
   opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
-  await fetchVendure(`
+  const data = await fetchVendure<{
+    setOrderBillingAddress: { id?: string; message?: string; errorCode?: string } | null;
+  }>(
+    `
     mutation SetOrderBillingAddress($input: CreateAddressInput!) {
       setOrderBillingAddress(input: $input) {
         ... on Order { id }
         ... on ErrorResult { message errorCode }
       }
     }
-  `, { input: toVendureAddress(address) }, opts);
+  `,
+    { input: toVendureAddress(address) },
+    opts
+  );
+  assertShopOrderMutationPayload(data.setOrderBillingAddress, "Set billing address");
   const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
@@ -745,14 +861,21 @@ export async function checkoutDeliveryMethodUpdate(
   deliveryMethodId: string,
   opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
-  await fetchVendure(`
+  const data = await fetchVendure<{
+    setOrderShippingMethod: { id?: string; message?: string; errorCode?: string } | null;
+  }>(
+    `
     mutation SetOrderShippingMethod($shippingMethodId: [ID!]!) {
       setOrderShippingMethod(shippingMethodId: $shippingMethodId) {
         ... on Order { id }
         ... on ErrorResult { message errorCode }
       }
     }
-  `, { shippingMethodId: [deliveryMethodId] }, opts);
+  `,
+    { shippingMethodId: [deliveryMethodId] },
+    opts
+  );
+  assertShopOrderMutationPayload(data.setOrderShippingMethod, "Set shipping method");
   const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
@@ -785,10 +908,26 @@ export async function createStripePaymentIntent(opts?: VendureRequestOptions): P
 }
 
 export async function checkoutTransitionToArrangingPayment(opts?: VendureRequestOptions): Promise<void> {
-  const { activeOrder } = await fetchVendure<{
-    activeOrder: { state: string } | null;
-  }>(`query ActiveOrderState { activeOrder { state } }`, undefined, opts);
-  const state = activeOrder?.state;
+  const snap = await fetchVendure<{
+    activeOrder: { state: string; nextOrderStates: string[] } | null;
+  }>(
+    `query ActiveOrderCheckoutState {
+      activeOrder {
+        state
+        nextOrderStates
+      }
+    }`,
+    undefined,
+    opts
+  );
+  const active = snap.activeOrder;
+  if (!active) {
+    throw new Error("No active order");
+  }
+
+  let state = active.state;
+  let nextStates = active.nextOrderStates ?? [];
+
   if (
     state === "ArrangingPayment" ||
     state === "PaymentAuthorized" ||
@@ -796,27 +935,36 @@ export async function checkoutTransitionToArrangingPayment(opts?: VendureRequest
   ) {
     return;
   }
-  const data = await fetchVendure<{
-    transitionOrderToState:
-      | { state?: string }
-      | { message?: string; transitionError?: string; fromState?: string; toState?: string };
-  }>(
-    `
-    mutation TransitionToArrangingPayment {
-      transitionOrderToState(state: "ArrangingPayment") {
-        ... on Order { id state }
-        ... on OrderStateTransitionError { message transitionError fromState toState }
-      }
-    }
-  `,
-    undefined,
-    opts
-  );
-  const r = data.transitionOrderToState;
-  if (r && typeof r === "object" && "transitionError" in r && (r as { transitionError?: string }).transitionError) {
-    const err = r as { message?: string; transitionError: string; fromState?: string; toState?: string };
-    throw new Error(err.message || err.transitionError);
+
+  // Logged-in customers with Permission.Owner satisfy the auth guard but get authorizedAsOwnerOnly=false;
+  // Vendure then returns [] for nextOrderStates and no-ops transitionOrderToState (null).
+  if (
+    nextStates.length === 0 &&
+    (state === "AddingItems" || state === "Draft" || state === "Created")
+  ) {
+    throw new Error(
+      "Checkout cannot continue: the server returned no allowed order transitions. " +
+        "This often happens when logged in with a customer role that includes the Owner permission. " +
+        "Try logging out and checking out as a guest, or ask an admin to adjust the Customer role permissions in Vendure."
+    );
   }
+
+  if (state === "Created" && nextStates.includes("AddingItems")) {
+    await shopTransitionOrderToState("AddingItems", opts);
+    const again = await fetchVendure<{
+      activeOrder: { state: string; nextOrderStates: string[] } | null;
+    }>(
+      `query ActiveOrderCheckoutState2 {
+        activeOrder { state nextOrderStates }
+      }`,
+      undefined,
+      opts
+    );
+    state = again.activeOrder?.state ?? state;
+    nextStates = again.activeOrder?.nextOrderStates ?? [];
+  }
+
+  await shopTransitionOrderToState("ArrangingPayment", opts);
 }
 
 export async function getCheckoutTotalPrice(

@@ -23,8 +23,8 @@ let PostalZoneAdminResolver = class PostalZoneAdminResolver {
     postalCodeZones(ctx) {
         return this.postalZoneService.findAll(ctx);
     }
-    updatePostalCodeZone(ctx, id, rateCents) {
-        return this.postalZoneService.updateRate(ctx, id, rateCents);
+    updatePostalCodeZone(ctx, id, rateCents, city, region) {
+        return this.postalZoneService.updateZone(ctx, id, rateCents, city ?? null, region ?? null);
     }
 };
 exports.PostalZoneAdminResolver = PostalZoneAdminResolver;
@@ -43,8 +43,10 @@ __decorate([
     __param(0, (0, core_1.Ctx)()),
     __param(1, (0, graphql_1.Args)("id")),
     __param(2, (0, graphql_1.Args)("rateCents")),
+    __param(3, (0, graphql_1.Args)("city")),
+    __param(4, (0, graphql_1.Args)("region")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [core_1.RequestContext, String, Number]),
+    __metadata("design:paramtypes", [core_1.RequestContext, String, Number, String, String]),
     __metadata("design:returntype", Promise)
 ], PostalZoneAdminResolver.prototype, "updatePostalCodeZone", null);
 exports.PostalZoneAdminResolver = PostalZoneAdminResolver = __decorate([

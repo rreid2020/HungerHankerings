@@ -39,6 +39,8 @@ exports.shippingRatesPageHtml = `
         <th>Country</th>
         <th>Prefix</th>
         <th>Zone</th>
+        <th>City</th>
+        <th>Region</th>
         <th>Rate (cents)</th>
         <th></th>
       </tr>
@@ -74,6 +76,8 @@ exports.shippingRatesPageHtml = `
           <td>\${escapeHtml(z.countryCode)}</td>
           <td>\${escapeHtml(z.prefix || '—')}</td>
           <td>\${escapeHtml(z.zoneName)}</td>
+          <td><input type="text" value="\${escapeHtml(z.city || '')}" placeholder="City" class="city" data-id="\${z.id}" style="width:8rem" /></td>
+          <td><input type="text" value="\${escapeHtml(z.region || '')}" placeholder="Region" class="region" data-id="\${z.id}" style="width:8rem" /></td>
           <td><input type="number" min="0" step="1" value="\${z.rateCents}" class="cents" data-id="\${z.id}" /></td>
           <td><button type="button" class="save" data-id="\${z.id}">Save</button></td>
         </tr>
@@ -115,7 +119,7 @@ exports.shippingRatesPageHtml = `
     (async function load() {
       try {
         const data = await graphql(
-          \`query { postalCodeZones { id countryCode prefix zoneName rateCents } }\`,
+          \`query { postalCodeZones { id countryCode prefix zoneName city region rateCents } }\`,
           {}
         );
         renderZones(data.postalCodeZones || []);

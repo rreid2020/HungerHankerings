@@ -27,9 +27,14 @@ type CartItem = {
 
 type Cart = {
   items: CartItem[]
+  /** Sum of line totals excluding tax (matches Vendure `subTotal` when order is synced). */
   subtotal: number
   total: number
+  /** Shipping excluding tax (Vendure `shipping` or storefront quote, dollars). */
   shippingTotal: number
+  /** From Vendure when present — for reconciling tax when not using client-side tax math. */
+  subtotalWithTax?: number
+  shippingWithTax?: number
 }
 
 export type AddressFields = {
@@ -109,7 +114,16 @@ const CartContext = createContext<CartContextValue | undefined>(undefined)
 export const VENDURE_ORDER_STORAGE_KEY = "vendure_last_order_v1"
 const ORDER_STORAGE_KEY = VENDURE_ORDER_STORAGE_KEY
 
-const buildCart = (items: CartItem[], totals?: { subtotal?: number; shipping?: number; total?: number }): Cart => {
+const buildCart = (
+  items: CartItem[],
+  totals?: {
+    subtotal?: number
+    shipping?: number
+    total?: number
+    subtotalWithTax?: number
+    shippingWithTax?: number
+  }
+): Cart => {
   const subtotal = totals?.subtotal ?? items.reduce(
       (sum, item) => sum + item.unitPrice * item.quantity,
       0
@@ -121,14 +135,19 @@ const buildCart = (items: CartItem[], totals?: { subtotal?: number; shipping?: n
     items,
     subtotal,
     shippingTotal,
-    total
+    total,
+    subtotalWithTax: totals?.subtotalWithTax,
+    shippingWithTax: totals?.shippingWithTax
   }
 }
 
 const mapCheckoutToCart = (checkout: Awaited<ReturnType<typeof getActiveOrder>>): Cart => {
   if (!checkout) return buildCart([])
   const items = checkout.lines.map((line) => {
-    const price = line.variant.pricing?.price?.gross?.amount ?? 0
+    const unitNet =
+      line.variant.pricing?.price?.net?.amount ??
+      line.variant.pricing?.price?.gross?.amount ??
+      0
     return {
       id: line.variant.id,
       lineId: line.id,
@@ -136,14 +155,16 @@ const mapCheckoutToCart = (checkout: Awaited<ReturnType<typeof getActiveOrder>>)
         line.variant.name ? ` - ${line.variant.name}` : ""
       }`,
       quantity: line.quantity,
-      unitPrice: price,
+      unitPrice: unitNet,
       image: line.variant.media?.[0]?.url ?? line.variant.product?.thumbnail?.url ?? null
     }
   })
   return buildCart(items, {
-    subtotal: checkout.subtotalPrice?.gross?.amount ?? undefined,
-    shipping: checkout.shippingPrice?.gross?.amount ?? undefined,
-    total: checkout.totalPrice?.gross?.amount ?? undefined
+    subtotal: checkout.subtotalPrice?.net?.amount ?? undefined,
+    shipping: checkout.shippingPrice?.net?.amount ?? undefined,
+    total: checkout.totalPrice?.gross?.amount ?? undefined,
+    subtotalWithTax: checkout.subtotalPrice?.gross?.amount ?? undefined,
+    shippingWithTax: checkout.shippingPrice?.gross?.amount ?? undefined
   })
 }
 

@@ -1,5 +1,6 @@
 import path from "path";
 import {
+  DefaultGuestCheckoutStrategy,
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   defaultConfig,
@@ -121,6 +122,18 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     paymentMethodHandlers: [dummyPaymentHandler],
   },
   // Stripe: create Payment Method in Admin with "Stripe payments" and set API key + webhook secret
+  //
+  // Guest checkout with an email that already belongs to a registered user would otherwise get
+  // EmailAddressConflictError and never attach a Customer to the order. Allowing merge links the order
+  // to the existing customer record (required for a proper customer on the order in Admin).
+  orderOptions: {
+    guestCheckoutStrategy: new DefaultGuestCheckoutStrategy({
+      allowGuestCheckoutForRegisteredCustomers: true,
+    }),
+  },
+  // Checkout note: if the default Customer role includes Permission.Owner, the Shop API can return
+  // empty nextOrderStates / skip transitions for logged-in users. Prefer Customer having UpdateOrder
+  // without Owner, or use guest checkout — see storefront checkout error text for details.
   taxOptions: {
     taxZoneStrategy: canadianProvinceTaxZoneStrategy,
   },

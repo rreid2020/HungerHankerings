@@ -109,17 +109,20 @@ async function seed() {
   }
   const categoryId = (standardCategory as { id: string }).id;
 
-  // Create tax rate per zone
-  const { items: rates } = await taxRateService.findAll(ctx, { take: 200 }, ["zone"]);
-  const ratesByZoneId = new Set(
-    (rates as { zone?: { id: string } }[]).map((r) => r.zone?.id).filter(Boolean) as string[]
+  // Create tax rate per zone for Standard (primary pass)
+  const { items: rates } = await taxRateService.findAll(ctx, { take: 500 }, ["zone", "category"]);
+  const rateKey = (zoneId: string, catId: string) => `${zoneId}:${catId}`;
+  const existingRateKeys = new Set(
+    (rates as { zone?: { id: string }; category?: { id: string } }[])
+      .filter((r) => r.zone?.id && r.category?.id)
+      .map((r) => rateKey(r.zone!.id, r.category!.id))
   );
 
   for (const name of [...PROVINCE_ZONES, "Canada"]) {
     const zoneId = zoneIds[name];
     if (!zoneId) continue;
-    if (ratesByZoneId.has(zoneId)) {
-      Logger.info(`Tax rate for zone "${name}" already exists`);
+    if (existingRateKeys.has(rateKey(zoneId, categoryId))) {
+      Logger.info(`Tax rate for zone "${name}" (Standard) already exists`);
       continue;
     }
     const value = TAX_RATES[name] ?? 13;
@@ -130,7 +133,32 @@ async function seed() {
       value,
       enabled: true,
     });
-    Logger.info(`Created tax rate for "${name}" at ${value}%`);
+    existingRateKeys.add(rateKey(zoneId, categoryId));
+    Logger.info(`Created tax rate for "${name}" at ${value}% (Standard)`);
+  }
+
+  // Duplicate provincial rates for every other tax category (e.g. "Reduced", custom categories).
+  // Otherwise order lines show "No configured tax rate" while shipping (Standard) still gets tax.
+  const { items: allCategories } = await taxCategoryService.findAll(ctx, { take: 100 });
+  for (const cat of allCategories) {
+    const catId = (cat as { id: string }).id;
+    if (catId === categoryId) continue;
+    for (const name of [...PROVINCE_ZONES, "Canada"]) {
+      const zoneId = zoneIds[name];
+      if (!zoneId) continue;
+      if (existingRateKeys.has(rateKey(zoneId, catId))) continue;
+      const value = TAX_RATES[name] ?? 13;
+      const catName = (cat as { name: string }).name ?? "category";
+      await taxRateService.create(ctx, {
+        name: `${catName} — ${name === "Canada" ? "Canada default" : name} (${value}%)`,
+        zoneId,
+        categoryId: catId,
+        value,
+        enabled: true,
+      });
+      existingRateKeys.add(rateKey(zoneId, catId));
+      Logger.info(`Created tax rate for zone "${name}" category "${catName}" at ${value}%`);
+    }
   }
 
   // Set channel default tax zone to "Canada" fallback so product list has a zone before address is set

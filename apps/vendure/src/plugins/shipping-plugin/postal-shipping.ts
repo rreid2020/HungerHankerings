@@ -54,8 +54,11 @@ const FALLBACK_RATE_CENTS = 1200; // $12 if no zone found
 
 /**
  * Postal-code–based shipping calculator using seeded PostalCodeZone table.
- * Shipping price from DB by postal zone; tax on shipping uses the same provincial
- * rate as the order (from tax zones CA-ON, CA-AB, etc.).
+ * Shipping price from DB by postal zone. The **tax rate** for shipping is resolved with
+ * the same **Standard** tax category as product lines (see `getApplicableTaxRate` below),
+ * so shipping tax matches provincial rates (CA-ON, CA-AB, etc.) from Settings → Tax rates.
+ * (Vendure applies that rate via the calculator’s `taxRate`; shipping lines are not a separate
+ * tax category in the Admin UI.)
  */
 class PostalZoneShippingCalculator extends ShippingCalculator {
   private postalZoneService!: PostalCodeZoneService;
@@ -106,8 +109,11 @@ class PostalZoneShippingCalculator extends ShippingCalculator {
         const zones = await this.zoneService.getAllWithMembers(ctx);
         const zone = zones.find((z) => z.name === zoneName) ?? zones.find((z) => z.name === "Canada");
         if (zone) {
-          const { items: categories } = await this.taxCategoryService.findAll(ctx, { take: 5 });
-          const defaultCategory = categories.find((c: { name?: string; isDefault?: boolean }) => c.name === "Standard" || c.isDefault);
+          const { items: categories } = await this.taxCategoryService.findAll(ctx, { take: 20 });
+          // Prefer **Standard** so shipping uses the same tax category as product variants.
+          const defaultCategory =
+            categories.find((c: { name?: string }) => c.name === "Standard") ??
+            categories.find((c: { isDefault?: boolean }) => c.isDefault);
           if (defaultCategory) {
             const applicable = await this.taxRateService.getApplicableTaxRate(ctx, zone, defaultCategory);
             if (applicable?.value != null) taxRate = Number(applicable.value);

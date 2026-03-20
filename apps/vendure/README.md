@@ -27,6 +27,21 @@ Province-specific tax is configured via a custom **TaxZoneStrategy** and zones/t
 
 This creates zones **CA-AB**, **CA-BC**, … **CA-YT** and **Canada** (fallback), each with Canada as member, and a **Standard** tax rate per zone (e.g. CA-ON 13%, CA-QC 14.975%, CA-AB 5%). It also sets the channel’s default tax zone to **Canada**. Safe to run multiple times (skips existing zones/rates).
 
+**All tax categories:** The seed also adds the same provincial rate for **every other** tax category in the system (e.g. default Vendure **Reduced**). If products used a non-Standard category, you previously saw **“No configured tax rate”** on lines while shipping still showed tax. Re-run this seed after adding new categories so they get CA-AB … CA-ON rates too.
+
+### Standard tax category on products and shipping
+
+- **Product lines:** Tax comes from each **variant’s** tax category (Admin → product → variant). To force **every variant** to use **Standard** (matching your tax rates table):
+
+  `pnpm run build && pnpm run seed:standard-tax-on-products`  
+  (droplet: `node dist/seed-product-variant-standard-tax.js`)
+
+- **Shipping:** Vendure does not store a separate “tax category” on shipping methods. The **postal shipping calculator** looks up the provincial rate using the **Standard** category (fallback: default category), i.e. the same **Settings → Tax rates** rows you use for products. After variants use Standard and zones/rates are seeded, product and shipping lines both align to those **Standard** rates for the active province zone (e.g. CA-ON).
+
+## Guest checkout & customers
+
+If a guest uses an **email that already belongs to a registered account**, Vendure’s default is to block `setCustomerForOrder` (**EmailAddressConflictError**), which leaves the order showing **Guest** with no linked customer. This project sets **`allowGuestCheckoutForRegisteredCustomers: true`** so the order attaches to the existing customer record. Deploy the updated `vendure-config` and retry checkout.
+
 ## Shipping
 
 Postal-code–based shipping uses the **PostalCodeZone** table with **3-character FSA lookup** (Canada) or country default (US). Seed the table, then create a Shipping Method in Admin.

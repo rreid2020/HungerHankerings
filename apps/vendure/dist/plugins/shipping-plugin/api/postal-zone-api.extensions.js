@@ -1,11 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postalZoneAdminSchema = void 0;
-const graphql_tag_1 = __importDefault(require("graphql-tag"));
-exports.postalZoneAdminSchema = (0, graphql_tag_1.default) `
+exports.postalZoneAdminSchemaSdl = void 0;
+/** SDL for admin API extension. Parsed at runtime with Vendure's graphql to avoid version mismatch. */
+exports.postalZoneAdminSchemaSdl = `
   type PostalCodeZone {
     id: ID!
     createdAt: DateTime!
@@ -13,6 +10,8 @@ exports.postalZoneAdminSchema = (0, graphql_tag_1.default) `
     countryCode: String!
     prefix: String!
     zoneName: String!
+    city: String
+    region: String
     rateCents: Int!
   }
 
@@ -21,6 +20,6 @@ exports.postalZoneAdminSchema = (0, graphql_tag_1.default) `
   }
 
   extend type Mutation {
-    updatePostalCodeZone(id: ID!, rateCents: Int!): PostalCodeZone
+    updatePostalCodeZone(id: ID!, rateCents: Int!, city: String, region: String): PostalCodeZone
   }
-`;
+`.trim();

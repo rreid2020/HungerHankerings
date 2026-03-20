@@ -682,7 +682,12 @@ const CheckoutPage = () => {
     hasShippingAddress && cart?.total != null && cart.total > 0 && !useStoreTotals
   const displayShipping = useVendureTotals ? (cart?.shippingTotal ?? 0) : shippingAmount
   const displayTax = useVendureTotals
-    ? Math.max(0, (cart?.total ?? 0) - (cart?.subtotal ?? 0) - (cart?.shippingTotal ?? 0))
+    ? Math.max(
+        0,
+        (cart?.total ?? 0) -
+          (cart?.subtotalWithTax ?? cart?.subtotal ?? 0) -
+          (cart?.shippingWithTax ?? cart?.shippingTotal ?? 0)
+      )
     : taxAmount
   const displayOrderTotal = useVendureTotals ? (cart?.total ?? 0) : orderTotal
 

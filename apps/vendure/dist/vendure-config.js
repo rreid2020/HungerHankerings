@@ -14,6 +14,28 @@ const canadian_province_tax_zone_strategy_1 = require("./plugins/tax/canadian-pr
 const postal_zone_plugin_1 = require("./plugins/shipping-plugin/postal-zone.plugin");
 const shipping_plugin_1 = require("./plugins/shipping-plugin");
 require("dotenv").config();
+/** In production, use SMTP if configured; otherwise noop so verification/password-reset emails are not sent until SMTP_* are set. */
+function buildEmailTransport() {
+    const host = process.env.SMTP_HOST?.trim();
+    const user = process.env.SMTP_USER?.trim();
+    const pass = process.env.SMTP_PASS?.trim();
+    if (host && user && pass) {
+        const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
+        console.info(`[vendure] EmailPlugin: SMTP enabled (${host}:${port}, user=${user})`);
+        return {
+            transport: {
+                type: "smtp",
+                host,
+                port,
+                secure: process.env.SMTP_SECURE === "true",
+                auth: { user, pass },
+                logging: true,
+            },
+        };
+    }
+    console.warn("[vendure] EmailPlugin: SMTP not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS). Verification emails are dropped — nothing reaches Resend.");
+    return { transport: { type: "none" } };
+}
 if (process.env.NODE_ENV === "production") {
     const warn = (name, defaultVal) => {
         if (!process.env[name] || process.env[name] === defaultVal) {
@@ -27,6 +49,11 @@ if (process.env.NODE_ENV === "production") {
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path_1.default.join(__dirname, "../assets");
 const isProduction = process.env.NODE_ENV === "production";
+/** Set VENDURE_REQUIRE_EMAIL_VERIFICATION=false to skip customer email verification (dev/testing only). */
+const requireCustomerEmailVerification = process.env.VENDURE_REQUIRE_EMAIL_VERIFICATION !== "false";
+if (isProduction && !requireCustomerEmailVerification) {
+    console.warn("[vendure] VENDURE_REQUIRE_EMAIL_VERIFICATION=false — customers can sign in without confirming email. Turn this off before real launch.");
+}
 // In production restrict CORS to APP_URL; in dev allow all (localhost)
 const corsOptions = isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
 const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
@@ -54,7 +81,9 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
         ...(process.env.LOG_SQL === "true" ? { logging: true } : {}),
     },
     authOptions: {
-        tokenMethod: "cookie",
+        requireVerification: requireCustomerEmailVerification,
+        // Bearer so headless storefront (Next.js) can receive token and send it on each request
+        tokenMethod: ["bearer", "cookie"],
         cookieOptions: {
             secret: process.env.COOKIE_SECRET ?? "dev-cookie-secret",
         },
@@ -87,13 +116,34 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
             route: "admin",
             port: 3002,
         }),
-        email_plugin_1.EmailPlugin.init({
-            templatePath: path_1.default.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
-            devMode: true,
-            outputPath: path_1.default.join(assetDir, "test-emails"),
-            route: "mailbox",
-            handlers: email_plugin_1.defaultEmailHandlers,
-        }),
+        email_plugin_1.EmailPlugin.init(process.env.NODE_ENV === "production"
+            ? {
+                templatePath: path_1.default.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+                outputPath: path_1.default.join(assetDir, "test-emails"),
+                route: "mailbox",
+                handlers: email_plugin_1.defaultEmailHandlers,
+                ...buildEmailTransport(),
+                globalTemplateVars: {
+                    baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
+                    passwordResetUrl: (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
+                    verifyEmailAddressUrl: (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+                    // Resend rejects unverified domains; use SMTP_FROM=noreply@yourverifieddomain.com in prod
+                    fromAddress: process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
+                },
+            }
+            : {
+                templatePath: path_1.default.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+                devMode: true,
+                outputPath: path_1.default.join(assetDir, "test-emails"),
+                route: "mailbox",
+                handlers: email_plugin_1.defaultEmailHandlers,
+                globalTemplateVars: {
+                    baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
+                    passwordResetUrl: (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
+                    verifyEmailAddressUrl: (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+                    fromAddress: process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
+                },
+            }),
     ],
 });
 exports.config = vendureConfig;

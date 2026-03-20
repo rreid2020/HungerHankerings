@@ -131,15 +131,19 @@ export async function POST(request: NextRequest) {
         )
         authToken = loginResult.token
         refreshToken = loginResult.refreshToken
-        // After login, use Bearer only for the rest of this request — merged order is tied to this token.
-        opts = { authToken: loginResult.token }
+        // Keep forwarding the session cookie *and* Bearer so Vendure stays on the same shop session
+        // while authenticating (dropping the cookie can lose the merged cart / break Owner-only mutations).
+        opts = { cookie: cookieHeader, authToken: loginResult.token }
       } catch (attachErr) {
         const msg = attachErr instanceof Error ? attachErr.message : "Could not attach account to order"
         return NextResponse.json({ error: msg }, { status: 400 })
       }
     }
 
-    await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
+    // Logged-in shoppers already have a Customer; setCustomerForOrder returns AlreadyLoggedInError.
+    if (!opts.authToken) {
+      await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
+    }
     try {
       await checkoutShippingAddressUpdate("", toStorefrontAddressInput(shipping), opts)
     } catch (shippingErr) {
@@ -149,10 +153,16 @@ export async function POST(request: NextRequest) {
     await checkoutBillingAddressUpdate("", toStorefrontAddressInput(billing), opts)
 
     const shippingMethods = await getCheckoutShippingMethods("", opts)
-    const firstMethod = shippingMethods[0]
-    if (firstMethod) {
-      await checkoutDeliveryMethodUpdate("", firstMethod.id, opts)
+    if (shippingMethods.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "No shipping methods are available for this address on the server. Check postal code and country, confirm zones are seeded in Vendure, then try again."
+        },
+        { status: 400 }
+      )
     }
+    await checkoutDeliveryMethodUpdate("", shippingMethods[0].id, opts)
 
     await checkoutTransitionToArrangingPayment(opts)
 
@@ -191,7 +201,10 @@ export async function POST(request: NextRequest) {
               productName: l.variant.product.name,
               variantName: l.variant.name || null,
               quantity: l.quantity,
-              unitPrice: l.variant.pricing?.price?.gross?.amount ?? 0
+              unitPrice:
+                l.variant.pricing?.price?.gross?.amount ??
+                l.variant.pricing?.price?.net?.amount ??
+                0
             })),
             shippingAddress: {
               firstName: shipping.first_name?.trim() ?? "",
@@ -313,6 +326,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (err) {
     const message = err instanceof Error ? err.message : "Checkout failed"
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message }, { status: 400 })
   }
 }

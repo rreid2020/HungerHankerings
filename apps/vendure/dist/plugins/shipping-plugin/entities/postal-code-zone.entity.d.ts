@@ -1,16 +1,20 @@
 import { VendureEntity } from "@vendure/core";
 /**
- * Shipping rate by postal code prefix (e.g. first letter in Canada).
- * Seeded with Canadian first-letter zones; one row per prefix or "default" for country.
+ * Shipping zone by 3-character postal prefix (Canadian FSA) or country default.
+ * You set your own rate per zone. Optional city/region for display; lookup uses prefix only.
  */
 export declare class PostalCodeZone extends VendureEntity {
     /** Country code (e.g. CA, US). */
     countryCode: string;
-    /** First character of postal code (e.g. M, T) or empty for country default. */
+    /** 3-char FSA (e.g. K0K, M5V) or empty for country default. */
     prefix: string;
-    /** Human-readable zone name (e.g. Toronto Metro, Alberta). */
+    /** Human-readable zone name (e.g. FSA K0K). */
     zoneName: string;
-    /** Shipping rate in cents (CAD). */
+    /** City name when available (for display; not used in lookup). */
+    city: string | null;
+    /** Region/province when available (e.g. Ontario; for display). */
+    region: string | null;
+    /** Your shipping rate in cents (CAD). Set per zone after seed. */
     rateCents: number;
     constructor(input?: Partial<PostalCodeZone>);
 }

@@ -5,6 +5,6 @@ export declare class PostalZoneAdminResolver {
     private postalZoneService;
     constructor(postalZoneService: PostalCodeZoneService);
     postalCodeZones(ctx: RequestContext): Promise<PostalCodeZone[]>;
-    updatePostalCodeZone(ctx: RequestContext, id: string, rateCents: number): Promise<PostalCodeZone | null>;
+    updatePostalCodeZone(ctx: RequestContext, id: string, rateCents: number, city?: string, region?: string): Promise<PostalCodeZone | null>;
 }
 //# sourceMappingURL=postal-zone-admin.resolver.d.ts.map

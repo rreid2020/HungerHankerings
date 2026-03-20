@@ -13,8 +13,8 @@ exports.PostalCodeZone = void 0;
 const core_1 = require("@vendure/core");
 const typeorm_1 = require("typeorm");
 /**
- * Shipping rate by postal code prefix (e.g. first letter in Canada).
- * Seeded with Canadian first-letter zones; one row per prefix or "default" for country.
+ * Shipping zone by 3-character postal prefix (Canadian FSA) or country default.
+ * You set your own rate per zone. Optional city/region for display; lookup uses prefix only.
  */
 let PostalCodeZone = class PostalCodeZone extends core_1.VendureEntity {
     constructor(input) {
@@ -27,13 +27,21 @@ __decorate([
     __metadata("design:type", String)
 ], PostalCodeZone.prototype, "countryCode", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 1, default: "" }),
+    (0, typeorm_1.Column)({ length: 6, default: "" }),
     __metadata("design:type", String)
 ], PostalCodeZone.prototype, "prefix", void 0);
 __decorate([
     (0, typeorm_1.Column)({ length: 128 }),
     __metadata("design:type", String)
 ], PostalCodeZone.prototype, "zoneName", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 128, nullable: true }),
+    __metadata("design:type", Object)
+], PostalCodeZone.prototype, "city", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 128, nullable: true }),
+    __metadata("design:type", Object)
+], PostalCodeZone.prototype, "region", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "int" }),
     __metadata("design:type", Number)
