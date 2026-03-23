@@ -70,7 +70,14 @@ Do **not** bake gift into variant prices **and** use the checkout add-on — tha
 
 ## Guest checkout & customers
 
-If a guest uses an **email that already belongs to a registered account**, Vendure’s default is to block `setCustomerForOrder` (**EmailAddressConflictError**), which leaves the order showing **Guest** with no linked customer. This project sets **`allowGuestCheckoutForRegisteredCustomers: true`** so the order attaches to the existing customer record. Deploy the updated `vendure-config` and retry checkout.
+If a guest uses an **email that already belongs to a registered account**, Vendure’s default is to block `setCustomerForOrder` (**EmailAddressConflictError**), which leaves the order showing **Guest** with no linked customer. This project sets **`allowGuestCheckoutForRegisteredCustomers: true`** so the order attaches to the existing customer record.
+
+**`LinkGuestCheckoutStrategy`** (see `src/link-guest-checkout-strategy.ts`) wraps the default strategy so:
+
+- **Logged-in** shoppers still get the active order linked to their **Customer** (`DefaultGuestCheckoutStrategy` would return `AlreadyLoggedInError` and never call `addCustomerToOrder`, which blocked **ArrangingPayment** and left Admin showing “Guest”).
+- **True guests** still get a real **Customer** row via `createOrUpdate` (see [GuestCheckoutStrategy](https://docs.vendure.io/current/core/reference/typescript-api/orders/guest-checkout-strategy)).
+
+Deploy the updated `vendure-config` and retry checkout.
 
 ## Shipping
 

@@ -13,6 +13,7 @@ import {
   customerRegister,
   customerLoginWithCookies,
   setOrderCheckoutGiftSurchargeCents,
+  assertActiveOrderReadyForArrangingPayment,
   type StorefrontAddressInput
 } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
@@ -147,18 +148,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Logged-in shoppers already have a Customer; setCustomerForOrder returns AlreadyLoggedInError.
-    // Session can be authenticated via Shop cookie only (no vendure_token), same as /api/auth/me — still skip.
-    if (!opts.authToken) {
-      const orderAlreadyHasCustomer = await activeOrderHasShopCustomer(opts)
-      if (!orderAlreadyHasCustomer) {
-        try {
-          await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
-        } catch (emailErr) {
-          const msg = emailErr instanceof Error ? emailErr.message : String(emailErr)
-          if (!/already logged in|cannot set a customer for the order/i.test(msg)) {
-            throw emailErr
-          }
+    // Vendure requires a Customer on the order before ArrangingPayment. Do not skip this just because
+    // Bearer is set — carts can still lack a customer (stale token, session edge cases, etc.).
+    const orderAlreadyHasCustomer = await activeOrderHasShopCustomer(opts)
+    if (!orderAlreadyHasCustomer) {
+      try {
+        await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
+      } catch (emailErr) {
+        const msg = emailErr instanceof Error ? emailErr.message : String(emailErr)
+        if (!/already logged in|cannot set a customer for the order/i.test(msg)) {
+          throw emailErr
         }
       }
     }
@@ -222,6 +221,7 @@ export async function POST(request: NextRequest) {
       metadata.push({ key: "storefront_shipping_label", value: storefrontShippingLabel.trim() })
     }
 
+    await assertActiveOrderReadyForArrangingPayment(opts)
     await checkoutTransitionToArrangingPayment(opts)
 
     const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()

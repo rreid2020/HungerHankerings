@@ -633,6 +633,44 @@ export async function activeOrderHasShopCustomer(
   return !!data.activeOrder?.customer?.id;
 }
 
+/** Vendure default order process blocks ArrangingPayment without Customer + at least one shipping line. */
+export async function assertActiveOrderReadyForArrangingPayment(
+  opts?: VendureRequestOptions
+): Promise<void> {
+  const data = await fetchVendure<{
+    activeOrder: {
+      customer?: { id: string } | null;
+      shippingLines?: { id: string }[] | null;
+    } | null;
+  }>(
+    `
+    query ActiveOrderArrangingPaymentPrereqs {
+      activeOrder {
+        customer { id }
+        shippingLines { id }
+      }
+    }
+  `,
+    undefined,
+    opts
+  );
+  const o = data.activeOrder;
+  if (!o) {
+    throw new Error("No active order");
+  }
+  if (!o.customer?.id) {
+    throw new Error(
+      "Your order has no customer on the server (Vendure requires this before payment). Try signing out and checking out again, or complete checkout with your email as a guest."
+    );
+  }
+  const n = o.shippingLines?.length ?? 0;
+  if (n === 0) {
+    throw new Error(
+      "No shipping method is set on your order. Confirm your shipping address and that a shipping method is available, then try again."
+    );
+  }
+}
+
 /** For compatibility: in Vendure we use session; id is ignored and we return activeOrder */
 export async function getCheckout(
   _id: string
@@ -1097,6 +1135,13 @@ export async function checkoutTransitionToArrangingPayment(opts?: VendureRequest
     );
     state = again.activeOrder?.state ?? state;
     nextStates = again.nextOrderStates ?? [];
+  }
+
+  if (!nextStates.includes("ArrangingPayment")) {
+    throw new Error(
+      `Cannot move order to payment from state "${state}". Server allows: ${nextStates.length ? nextStates.join(", ") : "(none)"}. ` +
+        "If you are logged in, try guest checkout or ask an admin to review the Customer role (Owner permission can block shop transitions)."
+    );
   }
 
   await shopTransitionOrderToState("ArrangingPayment", opts);

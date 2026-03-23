@@ -1,6 +1,5 @@
 import path from "path";
 import {
-  DefaultGuestCheckoutStrategy,
   DefaultJobQueuePlugin,
   DefaultSearchPlugin,
   defaultConfig,
@@ -20,6 +19,7 @@ import {
   postalShippingCalculator,
   postalShippingEligibilityChecker,
 } from "./plugins/shipping-plugin";
+import { LinkGuestCheckoutStrategy } from "./link-guest-checkout-strategy";
 
 require("dotenv").config();
 
@@ -150,7 +150,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   // EmailAddressConflictError and never attach a Customer to the order. Allowing merge links the order
   // to the existing customer record (required for a proper customer on the order in Admin).
   orderOptions: {
-    guestCheckoutStrategy: new DefaultGuestCheckoutStrategy({
+    guestCheckoutStrategy: new LinkGuestCheckoutStrategy({
       allowGuestCheckoutForRegisteredCustomers: true,
     }),
   },

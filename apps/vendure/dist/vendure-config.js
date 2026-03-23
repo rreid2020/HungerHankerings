@@ -14,6 +14,7 @@ const email_plugin_1 = require("@vendure/email-plugin");
 const canadian_province_tax_zone_strategy_1 = require("./plugins/tax/canadian-province-tax-zone-strategy");
 const postal_zone_plugin_1 = require("./plugins/shipping-plugin/postal-zone.plugin");
 const shipping_plugin_1 = require("./plugins/shipping-plugin");
+const link_guest_checkout_strategy_1 = require("./link-guest-checkout-strategy");
 require("dotenv").config();
 /** In production, use SMTP if configured; otherwise noop so verification/password-reset emails are not sent until SMTP_* are set. */
 function buildEmailTransport() {
@@ -126,7 +127,7 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
     // EmailAddressConflictError and never attach a Customer to the order. Allowing merge links the order
     // to the existing customer record (required for a proper customer on the order in Admin).
     orderOptions: {
-        guestCheckoutStrategy: new core_1.DefaultGuestCheckoutStrategy({
+        guestCheckoutStrategy: new link_guest_checkout_strategy_1.LinkGuestCheckoutStrategy({
             allowGuestCheckoutForRegisteredCustomers: true,
         }),
     },
