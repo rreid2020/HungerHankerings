@@ -537,6 +537,7 @@ function mapVendureOrderToCheckout(order: {
   const currency = "CAD";
   return {
     id: order.id,
+    code: order.code,
     email: undefined,
     lines:
       order.lines?.map((line) => ({
