@@ -22,9 +22,13 @@ import {
 export class LinkGuestCheckoutStrategy implements GuestCheckoutStrategy {
   private customerService!: CustomerService;
   private readonly delegate: DefaultGuestCheckoutStrategy;
+  /** Same flag as {@link DefaultGuestCheckoutStrategy} — used for createOrUpdate when not delegating. */
+  private readonly allowGuestCheckoutForRegisteredCustomers: boolean;
 
   constructor(options?: DefaultGuestCheckoutStrategyOptions) {
     this.delegate = new DefaultGuestCheckoutStrategy(options);
+    this.allowGuestCheckoutForRegisteredCustomers =
+      options?.allowGuestCheckoutForRegisteredCustomers ?? false;
   }
 
   init(injector: Injector): void {
@@ -46,10 +50,16 @@ export class LinkGuestCheckoutStrategy implements GuestCheckoutStrategy {
     }
 
     if (ctx.activeUserId) {
-      const forUser = await this.customerService.findOneByUserId(ctx, ctx.activeUserId);
+      // Default findOneByUserId uses filterOnChannel=true; customers not assigned to the current
+      // channel would not be found, then we'd delegate and hit AlreadyLoggedInError with no link.
+      const forUser = await this.customerService.findOneByUserId(ctx, ctx.activeUserId, false);
       if (forUser) {
         return forUser;
       }
+      // Logged in but no Customer row (rare). Cannot delegate — DefaultGuestCheckoutStrategy returns
+      // AlreadyLoggedInError when activeUserId is set. Create/update from checkout input instead.
+      const errorOnExistingUser = !this.allowGuestCheckoutForRegisteredCustomers;
+      return this.customerService.createOrUpdate(ctx, input, errorOnExistingUser);
     }
 
     return this.delegate.setCustomerForOrder(ctx, order, input);

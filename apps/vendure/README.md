@@ -74,7 +74,7 @@ If a guest uses an **email that already belongs to a registered account**, Vendu
 
 **`LinkGuestCheckoutStrategy`** (see `src/link-guest-checkout-strategy.ts`) wraps the default strategy so:
 
-- **Logged-in** shoppers still get the active order linked to their **Customer** (`DefaultGuestCheckoutStrategy` would return `AlreadyLoggedInError` and never call `addCustomerToOrder`, which blocked **ArrangingPayment** and left Admin showing “Guest”).
+- **Logged-in** shoppers still get the active order linked to their **Customer** (`DefaultGuestCheckoutStrategy` would return `AlreadyLoggedInError` and never call `addCustomerToOrder`, which blocked **ArrangingPayment** and left Admin showing “Guest”). The strategy uses `findOneByUserId(..., false)` so the Customer is found even if they are not assigned to the **current channel** (the default `filterOnChannel: true` lookup was empty → fallback to delegate → `AlreadyLoggedInError`).
 - **True guests** still get a real **Customer** row via `createOrUpdate` (see [GuestCheckoutStrategy](https://docs.vendure.io/current/core/reference/typescript-api/orders/guest-checkout-strategy)).
 
 Deploy the updated `vendure-config` and retry checkout.

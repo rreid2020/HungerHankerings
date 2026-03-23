@@ -7,13 +7,14 @@ import { DefaultGuestCheckoutStrategy, type DefaultGuestCheckoutStrategyOptions,
  * 2. If the shopper is logged in (`ctx.activeUserId`), return their Customer instead of Vendure's
  *    `AlreadyLoggedInError` — the default strategy never links the cart in that case, which leaves
  *    Admin showing **Guest** and blocks `ArrangingPayment` (requires `order.customer`).
- * 3. Otherwise delegate: create/update guest customer from `CreateCustomerInput` (unique Customer row per email).
+ * 3. Otherwise delegate: create/update guest customer from checkout input (unique Customer row per email).
  *
  * @see https://docs.vendure.io/current/core/reference/typescript-api/orders/guest-checkout-strategy
  */
 export declare class LinkGuestCheckoutStrategy implements GuestCheckoutStrategy {
     private customerService;
     private readonly delegate;
+    private readonly allowGuestCheckoutForRegisteredCustomers;
     constructor(options?: DefaultGuestCheckoutStrategyOptions);
     init(injector: Injector): void;
     setCustomerForOrder(ctx: RequestContext, order: Order, input: CreateCustomerInput): Promise<Awaited<ReturnType<DefaultGuestCheckoutStrategy["setCustomerForOrder"]>>>;
