@@ -150,16 +150,23 @@ export async function POST(request: NextRequest) {
 
     // Vendure requires a Customer on the order before ArrangingPayment. Do not skip this just because
     // Bearer is set — carts can still lack a customer (stale token, session edge cases, etc.).
+    // IMPORTANT: Do not swallow setCustomerForOrder errors (e.g. "already logged in" from the *old*
+    // DefaultGuestCheckoutStrategy). That leaves no customer on the order and fails later with a
+    // confusing message — use LinkGuestCheckoutStrategy on the server instead.
     const orderAlreadyHasCustomer = await activeOrderHasShopCustomer(opts)
     if (!orderAlreadyHasCustomer) {
-      try {
-        await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
-      } catch (emailErr) {
-        const msg = emailErr instanceof Error ? emailErr.message : String(emailErr)
-        if (!/already logged in|cannot set a customer for the order/i.test(msg)) {
-          throw emailErr
-        }
-      }
+      await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
+    }
+    if (!(await activeOrderHasShopCustomer(opts))) {
+      return NextResponse.json(
+        {
+          error:
+            "We could not link your email to this cart on the server (required for payment). " +
+            "Try signing out and checking out again, or use another browser. " +
+            "If this persists, confirm the Vendure server is deployed with LinkGuestCheckoutStrategy (see apps/vendure/src/link-guest-checkout-strategy.ts)."
+        },
+        { status: 400 }
+      )
     }
     try {
       await checkoutShippingAddressUpdate("", toStorefrontAddressInput(shipping), opts)

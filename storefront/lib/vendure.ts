@@ -880,12 +880,14 @@ export async function checkoutEmailUpdate(
   lastName?: string
 ): Promise<StorefrontCheckout> {
   const data = await fetchVendure<{
-    setCustomerForOrder: { id?: string; message?: string; errorCode?: string } | null;
+    setCustomerForOrder:
+      | { id?: string; customer?: { id?: string } | null; message?: string; errorCode?: string }
+      | null;
   }>(
     `
     mutation SetCustomerForOrder($input: CreateCustomerInput!) {
       setCustomerForOrder(input: $input) {
-        ... on Order { id }
+        ... on Order { id customer { id } }
         ... on ErrorResult { message errorCode }
       }
     }
@@ -899,7 +901,17 @@ export async function checkoutEmailUpdate(
     },
     opts
   );
-  assertShopOrderMutationPayload(data.setCustomerForOrder, "Set customer for order");
+  const payload = data.setCustomerForOrder;
+  assertShopOrderMutationPayload(payload, "Set customer for order");
+  const custId =
+    payload && typeof payload === "object" && "customer" in payload
+      ? payload.customer?.id
+      : undefined;
+  if (!custId) {
+    throw new Error(
+      "Set customer for order succeeded but the order has no linked customer. Check Vendure GuestCheckoutStrategy (use LinkGuestCheckoutStrategy) and shop session cookies."
+    );
+  }
   const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
