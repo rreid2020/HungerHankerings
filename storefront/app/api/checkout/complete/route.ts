@@ -8,6 +8,7 @@ import {
   checkoutTransitionToArrangingPayment,
   createStripePaymentIntent,
   getActiveOrder,
+  getShopActiveOrderSnapshot,
   activeOrderHasShopCustomer,
   checkoutComplete,
   customerRegister,
@@ -176,17 +177,29 @@ export async function POST(request: NextRequest) {
     }
     await checkoutBillingAddressUpdate("", toStorefrontAddressInput(billing), opts)
 
-    const shippingMethods = await getCheckoutShippingMethods("", opts)
-    if (shippingMethods.length === 0) {
-      return NextResponse.json(
-        {
-          error:
-            "No shipping methods are available for this address on the server. Check postal code and country, confirm zones are seeded in Vendure, then try again."
-        },
-        { status: 400 }
-      )
+    const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
+    const paymentSnapshot = await getShopActiveOrderSnapshot(opts)
+    /**
+     * Vendure only allows setOrderShippingMethod in AddingItems/Draft. A double-submit or retry after
+     * the first successful transition leaves the order in ArrangingPayment — re-calling shipping method
+     * fails with "Order contents may only be modified when in the 'AddingItems' state".
+     */
+    const skipShippingMethodBecauseAwaitingPayment =
+      Boolean(stripePublishable) && paymentSnapshot?.state === "ArrangingPayment"
+
+    if (!skipShippingMethodBecauseAwaitingPayment) {
+      const shippingMethods = await getCheckoutShippingMethods("", opts)
+      if (shippingMethods.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "No shipping methods are available for this address on the server. Check postal code and country, confirm zones are seeded in Vendure, then try again."
+          },
+          { status: 400 }
+        )
+      }
+      await checkoutDeliveryMethodUpdate("", shippingMethods[0].id, opts)
     }
-    await checkoutDeliveryMethodUpdate("", shippingMethods[0].id, opts)
 
     const metadata: { key: string; value: string }[] = []
 
@@ -230,8 +243,6 @@ export async function POST(request: NextRequest) {
 
     await assertActiveOrderReadyForArrangingPayment(opts)
     await checkoutTransitionToArrangingPayment(opts)
-
-    const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
 
     /** @see https://docs.vendure.io/current/core/reference/core-plugins/payments-plugin/stripe-plugin */
     if (stripePublishable) {

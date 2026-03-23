@@ -607,6 +607,29 @@ export async function getActiveOrder(opts?: VendureRequestOptions): Promise<Stor
   return mapVendureOrderToCheckout(data.activeOrder);
 }
 
+/** Minimal active order info for checkout branching (e.g. Stripe retry while already ArrangingPayment). */
+export async function getShopActiveOrderSnapshot(
+  opts?: VendureRequestOptions
+): Promise<{ state: string; code: string } | null> {
+  const data = await fetchVendure<{
+    activeOrder: { state: string; code: string } | null;
+  }>(
+    `
+    query ShopActiveOrderSnapshot {
+      activeOrder {
+        state
+        code
+      }
+    }
+  `,
+    undefined,
+    opts
+  );
+  const o = data.activeOrder;
+  if (!o) return null;
+  return { state: o.state, code: o.code };
+}
+
 /**
  * True when the active order already has a Customer (logged-in shop session or after setCustomer).
  * Used by checkout API: {@link checkoutEmailUpdate} / setCustomerForOrder fails with "already logged in"
