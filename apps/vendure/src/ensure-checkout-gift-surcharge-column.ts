@@ -100,13 +100,14 @@ export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
       if (exists.rows.length === 0) continue;
 
       const fullName = `"${table_schema}"."${table_name}"`;
-      const cols = await client.query<{ column_name: string }>(
+      const cols = await client.query(
         `SELECT column_name FROM information_schema.columns
          WHERE table_schema = $1 AND table_name = $2
            AND LOWER(column_name) = LOWER($3)`,
         [table_schema, table_name, COLUMN]
       );
-      const names = cols.rows.map((r) => r.column_name);
+      const colRows = cols.rows as { column_name: string }[];
+      const names = colRows.map((r) => r.column_name);
       if (names.includes(COLUMN)) {
         console.info(`[ensure-checkout-gift-surcharge] ${fullName}: "${COLUMN}" already correct.`);
         continue;
