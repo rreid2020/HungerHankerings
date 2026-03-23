@@ -14,7 +14,7 @@
     "add-stripe-column-exact-name": "node dist/add-stripe-column-exact-name.js",
     "seed:canadian-tax": "node dist/seed-canadian-tax-zones.js",
     "seed:standard-tax-on-products": "node dist/seed-product-variant-standard-tax.js",
-    "add-order-gift-surcharge-column": "node dist/add-order-checkout-gift-surcharge-column.js",
+    "add-order-gift-surcharge-column": "node dist/ensure-checkout-gift-surcharge-column.js",
     "create-postal-zone-table": "node dist/create-postal-code-zone-table.js",
     "alter-postal-zone-prefix": "node dist/alter-postal-zone-prefix-length.js",
     "alter-postal-zone-city-region": "node dist/alter-postal-zone-add-city-region.js",
