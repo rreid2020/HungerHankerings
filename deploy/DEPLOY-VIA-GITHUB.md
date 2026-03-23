@@ -50,3 +50,18 @@ The workflow in `.github/workflows/deploy-droplet.yml` deploys to your droplet w
 After that, every push to `main` will run the workflow. Check **Actions** in the GitHub repo to see runs and logs.
 
 **Note:** The workflow does not change `.env` or `jwt_key.pem` on the server. Those stay as you configured them. Only code from the repo is updated.
+
+### Deploy failed: `container name "...hungerhankerings-redis-1" is already in use`
+
+Usually `docker compose down` did not remove old containers (e.g. a previous partial deploy). On the droplet:
+
+```bash
+export COMPOSE_PROJECT_NAME=hungerhankerings
+cd /root/HungerHankerings
+set -a && . ./.env && set +a
+comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
+$comp down --remove-orphans --timeout 120
+docker ps -aq --filter "label=com.docker.compose.project=hungerhankerings" | xargs -r docker rm -f
+```
+
+Then re-run the GitHub Action or run the same compose build/up steps manually.

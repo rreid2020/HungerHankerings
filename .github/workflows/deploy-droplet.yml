@@ -42,7 +42,14 @@ jobs:
             echo "Building images (site stays up until swap)..."
             $comp build --no-cache
             echo "Stopping stack for swap..."
-            $comp down --remove-orphans 2>/dev/null || true
+            # Do not hide down failures: old containers left behind cause "name already in use" on compose run/up.
+            $comp down --remove-orphans --timeout 120 || echo "WARN: compose down exited non-zero"
+            proj="${COMPOSE_PROJECT_NAME:-hungerhankerings}"
+            leftovers=$(docker ps -aq --filter "label=com.docker.compose.project=${proj}" 2>/dev/null || true)
+            if [ -n "$leftovers" ]; then
+              echo "Removing leftover Compose project containers (${proj}): $leftovers"
+              docker rm -f $leftovers || true
+            fi
             echo "Pruning build cache (optional disk recovery)..."
             docker builder prune -af 2>/dev/null || true
             # Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
