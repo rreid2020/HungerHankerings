@@ -70,6 +70,9 @@ const CheckoutPage = () => {
   const cardMountRef = useRef<HTMLDivElement | null>(null)
   /** Invalidates in-flight loadStripe when mount node is cleared (Strict Mode / navigation). */
   const stripeCardMountSessionRef = useRef(0)
+  /** Bump to remount the card container after a failed Stripe.js load (retry). */
+  const [stripeMountKey, setStripeMountKey] = useState(0)
+  const [stripeLoadError, setStripeLoadError] = useState<string | null>(null)
 
   /**
    * Mount Stripe Card Element only after the DOM node exists (ref callback).
@@ -94,28 +97,47 @@ const CheckoutPage = () => {
 
       const session = stripeCardMountSessionRef.current + 1
       stripeCardMountSessionRef.current = session
+      setStripeLoadError(null)
 
-      void loadStripe(STRIPE_PUBLISHABLE_KEY).then((stripe) => {
-        if (session !== stripeCardMountSessionRef.current || !stripe) return
-        if (cardMountRef.current !== node) return
-        stripeRef.current = stripe
-        const elements = stripe.elements()
-        const card = elements.create("card", {
-          // Use billing address postal code (CA/US/international) instead of Stripe's US-style "ZIP" field
-          hidePostalCode: true,
-          style: {
-            base: {
-              fontSize: "16px",
-              color: "#111827",
-              fontFamily: "system-ui, sans-serif",
-              "::placeholder": { color: "#9ca3af" }
-            },
-            invalid: { color: "#b91c1c" }
+      void loadStripe(STRIPE_PUBLISHABLE_KEY)
+        .then((stripe) => {
+          if (session !== stripeCardMountSessionRef.current) return
+          if (cardMountRef.current !== node) return
+          if (!stripe) {
+            setStripeLoadError(
+              "Stripe could not start (invalid publishable key or blocked script). Check NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY and try Retry."
+            )
+            return
           }
+          stripeRef.current = stripe
+          const elements = stripe.elements()
+          const card = elements.create("card", {
+            // Use billing address postal code (CA/US/international) instead of Stripe's US-style "ZIP" field
+            hidePostalCode: true,
+            style: {
+              base: {
+                fontSize: "16px",
+                color: "#111827",
+                fontFamily: "system-ui, sans-serif",
+                "::placeholder": { color: "#9ca3af" }
+              },
+              invalid: { color: "#b91c1c" }
+            }
+          })
+          card.mount(node)
+          cardElementRef.current = card
         })
-        card.mount(node)
-        cardElementRef.current = card
-      })
+        .catch((err: unknown) => {
+          if (session !== stripeCardMountSessionRef.current) return
+          const msg =
+            err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : "Failed to load Stripe.js"
+          setStripeLoadError(msg)
+          console.error("[checkout] loadStripe failed:", err)
+        })
     },
     [STRIPE_PUBLISHABLE_KEY]
   )
@@ -908,6 +930,11 @@ const CheckoutPage = () => {
       }
 
       if (STRIPE_PUBLISHABLE_KEY) {
+        if (stripeLoadError) {
+          throw new Error(
+            "The card form did not load. Try Retry below, turn off ad blockers for this site, or allow https://js.stripe.com in your firewall / Content-Security-Policy."
+          )
+        }
         if (!stripeRef.current || !cardElementRef.current) {
           throw new Error("Card form is still loading. Wait a moment and try again.")
         }
@@ -1524,9 +1551,31 @@ const CheckoutPage = () => {
                     <strong>billing address</strong> above (Canadian postal codes and US ZIP both work).
                   </p>
                   <div
+                    key={stripeMountKey}
                     ref={setCardMountNode}
                     className="min-h-[52px] rounded-md border border-gray-300 bg-white px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500"
                   />
+                  {stripeLoadError ? (
+                    <div className="mt-2 space-y-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+                      <p>
+                        <strong>Could not load the card form.</strong> Common causes: ad blockers, a strict
+                        Content-Security-Policy (allow <code className="text-xs">https://js.stripe.com</code>), or a
+                        network issue.
+                      </p>
+                      <p className="text-xs text-red-800/90">{stripeLoadError}</p>
+                      <button
+                        type="button"
+                        className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100"
+                        onClick={() => {
+                          setStripeLoadError(null)
+                          stripeRef.current = null
+                          setStripeMountKey((k) => k + 1)
+                        }}
+                      >
+                        Retry loading card form
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ) : (
