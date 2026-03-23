@@ -9,6 +9,7 @@ import {
   checkoutTransitionToArrangingPayment,
   createStripePaymentIntent,
   getActiveOrder,
+  activeOrderHasShopCustomer,
   checkoutComplete,
   customerRegister,
   customerLoginWithCookies,
@@ -146,8 +147,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Logged-in shoppers already have a Customer; setCustomerForOrder returns AlreadyLoggedInError.
+    // Session can be authenticated via Shop cookie only (no vendure_token), same as /api/auth/me — still skip.
     if (!opts.authToken) {
-      await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
+      const orderAlreadyHasCustomer = await activeOrderHasShopCustomer(opts)
+      if (!orderAlreadyHasCustomer) {
+        try {
+          await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
+        } catch (emailErr) {
+          const msg = emailErr instanceof Error ? emailErr.message : String(emailErr)
+          if (!/already logged in|cannot set a customer for the order/i.test(msg)) {
+            throw emailErr
+          }
+        }
+      }
     }
     try {
       await checkoutShippingAddressUpdate("", toStorefrontAddressInput(shipping), opts)

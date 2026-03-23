@@ -606,6 +606,33 @@ export async function getActiveOrder(opts?: VendureRequestOptions): Promise<Stor
   return mapVendureOrderToCheckout(data.activeOrder);
 }
 
+/**
+ * True when the active order already has a Customer (logged-in shop session or after setCustomer).
+ * Used by checkout API: {@link checkoutEmailUpdate} / setCustomerForOrder fails with "already logged in"
+ * if the session is authenticated but no `vendure_token` cookie was sent (same situation as /api/auth/me
+ * resolving the user from the session cookie alone).
+ */
+export async function activeOrderHasShopCustomer(
+  opts?: VendureRequestOptions
+): Promise<boolean> {
+  const data = await fetchVendure<{
+    activeOrder: { customer?: { id: string } | null } | null;
+  }>(
+    `
+    query ActiveOrderCustomer {
+      activeOrder {
+        customer {
+          id
+        }
+      }
+    }
+  `,
+    undefined,
+    opts
+  );
+  return !!data.activeOrder?.customer?.id;
+}
+
 /** For compatibility: in Vendure we use session; id is ignored and we return activeOrder */
 export async function getCheckout(
   _id: string
