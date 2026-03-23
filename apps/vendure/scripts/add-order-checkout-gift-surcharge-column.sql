@@ -1,9 +1,10 @@
--- One-time: add Order custom field column for checkout gift Stripe surcharge.
--- TypeORM / Vendure use quoted camelCase column names.
--- Run against your Vendure Postgres DB if you deploy with synchronize:false and see:
---   column order.customFieldsCheckoutgiftsurchargecents does not exist
+-- One-time (optional): add Order custom field column for checkout gift Stripe surcharge.
+-- Vendure now runs ensure-checkout-gift-surcharge-column on server/worker startup; use this SQL
+-- only if startup ALTER fails (e.g. DB user lacks permission).
 --
--- Adjust schema if not "public". Table is usually "order" (quoted).
+-- Error fixed: column order.customFieldsCheckoutgiftsurchargecents does not exist
+--
+-- If your table is not public."order", find it (has columns code, state, subTotalWithTax) and adjust:
 
 ALTER TABLE public."order"
   ADD COLUMN IF NOT EXISTS "customFieldsCheckoutGiftSurchargeCents" integer NULL;
