@@ -737,6 +737,7 @@ export async function addItemToOrder(
   quantity: number,
   opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
+  await ensureActiveOrderAllowsCartLineEdits(opts);
   const data = await fetchVendure<{ addItemToOrder: unknown }>(`
     mutation AddItemToOrder($variantId: ID!, $quantity: Int!) {
       addItemToOrder(productVariantId: $variantId, quantity: $quantity) {
@@ -754,19 +755,20 @@ export async function addItemToOrder(
   if (result && typeof result === "object" && "errorCode" in result) {
     throw new Error((result as { message?: string }).message || "Failed to add item");
   }
-  const order = await getActiveOrder();
+  const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order after add");
   return order;
 }
 
 export async function checkoutLinesAdd(
   _checkoutId: string,
-  lines: { variantId: string; quantity: number }[]
+  lines: { variantId: string; quantity: number }[],
+  opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
   for (const line of lines) {
-    await addItemToOrder(line.variantId, line.quantity);
+    await addItemToOrder(line.variantId, line.quantity, opts);
   }
-  const order = await getActiveOrder();
+  const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
 }
@@ -774,8 +776,10 @@ export async function checkoutLinesAdd(
 export async function checkoutLineUpdate(
   _checkoutId: string,
   lineId: string,
-  quantity: number
+  quantity: number,
+  opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
+  await ensureActiveOrderAllowsCartLineEdits(opts);
   const data = await fetchVendure<{
     adjustOrderLine?: { __typename: string } & Record<string, unknown>;
   }>(`
@@ -790,20 +794,22 @@ export async function checkoutLineUpdate(
         }
       }
     }
-  `, { orderLineId: lineId, quantity });
+  `, { orderLineId: lineId, quantity }, opts);
   const result = (data as { adjustOrderLine?: unknown }).adjustOrderLine;
   if (result && typeof result === "object" && "errorCode" in result) {
     throw new Error((result as { message?: string }).message || "Failed to update line");
   }
-  const order = await getActiveOrder();
+  const order = await getActiveOrder(opts);
   if (!order) throw new Error("No active order");
   return order;
 }
 
 export async function checkoutLineDelete(
   _checkoutId: string,
-  lineId: string
+  lineId: string,
+  opts?: VendureRequestOptions
 ): Promise<StorefrontCheckout> {
+  await ensureActiveOrderAllowsCartLineEdits(opts);
   const data = await fetchVendure<{
     removeOrderLine?: { __typename: string } & Record<string, unknown>;
   }>(`
@@ -818,12 +824,12 @@ export async function checkoutLineDelete(
         }
       }
     }
-  `, { orderLineId: lineId });
+  `, { orderLineId: lineId }, opts);
   const result = (data as { removeOrderLine?: unknown }).removeOrderLine;
   if (result && typeof result === "object" && "errorCode" in result) {
     throw new Error((result as { message?: string }).message || "Failed to remove line");
   }
-  const order = await getActiveOrder();
+  const order = await getActiveOrder(opts);
   if (!order) return { id: "", email: null, lines: [], subtotalPrice: undefined, totalPrice: undefined, shippingPrice: undefined };
   return order;
 }
@@ -894,6 +900,29 @@ async function shopTransitionOrderToState(
   if (!("id" in r) || !(r as { id?: string }).id) {
     throw new Error("Order state transition did not return an order.");
   }
+}
+
+/**
+ * `removeOrderLine` / `adjustOrderLine` / `addItemToOrder` require `AddingItems` or `Draft`.
+ * After starting Stripe checkout the active order can sit in `ArrangingPayment`, so the shopper
+ * cannot change quantities or remove lines until we move back to `AddingItems` (allowed by the
+ * default order process).
+ */
+async function ensureActiveOrderAllowsCartLineEdits(opts?: VendureRequestOptions): Promise<void> {
+  const data = await fetchVendure<{
+    activeOrder: { state: string } | null;
+  }>(
+    `
+    query ActiveOrderStateForCart {
+      activeOrder { state }
+    }
+  `,
+    undefined,
+    opts
+  );
+  const state = data.activeOrder?.state;
+  if (state !== "ArrangingPayment") return;
+  await shopTransitionOrderToState("AddingItems", opts);
 }
 
 export async function checkoutEmailUpdate(

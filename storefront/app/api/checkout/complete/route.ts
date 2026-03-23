@@ -154,8 +154,15 @@ export async function POST(request: NextRequest) {
     // IMPORTANT: Do not swallow setCustomerForOrder errors (e.g. "already logged in" from the *old*
     // DefaultGuestCheckoutStrategy). That leaves no customer on the order and fails later with a
     // confusing message — use LinkGuestCheckoutStrategy on the server instead.
+    //
+    // Guest sessions (no vendure_token): the active order may already have a Customer from an earlier
+    // checkout attempt or cart step. If we skip setCustomerForOrder whenever `customer` exists, the
+    // shopper can change the email on the form but the server keeps the old Customer — including a
+    // stale Stripe customer id — and Stripe returns "No such customer". Always sync the submitted
+    // email for guests. Authenticated shoppers keep the existing customer when already set.
+    const isShopAuthenticated = Boolean(opts.authToken)
     const orderAlreadyHasCustomer = await activeOrderHasShopCustomer(opts)
-    if (!orderAlreadyHasCustomer) {
+    if (!orderAlreadyHasCustomer || !isShopAuthenticated) {
       await checkoutEmailUpdate("", email.trim(), opts, billing?.first_name, billing?.last_name)
     }
     if (!(await activeOrderHasShopCustomer(opts))) {
