@@ -1,16 +1,23 @@
 /**
- * Ensures Order.customFieldsCheckoutGiftSurchargeCents exists (Postgres).
+ * Ensures the Order checkout gift surcharge custom field column exists (Postgres).
  * Run automatically before Vendure bootstrap so production (synchronize:false) self-heals.
+ *
+ * **Name must match TypeORM DefaultNamingStrategy** for embedded custom fields:
+ * `camelCase(prefix) + titleCase(propertyName)` → for `checkoutGiftSurchargeCents` under `customFields`,
+ * `titleCase` uppercases only the first character and lowercases the rest of the string, producing
+ * `customFieldsCheckoutgiftsurchargecents` — NOT `customFieldsCheckoutGiftSurchargeCents`.
+ * (See typeorm `DefaultNamingStrategy.columnName` + `StringUtils.titleCase`.)
  *
  * CLI: node dist/ensure-checkout-gift-surcharge-column.js
  */
 import { Client } from "pg";
 import { config } from "./vendure-config";
 
-const COLUMN = "customFieldsCheckoutGiftSurchargeCents";
+/** Exact DB identifier TypeORM uses for Order.customFields.checkoutGiftSurchargeCents */
+const COLUMN = "customFieldsCheckoutgiftsurchargecents";
 const COLUMN_DEF = `ADD COLUMN IF NOT EXISTS "${COLUMN}" integer NULL`;
 
-/** Postgres double-quote for identifiers (TypeORM expects exact camelCase column name). */
+/** Postgres double-quote for identifiers. */
 function quoteIdent(ident: string): string {
   return `"${ident.replace(/"/g, '""')}"`;
 }
@@ -118,13 +125,13 @@ export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
           `ALTER TABLE ${fullName} RENAME COLUMN ${quoteIdent(oldName)} TO ${quoteIdent(COLUMN)}`
         );
         console.info(
-          `[ensure-checkout-gift-surcharge] ${fullName}: renamed mis-cased column "${oldName}" -> "${COLUMN}" (TypeORM requires quoted camelCase).`
+          `[ensure-checkout-gift-surcharge] ${fullName}: renamed "${oldName}" -> "${COLUMN}" (must match TypeORM DefaultNamingStrategy).`
         );
         continue;
       }
       if (names.length > 1) {
         console.warn(
-          `[ensure-checkout-gift-surcharge] ${fullName}: multiple columns match gift surcharge name (${names.join(", ")}); fix manually.`
+          `[ensure-checkout-gift-surcharge] ${fullName}: multiple gift surcharge columns (${names.join(", ")}); drop/rename duplicates manually.`
         );
         continue;
       }

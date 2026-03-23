@@ -2,16 +2,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ensureCheckoutGiftSurchargeColumn = ensureCheckoutGiftSurchargeColumn;
 /**
- * Ensures Order.customFieldsCheckoutGiftSurchargeCents exists (Postgres).
+ * Ensures the Order checkout gift surcharge custom field column exists (Postgres).
  * Run automatically before Vendure bootstrap so production (synchronize:false) self-heals.
+ *
+ * **Name must match TypeORM DefaultNamingStrategy** for embedded custom fields:
+ * `camelCase(prefix) + titleCase(propertyName)` → for `checkoutGiftSurchargeCents` under `customFields`,
+ * `titleCase` uppercases only the first character and lowercases the rest of the string, producing
+ * `customFieldsCheckoutgiftsurchargecents` — NOT `customFieldsCheckoutGiftSurchargeCents`.
+ * (See typeorm `DefaultNamingStrategy.columnName` + `StringUtils.titleCase`.)
  *
  * CLI: node dist/ensure-checkout-gift-surcharge-column.js
  */
 const pg_1 = require("pg");
 const vendure_config_1 = require("./vendure-config");
-const COLUMN = "customFieldsCheckoutGiftSurchargeCents";
+/** Exact DB identifier TypeORM uses for Order.customFields.checkoutGiftSurchargeCents */
+const COLUMN = "customFieldsCheckoutgiftsurchargecents";
 const COLUMN_DEF = `ADD COLUMN IF NOT EXISTS "${COLUMN}" integer NULL`;
-/** Postgres double-quote for identifiers (TypeORM expects exact camelCase column name). */
+/** Postgres double-quote for identifiers. */
 function quoteIdent(ident) {
     return `"${ident.replace(/"/g, '""')}"`;
 }
@@ -92,11 +99,11 @@ async function ensureCheckoutGiftSurchargeColumn() {
             if (names.length === 1 && names[0] !== COLUMN) {
                 const oldName = names[0];
                 await client.query(`ALTER TABLE ${fullName} RENAME COLUMN ${quoteIdent(oldName)} TO ${quoteIdent(COLUMN)}`);
-                console.info(`[ensure-checkout-gift-surcharge] ${fullName}: renamed mis-cased column "${oldName}" -> "${COLUMN}" (TypeORM requires quoted camelCase).`);
+                console.info(`[ensure-checkout-gift-surcharge] ${fullName}: renamed "${oldName}" -> "${COLUMN}" (must match TypeORM DefaultNamingStrategy).`);
                 continue;
             }
             if (names.length > 1) {
-                console.warn(`[ensure-checkout-gift-surcharge] ${fullName}: multiple columns match gift surcharge name (${names.join(", ")}); fix manually.`);
+                console.warn(`[ensure-checkout-gift-surcharge] ${fullName}: multiple gift surcharge columns (${names.join(", ")}); drop/rename duplicates manually.`);
                 continue;
             }
             await client.query(`ALTER TABLE ${fullName} ${COLUMN_DEF}`);

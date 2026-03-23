@@ -57,7 +57,7 @@ Snack boxes use **one variant dimension in the catalog (e.g. size only)**. Gift 
      `pnpm run add-order-gift-surcharge-column`  
      Or with Docker:  
      `docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm vendure node dist/ensure-checkout-gift-surcharge-column.js`  
-   **Note:** The Vendure **server and worker** now run this check **automatically on startup** before bootstrap, so a rebuild/restart is usually enough.
+   **Note:** The Vendure **server and worker** now run this check **automatically on startup** before bootstrap, so a rebuild/restart is usually enough. The physical Postgres column name is **`customFieldsCheckoutgiftsurchargecents`** (TypeORM `DefaultNamingStrategy` + `titleCase` on `checkoutGiftSurchargeCents` — not PascalCase on every word).
    - **Or SQL:** `apps/vendure/scripts/add-order-checkout-gift-surcharge-column.sql` against Postgres.
    - **Dev:** with `synchronize: true`, restarting Vendure creates the column automatically.
 4. **Admin totals:** The order’s line totals may not include the gift add-on; the **Stripe** charge is the source of truth for amount paid. The custom field shows the surcharge in minor units.
