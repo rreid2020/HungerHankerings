@@ -1040,13 +1040,15 @@ export async function createStripePaymentIntent(opts?: VendureRequestOptions): P
 
 export async function checkoutTransitionToArrangingPayment(opts?: VendureRequestOptions): Promise<void> {
   const snap = await fetchVendure<{
-    activeOrder: { state: string; nextOrderStates: string[] } | null;
+    activeOrder: { state: string } | null;
+    /** Shop API: top-level Query field, not Order.nextOrderStates */
+    nextOrderStates: string[];
   }>(
     `query ActiveOrderCheckoutState {
       activeOrder {
         state
-        nextOrderStates
       }
+      nextOrderStates
     }`,
     undefined,
     opts
@@ -1057,7 +1059,7 @@ export async function checkoutTransitionToArrangingPayment(opts?: VendureRequest
   }
 
   let state = active.state;
-  let nextStates = active.nextOrderStates ?? [];
+  let nextStates = snap.nextOrderStates ?? [];
 
   if (
     state === "ArrangingPayment" ||
@@ -1083,16 +1085,18 @@ export async function checkoutTransitionToArrangingPayment(opts?: VendureRequest
   if (state === "Created" && nextStates.includes("AddingItems")) {
     await shopTransitionOrderToState("AddingItems", opts);
     const again = await fetchVendure<{
-      activeOrder: { state: string; nextOrderStates: string[] } | null;
+      activeOrder: { state: string } | null;
+      nextOrderStates: string[];
     }>(
       `query ActiveOrderCheckoutState2 {
-        activeOrder { state nextOrderStates }
+        activeOrder { state }
+        nextOrderStates
       }`,
       undefined,
       opts
     );
     state = again.activeOrder?.state ?? state;
-    nextStates = again.activeOrder?.nextOrderStates ?? [];
+    nextStates = again.nextOrderStates ?? [];
   }
 
   await shopTransitionOrderToState("ArrangingPayment", opts);
