@@ -52,7 +52,13 @@ Snack boxes use **one variant dimension in the catalog (e.g. size only)**. Gift 
 
 1. **Sellable products:** Only **size** (or similar) in the option matrix — **remove** the gift option group and **regenerate variants** so you have one row per size at the **base** price.
 2. **Gift fee:** The storefront sets Order custom field **`checkoutGiftSurchargeCents`** before payment. **Stripe** charges `order.totalWithTax` **plus** that amount (see `StripePlugin` `paymentIntentCreateParams` in `vendure-config.ts`). You do **not** need a gift `ProductVariant` or **`VENDURE_GIFT_BOX_VARIANT_ID`** (deprecated; remove from `.env` if still set).
-3. **Deploy:** After pulling, run DB sync or a migration so the new Order custom field exists (`synchronize` in dev, or your usual prod migration process).
+3. **Deploy / database (required):** The new column must exist on the **`order`** table or **every** cart operation fails. If you use `synchronize: false` in production (default in this repo), run **once** after deploy:
+   - **Script (recommended):** from `apps/vendure` after `pnpm run build`:  
+     `pnpm run add-order-gift-surcharge-column`  
+     Or with Docker:  
+     `docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm vendure node dist/add-order-checkout-gift-surcharge-column.js`
+   - **Or SQL:** `apps/vendure/scripts/add-order-checkout-gift-surcharge-column.sql` against Postgres.
+   - **Dev:** with `synchronize: true`, restarting Vendure creates the column automatically.
 4. **Admin totals:** The order’s line totals may not include the gift add-on; the **Stripe** charge is the source of truth for amount paid. The custom field shows the surcharge in minor units.
 
 **Dummy payment (local):** The dummy handler settles against Vendure’s order total only; it does **not** add the gift surcharge. Use **Stripe test mode** to verify gift pricing end-to-end.
