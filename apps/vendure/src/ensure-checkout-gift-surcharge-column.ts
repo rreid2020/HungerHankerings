@@ -10,6 +10,11 @@ import { config } from "./vendure-config";
 const COLUMN = "customFieldsCheckoutGiftSurchargeCents";
 const COLUMN_DEF = `ADD COLUMN IF NOT EXISTS "${COLUMN}" integer NULL`;
 
+/** Postgres double-quote for identifiers (TypeORM expects exact camelCase column name). */
+function quoteIdent(ident: string): string {
+  return `"${ident.replace(/"/g, '""')}"`;
+}
+
 const opts = config.dbConnectionOptions as {
   type?: string;
   host: string;
@@ -95,18 +100,35 @@ export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
       if (exists.rows.length === 0) continue;
 
       const fullName = `"${table_schema}"."${table_name}"`;
-      const hasColumn = await client.query(
-        `SELECT 1 FROM information_schema.columns
+      const cols = await client.query<{ column_name: string }>(
+        `SELECT column_name FROM information_schema.columns
          WHERE table_schema = $1 AND table_name = $2
-           AND (column_name = $3 OR LOWER(column_name) = LOWER($3))`,
+           AND LOWER(column_name) = LOWER($3)`,
         [table_schema, table_name, COLUMN]
       );
-      if (hasColumn.rows.length > 0) {
-        console.info(`[ensure-checkout-gift-surcharge] ${fullName}: column ${COLUMN} already present.`);
+      const names = cols.rows.map((r) => r.column_name);
+      if (names.includes(COLUMN)) {
+        console.info(`[ensure-checkout-gift-surcharge] ${fullName}: "${COLUMN}" already correct.`);
+        continue;
+      }
+      if (names.length === 1 && names[0] !== COLUMN) {
+        const oldName = names[0];
+        await client.query(
+          `ALTER TABLE ${fullName} RENAME COLUMN ${quoteIdent(oldName)} TO ${quoteIdent(COLUMN)}`
+        );
+        console.info(
+          `[ensure-checkout-gift-surcharge] ${fullName}: renamed mis-cased column "${oldName}" -> "${COLUMN}" (TypeORM requires quoted camelCase).`
+        );
+        continue;
+      }
+      if (names.length > 1) {
+        console.warn(
+          `[ensure-checkout-gift-surcharge] ${fullName}: multiple columns match gift surcharge name (${names.join(", ")}); fix manually.`
+        );
         continue;
       }
       await client.query(`ALTER TABLE ${fullName} ${COLUMN_DEF}`);
-      console.info(`[ensure-checkout-gift-surcharge] ${fullName}: added ${COLUMN}.`);
+      console.info(`[ensure-checkout-gift-surcharge] ${fullName}: added "${COLUMN}".`);
     }
   } finally {
     await client.end();
