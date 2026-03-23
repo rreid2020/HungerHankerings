@@ -8,6 +8,7 @@ import type { AddressFields, ShippingOverridesByUnit } from "../../components/Ca
 import { useAuth } from "../../components/AuthContext"
 import { useGooglePlacesScript } from "../../hooks/useGooglePlacesScript"
 import { getTaxRate, CANADIAN_PROVINCES } from "../../lib/shippingTax"
+import { CHECKOUT_GIFT_BOX_FEE_DOLLARS } from "../../lib/checkout-gift-surcharge"
 import {
   checkoutShippingAddressUpdate,
   getCheckoutShippingMethods,
@@ -18,7 +19,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { loadStripe, type StripeCardElement } from "@stripe/stripe-js"
 
-const GIFT_BOX_FEE = 3.99
+const GIFT_BOX_FEE = CHECKOUT_GIFT_BOX_FEE_DOLLARS
 const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
 const CHECKOUT_DRAFT_KEY = "hungerhankerings_checkout_draft_v1"
 
@@ -741,11 +742,12 @@ const CheckoutPage = () => {
       shippingByDestKey
     ])
 
-  // Prefer Vendure totals when we have a single address and no gift (Vendure doesn't know about gift fee)
+  // Vendure cart tax can follow billing/default zone; UI tax must follow shipping address(es) from the form.
+  // When we have an address breakdown, always use storefront math (getTaxRate + quotes) so tax shows without gift and matches grand total.
   const hasShippingAddress = !!(shipping.country?.trim() && shipping.province?.trim())
-  const useStoreTotals = giftFee > 0 || addressBreakdown.length > 1
+  const useAddressBreakdownTotals = addressBreakdown.length > 0
   const useVendureTotals =
-    hasShippingAddress && cart?.total != null && cart.total > 0 && !useStoreTotals
+    hasShippingAddress && cart?.total != null && cart.total > 0 && !useAddressBreakdownTotals
   const displayShipping = useVendureTotals ? (cart?.shippingTotal ?? 0) : shippingAmount
   const displayTax = useVendureTotals
     ? Math.max(
@@ -1655,17 +1657,13 @@ const CheckoutPage = () => {
         <div className="mt-4 space-y-2 text-sm text-foreground">
           {addressBreakdown.length > 0 ? (
             addressBreakdown.map((addr) => {
-              const isMainAddressOnly =
-                useVendureTotals && addressBreakdown.length === 1
-              const rowShipping = isMainAddressOnly ? displayShipping : addr.shipping
-              const rowTax = isMainAddressOnly ? displayTax : addr.taxAmount
-              const rowTotal =
-                isMainAddressOnly
-                  ? addr.subtotal + displayShipping + addr.giftFee + displayTax
-                  : addr.totalForAddress
+              const rowShipping = addr.shipping
+              const rowTax = addr.taxAmount
+              const rowTotal = addr.totalForAddress
+              const taxBase = addr.subtotal + rowShipping + addr.giftFee
               const taxRateDisplay =
-                rowTax > 0 && addr.subtotal + rowShipping + addr.giftFee > 0
-                  ? ((rowTax / (addr.subtotal + rowShipping + addr.giftFee)) * 100).toFixed(1)
+                rowTax > 0 && taxBase > 0
+                  ? ((rowTax / taxBase) * 100).toFixed(1)
                   : (addr.taxRate * 100).toFixed(1)
               return (
                 <div key={addr.label} className="space-y-2 border-t border-gray-200 pt-3 first:border-t-0 first:pt-0">

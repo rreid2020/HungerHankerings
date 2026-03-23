@@ -892,6 +892,33 @@ export async function checkoutShippingAddressUpdate(
   return order;
 }
 
+/**
+ * Persists gift add-on amount (minor units, tax-inclusive) on the active order for StripePlugin to add to the PaymentIntent.
+ * Pass 0 or clear with null to reset (avoids stale values on retry).
+ */
+export async function setOrderCheckoutGiftSurchargeCents(
+  cents: number | null,
+  opts?: VendureRequestOptions
+): Promise<void> {
+  const customFields =
+    cents != null && cents > 0 ? { checkoutGiftSurchargeCents: Math.floor(cents) } : { checkoutGiftSurchargeCents: null }
+  const data = await fetchVendure<{
+    setOrderCustomFields: { id?: string; message?: string; errorCode?: string } | null;
+  }>(
+    `
+    mutation SetOrderCheckoutGiftSurcharge($input: UpdateOrderInput!) {
+      setOrderCustomFields(input: $input) {
+        ... on Order { id }
+        ... on ErrorResult { message errorCode }
+      }
+    }
+  `,
+    { input: { customFields } },
+    opts
+  )
+  assertShopOrderMutationPayload(data.setOrderCustomFields, "Set order gift surcharge")
+}
+
 export async function checkoutBillingAddressUpdate(
   _checkoutId: string,
   address: StorefrontAddressInput,

@@ -46,15 +46,18 @@ Snack boxes use **one variant dimension in the catalog (e.g. size only)**. Gift 
 
 - **Product grid / PDP:** Option groups whose names match **gift / wrap / card** (case-insensitive) are **hidden**. Shoppers only pick **size** (and any other non-gift groups).
 - If you still have **old variants** in Vendure (size × gift), the storefront picks the **cheapest** matching variant for the selected size (usually base price without gift). **Prefer cleaning up Admin** (below) so each size is a single variant.
-- **Checkout:** Per-unit checkboxes + message; fee is shown in the order summary. Set **`VENDURE_GIFT_BOX_VARIANT_ID`** so the fee is added as a real order line before payment (tax + Stripe).
+- **Checkout:** Per-unit checkboxes + message; fee is shown in the order summary ($3.99/box + tax at shipping province, same formula as the server).
 
-### Vendure setup
+### Vendure / Stripe (no gift product variant)
 
-1. **Sellable products:** Only **size** (or similar) in the option matrix — **remove** the gift option group and **regenerate variants** so you have one row per size at the **base** price. Easiest long-term.
-2. **Hidden gift SKU:** One product (e.g. *Gift box — wrap + card*), one variant at **$3.99**, **Standard** tax, slug/internal id hidden via `STOREFRONT_HIDDEN_PRODUCT_SLUGS` / `STOREFRONT_HIDDEN_PRODUCT_IDS`.
-3. **Env (storefront server):** `VENDURE_GIFT_BOX_VARIANT_ID=<variant id>` (from variant detail sidebar in Admin).
+1. **Sellable products:** Only **size** (or similar) in the option matrix — **remove** the gift option group and **regenerate variants** so you have one row per size at the **base** price.
+2. **Gift fee:** The storefront sets Order custom field **`checkoutGiftSurchargeCents`** before payment. **Stripe** charges `order.totalWithTax` **plus** that amount (see `StripePlugin` `paymentIntentCreateParams` in `vendure-config.ts`). You do **not** need a gift `ProductVariant` or **`VENDURE_GIFT_BOX_VARIANT_ID`** (deprecated; remove from `.env` if still set).
+3. **Deploy:** After pulling, run DB sync or a migration so the new Order custom field exists (`synchronize` in dev, or your usual prod migration process).
+4. **Admin totals:** The order’s line totals may not include the gift add-on; the **Stripe** charge is the source of truth for amount paid. The custom field shows the surcharge in minor units.
 
-Do **not** also bake gift into variant prices **and** use checkout add-on — that **double-charges**. Use either priced gift variants **or** checkout add-on + hidden SKU.
+**Dummy payment (local):** The dummy handler settles against Vendure’s order total only; it does **not** add the gift surcharge. Use **Stripe test mode** to verify gift pricing end-to-end.
+
+Do **not** bake gift into variant prices **and** use the checkout add-on — that **double-charges**.
 
 **Stale checkout drafts:** Gift keys use `lineId-unitIndex`; orphaned keys are pruned when the cart changes.
 

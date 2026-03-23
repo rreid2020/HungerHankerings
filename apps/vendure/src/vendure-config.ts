@@ -5,9 +5,11 @@ import {
   DefaultSearchPlugin,
   defaultConfig,
   dummyPaymentHandler,
+  LanguageCode,
   mergeConfig,
   VendureConfig,
 } from "@vendure/core";
+import { getAmountInStripeMinorUnits } from "@vendure/payments-plugin/package/stripe/stripe-utils";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
@@ -77,6 +79,27 @@ const corsOptions =
   isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
 
 const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
+  customFields: {
+    Order: [
+      ...(defaultConfig.customFields?.Order ?? []),
+      {
+        name: "checkoutGiftSurchargeCents",
+        type: "int",
+        nullable: true,
+        public: true,
+        readonly: false,
+        internal: false,
+        label: [{ languageCode: LanguageCode.en, value: "Checkout gift surcharge (minor units)" }],
+        description: [
+          {
+            languageCode: LanguageCode.en,
+            value:
+              "Set at checkout when the customer selects gift wrap. Added to the Stripe PaymentIntent; not an order line.",
+          },
+        ],
+      },
+    ],
+  },
   apiOptions: {
     hostname: "0.0.0.0",
     port,
@@ -145,7 +168,19 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     PostalZonePlugin,
     DefaultJobQueuePlugin,
     DefaultSearchPlugin.init({}),
-    StripePlugin.init({ storeCustomersInStripe: true }),
+    StripePlugin.init({
+      storeCustomersInStripe: true,
+      paymentIntentCreateParams: (_injector, _ctx, order) => {
+        const raw = order.customFields?.checkoutGiftSurchargeCents as number | null | undefined;
+        const extra = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : 0;
+        if (extra <= 0) {
+          return {};
+        }
+        const base = getAmountInStripeMinorUnits(order);
+        // Stripe types omit `amount` from overrides; runtime merge replaces PI amount.
+        return { amount: base + extra } as Record<string, unknown>;
+      },
+    }),
     AssetServerPlugin.init({
       route: "assets",
       assetUploadDir: assetDir,

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
-  addItemToOrder,
   checkoutEmailUpdate,
   checkoutShippingAddressUpdate,
   checkoutBillingAddressUpdate,
@@ -13,9 +12,11 @@ import {
   checkoutComplete,
   customerRegister,
   customerLoginWithCookies,
+  setOrderCheckoutGiftSurchargeCents,
   type StorefrontAddressInput
 } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
+import { checkoutGiftSurchargeMinorUnits } from "../../../../lib/checkout-gift-surcharge"
 
 // Vendure: active order is from session (cookie). Forward request cookie to all Vendure calls.
 
@@ -188,16 +189,19 @@ export async function POST(request: NextRequest) {
       typeof giftBoxCountRaw === "number" && Number.isFinite(giftBoxCountRaw)
         ? Math.max(0, Math.floor(giftBoxCountRaw))
         : 0
-    const giftVariantId = process.env.VENDURE_GIFT_BOX_VARIANT_ID?.trim()
-    if (giftVariantId && giftBoxCount > 0) {
-      const preview = await getActiveOrder(opts)
-      const maxBoxes =
-        preview?.lines?.reduce((sum, l) => sum + l.quantity, 0) ?? 0
-      const n = Math.min(giftBoxCount, maxBoxes > 0 ? maxBoxes : giftBoxCount)
-      if (n > 0) {
-        await addItemToOrder(giftVariantId, n, opts)
-      }
-    }
+    const previewForGift = await getActiveOrder(opts)
+    const maxBoxes =
+      previewForGift?.lines?.reduce((sum, l) => sum + l.quantity, 0) ?? 0
+    const giftSurchargeMinor = checkoutGiftSurchargeMinorUnits(
+      giftBoxCount,
+      maxBoxes,
+      toCountryCode(shipping.country),
+      (shipping.province ?? "").trim()
+    )
+    await setOrderCheckoutGiftSurchargeCents(
+      giftSurchargeMinor > 0 ? giftSurchargeMinor : null,
+      opts
+    )
 
     const gbu = body.giftByLineUnit
     if (gbu && typeof gbu === "object" && Object.keys(gbu).length > 0) {

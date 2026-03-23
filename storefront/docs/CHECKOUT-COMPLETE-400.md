@@ -18,7 +18,7 @@ Below matches `storefront/app/api/checkout/complete/route.ts`.
 | **Cannot set a Customer for the Order when already logged in** | Shop session already has a Customer, but checkout still called `setCustomerForOrder` — e.g. `vendure_token` missing on the request while the Vendure session cookie still reflects login (same pattern as `/api/auth/me` falling back to cookies) | **Fixed in code:** skip guest email step when `activeOrder.customer` exists; try/catch for this message. Redeploy storefront. |
 | **No active order** / **Set customer for order** / **Set shipping address** / GraphQL errors | Shop session on the server does not match the cart you think you have | See **Session / URL alignment** below. |
 | **Order was not created. Payment may be required.** | Dummy checkout path without valid completion | Usually payment plugin / `addPaymentToOrder` returned no order token. |
-| **Failed to add item** (generic) | `VENDURE_GIFT_BOX_VARIANT_ID` set but variant missing/disabled | Unset env or set a valid variant ID in the **same channel** as the cart. |
+| **Failed to add item** (generic) | Rare `addItemToOrder` failure | Gift add-on no longer uses a variant; remove **`VENDURE_GIFT_BOX_VARIANT_ID`** from env if present. |
 | Any other Vendure message | GraphQL `ErrorResult` or network | Read full `error`; check `docker compose … logs vendure --tail=100` at the same timestamp. |
 
 ## Session / URL alignment (very common on droplets)
@@ -48,7 +48,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml logs storefront 
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs vendure --tail=80
 ```
 
-Confirm env inside containers: `NEXT_PUBLIC_VENDURE_SHOP_API_URL` baked into storefront, `VENDURE_SHOP_API_URL` for server-side proxy, `APP_URL`, Stripe keys on **Vendure**, `VENDURE_GIFT_BOX_VARIANT_ID` if used.
+Confirm env inside containers: `NEXT_PUBLIC_VENDURE_SHOP_API_URL` baked into storefront, `VENDURE_SHOP_API_URL` for server-side proxy, `APP_URL`, Stripe keys on **Vendure**. Do **not** set `VENDURE_GIFT_BOX_VARIANT_ID` (removed).
 
 ## Dummy vs Stripe
 
