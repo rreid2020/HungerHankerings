@@ -149,6 +149,8 @@ export type StorefrontCheckout = {
   id: string;
   /** Vendure order code (e.g. for redirects after Stripe Payment Intent) */
   code?: string;
+  /** Channel currency when present (avoids hard-coding CAD in summaries). */
+  currencyCode?: string;
   email?: string | null;
   lines: {
     id: string;
@@ -179,6 +181,15 @@ export type StorefrontCheckout = {
     net?: { amount: number; currency: string };
     gross?: { amount: number; currency: string };
   };
+  /** Full order tax rows (Shop API), amounts in major units. */
+  taxSummary?: {
+    description: string;
+    taxRate: number;
+    taxBase: number;
+    taxTotal: number;
+  }[];
+  /** Gift packaging surcharge from Order custom field (major units). */
+  giftPackagingAmount?: number;
 };
 
 export type StorefrontAddressInput = {
@@ -563,6 +574,7 @@ const activeOrderFragment = `
   code
   state
   active
+  currencyCode
   lines {
     id
     quantity
@@ -586,11 +598,21 @@ const activeOrderFragment = `
   shippingWithTax
   total
   totalWithTax
+  taxSummary {
+    description
+    taxRate
+    taxBase
+    taxTotal
+  }
+  customFields {
+    checkoutGiftSurchargeCents
+  }
 `;
 
 function mapVendureOrderToCheckout(order: {
   id: string;
   code: string;
+  currencyCode?: string | null;
   lines?: Array<{
     id: string;
     quantity: number;
@@ -614,12 +636,36 @@ function mapVendureOrderToCheckout(order: {
   shippingWithTax?: number;
   total?: number;
   totalWithTax?: number;
+  taxSummary?: Array<{
+    description?: string | null;
+    taxRate?: number | null;
+    taxBase?: unknown;
+    taxTotal?: unknown;
+  }> | null;
+  customFields?: { checkoutGiftSurchargeCents?: number | null } | null;
 } | null): StorefrontCheckout | null {
   if (!order) return null;
-  const currency = "CAD";
+  const currency =
+    (typeof order.currencyCode === "string" && order.currencyCode.trim()) || "CAD";
+  const minor = (v: unknown): number => {
+    if (v == null) return 0;
+    if (typeof v === "bigint") return Number(v) / 100;
+    if (typeof v === "number" && Number.isFinite(v)) return v / 100;
+    if (typeof v === "string" && v.trim() !== "") {
+      const n = Number(v);
+      return Number.isFinite(n) ? n / 100 : 0;
+    }
+    return 0;
+  };
+  const giftCents = order.customFields?.checkoutGiftSurchargeCents;
+  const giftMajor =
+    typeof giftCents === "number" && Number.isFinite(giftCents) && giftCents > 0
+      ? giftCents / 100
+      : undefined;
   return {
     id: order.id,
     code: order.code,
+    currencyCode: currency,
     email: undefined,
     lines:
       order.lines?.map((line) => ({
@@ -673,6 +719,15 @@ function mapVendureOrderToCheckout(order: {
           }
         : undefined,
     totalPrice: order.totalWithTax != null ? { gross: { amount: order.totalWithTax / 100, currency } } : undefined,
+    taxSummary: order.taxSummary?.length
+      ? order.taxSummary.map((row) => ({
+          description: row?.description ?? "",
+          taxRate: row?.taxRate ?? 0,
+          taxBase: minor(row?.taxBase),
+          taxTotal: minor(row?.taxTotal),
+        }))
+      : undefined,
+    giftPackagingAmount: giftMajor,
   };
 }
 

@@ -263,7 +263,10 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
-        const currency = preview?.totalPrice?.gross?.currency ?? "CAD"
+        const currency =
+          preview?.currencyCode?.trim() ||
+          preview?.totalPrice?.gross?.currency ||
+          "CAD"
         const giftBoxCount =
           typeof body.giftBoxCount === "number" && Number.isFinite(body.giftBoxCount)
             ? Math.max(0, Math.floor(body.giftBoxCount))
@@ -289,19 +292,32 @@ export async function POST(request: NextRequest) {
             subTotalGross: preview?.subtotalPrice?.gross?.amount,
             shippingNet: preview?.shippingPrice?.net?.amount,
             shippingGross: preview?.shippingPrice?.gross?.amount,
-            taxEstimate:
-              preview?.subtotalPrice?.gross?.amount != null && preview?.subtotalPrice?.net?.amount != null
+            /** Full order tax (lines + shipping, etc.); replaces misleading line-only taxEstimate. */
+            taxLines: preview?.taxSummary?.length
+              ? preview.taxSummary.map((t) => ({
+                  description: t.description,
+                  taxRate: t.taxRate,
+                  taxTotal: t.taxTotal,
+                }))
+              : undefined,
+            taxEstimate: preview?.taxSummary?.length
+              ? preview.taxSummary.reduce((s, t) => s + t.taxTotal, 0)
+              : preview?.subtotalPrice?.gross?.amount != null &&
+                  preview?.subtotalPrice?.net?.amount != null
                 ? preview.subtotalPrice.gross.amount - preview.subtotalPrice.net.amount
                 : undefined,
+            amountPaid: preview?.totalPrice?.gross?.amount,
             giftPackagingAmount:
-              giftBoxCount > 0
-                ? checkoutGiftSurchargeMinorUnits(
-                    giftBoxCount,
-                    preview?.lines?.reduce((s, l) => s + l.quantity, 0) ?? 0,
-                    toCountryCode(shipping.country),
-                    (shipping.province ?? "").trim()
-                  ) / 100
-                : undefined,
+              typeof preview?.giftPackagingAmount === "number" && preview.giftPackagingAmount > 0
+                ? preview.giftPackagingAmount
+                : giftBoxCount > 0
+                  ? checkoutGiftSurchargeMinorUnits(
+                      giftBoxCount,
+                      preview?.lines?.reduce((s, l) => s + l.quantity, 0) ?? 0,
+                      toCountryCode(shipping.country),
+                      (shipping.province ?? "").trim()
+                    ) / 100
+                  : undefined,
             giftLineMessages: giftLines.length ? giftLines : undefined,
             lines: (preview?.lines ?? []).map((l) => ({
               productName: l.variant.product.name,

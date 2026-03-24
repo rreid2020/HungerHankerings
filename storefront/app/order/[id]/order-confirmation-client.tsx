@@ -309,8 +309,14 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   {typeof s.subTotalNet === "number" ? (
                     <Row label="Subtotal (ex. tax)" value={moneyFmt(s.subTotalNet, c)} />
                   ) : null}
+                  {typeof s.subTotalGross === "number" &&
+                  (typeof s.subTotalNet !== "number" || s.subTotalGross - s.subTotalNet > 0.001) ? (
+                    <Row label="Subtotal (incl. tax)" value={moneyFmt(s.subTotalGross, c)} />
+                  ) : null}
                   {typeof s.shippingNet === "number" ? (
                     <Row label="Shipping (ex. tax)" value={moneyFmt(s.shippingNet, c)} />
+                  ) : typeof s.shippingGross === "number" && s.shippingGross > 0 ? (
+                    <Row label="Shipping (incl. tax)" value={moneyFmt(s.shippingGross, c)} />
                   ) : null}
                   {typeof s.giftPackagingAmount === "number" && s.giftPackagingAmount > 0 ? (
                     <Row label="Gift packaging" value={moneyFmt(s.giftPackagingAmount, c)} />
