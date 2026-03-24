@@ -38,8 +38,7 @@ function giftFeeCents(order: Order): number {
 export const ordersInboxNotificationHandler = new EmailEventListener("orders-inbox-notification")
   .on(OrderStateTransitionEvent)
   .filter(
-    (event) =>
-      event.toState === "PaymentSettled" && event.fromState !== "Modifying" && !!event.order.customer,
+    (event) => event.toState === "PaymentSettled" && event.fromState !== "Modifying",
   )
   .loadData(async ({ event, injector }) => {
     transformOrderLineAssetUrls(event.ctx, event.order, injector);
@@ -50,9 +49,12 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
   })
   .setRecipient(() => process.env.ORDERS_INBOX_EMAIL?.trim() || "orders@hungerhankerings.com")
   .setFrom("{{ fromAddress }}")
-  .setSubject(
-    "[New order] #{{ order.code }} — {{ order.customer.emailAddress }}",
-  )
+  .setSubject((event) => {
+    const o = event.order;
+    const email = o.customer?.emailAddress?.trim();
+    const suffix = email && email.length > 0 ? email : "guest / no email on file";
+    return `[New order] #${o.code} — ${suffix}`;
+  })
   .setTemplateVars((event) => ({
     order: event.order,
     shippingLines: (event as { data: { shippingLines: unknown[] } }).data.shippingLines,

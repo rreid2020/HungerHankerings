@@ -23,6 +23,8 @@ services:
     image: axllent/mailpit:latest
     ports:
       - "8025:8025"
+      # SMTP for host-side apps; in Docker use hostname `mailpit` and port 1025
+      - "1025:1025"
 
   vendure:
     build:
@@ -62,10 +64,18 @@ services:
       REDIS_PORT: ${REDIS_PORT:-6379}
       COOKIE_SECRET: ${COOKIE_SECRET:-dev-cookie-secret}
       NODE_ENV: ${NODE_ENV:-development}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_FROM: ${SMTP_FROM:-Hunger Hankerings <noreply@hungerhankerings.local>}
+      ORDERS_INBOX_EMAIL: ${ORDERS_INBOX_EMAIL:-orders@hungerhankerings.com}
     command: ["node", "dist/worker.js"]
     depends_on:
       - vendure
       - redis
+      - mailpit
 
   storefront:
     build:

@@ -4,7 +4,14 @@
   <mj-column>
     <mj-text>
       <strong>Order:</strong> {{ order.code }}<br/>
+      {{#if order.customer}}
       <strong>Customer:</strong> {{ order.customer.firstName }} {{ order.customer.lastName }} &lt;{{ order.customer.emailAddress }}&gt;<br/>
+      {{else}}
+      <strong>Customer:</strong> Guest checkout (no customer record on order)<br/>
+      {{#if order.shippingAddress}}
+      <strong>Ship-to name:</strong> {{ order.shippingAddress.fullName }}<br/>
+      {{/if}}
+      {{/if}}
       <strong>State:</strong> {{ order.state }}
     </mj-text>
   </mj-column>

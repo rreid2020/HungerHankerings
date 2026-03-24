@@ -30,6 +30,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_FROM: ${SMTP_FROM:-}
+      ORDERS_INBOX_EMAIL: ${ORDERS_INBOX_EMAIL:-orders@hungerhankerings.com}
     command: ["node", "dist/index.js"]
     depends_on:
       - redis
@@ -62,6 +63,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_FROM: ${SMTP_FROM:-}
+      ORDERS_INBOX_EMAIL: ${ORDERS_INBOX_EMAIL:-orders@hungerhankerings.com}
     command: ["node", "dist/worker.js"]
     depends_on:
       - vendure

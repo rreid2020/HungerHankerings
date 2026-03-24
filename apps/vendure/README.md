@@ -12,6 +12,17 @@ Vendure server and worker for Hunger Hankerings.
 4. Start the server: `node dist/index.js` (or `pnpm start`).
 5. Start the worker: `node dist/worker.js` (or `pnpm start:worker`).
 
+## Testing email with Mailpit (Docker)
+
+The root `docker-compose.yml` includes [Mailpit](https://github.com/axllent/mailpit) (web UI **http://localhost:8025**, SMTP **mailpit:1025** inside the compose network).
+
+1. In `.env` (or export before `docker compose up`):  
+   `SMTP_HOST=mailpit` · `SMTP_PORT=1025` · leave `SMTP_USER` / `SMTP_PASS` empty · optional `ORDERS_INBOX_EMAIL=orders@hungerhankerings.com` (shown as the **To** address for internal new-order mail).
+2. Rebuild/restart **vendure** and **vendure-worker** so they pick up env (the worker sends queued emails).
+3. Complete a checkout so the order reaches **PaymentSettled** — you should see the customer templates plus **[New order]** in Mailpit.
+
+If `SMTP_HOST` is **unset** and `NODE_ENV` is development, Vendure uses the built-in **`/mailbox`** file capture instead of SMTP (no Mailpit required).
+
 ## Admin UI
 
 Open `/admin` (e.g. http://localhost:3000/admin). Log in with `SUPERADMIN_USERNAME` / `SUPERADMIN_PASSWORD`.

@@ -26,33 +26,48 @@ import { LinkGuestCheckoutStrategy } from "./link-guest-checkout-strategy";
 
 require("dotenv").config();
 
-/** In production, use SMTP if configured; otherwise noop so verification/password-reset emails are not sent until SMTP_* are set. */
+/**
+ * SMTP when `SMTP_HOST` is set. User/pass optional (Mailpit and other local catchers use no auth on port 1025).
+ * If host is unset in production, emails are dropped (verification, orders inbox, etc.).
+ */
 function buildEmailTransport(): {
   transport:
-    | { type: "smtp"; host: string; port: number; secure?: boolean; auth: { user: string; pass: string }; logging?: boolean }
+    | {
+        type: "smtp";
+        host: string;
+        port: number;
+        secure?: boolean;
+        auth?: { user: string; pass: string };
+        logging?: boolean;
+      }
     | { type: "none" };
 } {
   const host = process.env.SMTP_HOST?.trim();
+  if (!host) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn(
+        "[vendure] EmailPlugin: SMTP_HOST not set — outgoing mail disabled (verification, password reset, orders inbox)."
+      );
+    }
+    return { transport: { type: "none" } };
+  }
+  const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_PASS?.trim();
-  if (host && user && pass) {
-    const port = parseInt(process.env.SMTP_PORT ?? "587", 10);
-    console.info(`[vendure] EmailPlugin: SMTP enabled (${host}:${port}, user=${user})`);
-    return {
-      transport: {
-        type: "smtp",
-        host,
-        port,
-        secure: process.env.SMTP_SECURE === "true",
-        auth: { user, pass },
-        logging: true,
-      },
-    };
-  }
-  console.warn(
-    "[vendure] EmailPlugin: SMTP not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS). Verification emails are dropped — nothing reaches Resend."
+  const auth = user && pass ? { user, pass } : undefined;
+  console.info(
+    `[vendure] EmailPlugin: SMTP enabled (${host}:${port}${auth ? `, user=${user}` : ", no auth — e.g. Mailpit"})`,
   );
-  return { transport: { type: "none" } };
+  return {
+    transport: {
+      type: "smtp",
+      host,
+      port,
+      secure: process.env.SMTP_SECURE === "true",
+      ...(auth ? { auth } : {}),
+      logging: true,
+    },
+  };
 }
 
 if (process.env.NODE_ENV === "production") {
@@ -80,6 +95,25 @@ if (isProduction && !requireCustomerEmailVerification) {
 // In production restrict CORS to APP_URL; in dev allow all (localhost)
 const corsOptions =
   isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
+
+const smtpHostConfigured = Boolean(process.env.SMTP_HOST?.trim());
+/** Dev file mailbox at /mailbox only when not sending via SMTP (e.g. use Mailpit with SMTP_HOST=mailpit). */
+const useEmailDevMode = !isProduction && !smtpHostConfigured;
+const emailTemplateLoader = new FallbackEmailTemplateLoader(
+  path.join(__dirname, "..", "email-templates"),
+  path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+);
+const ordersAndDefaultEmailHandlers = [...defaultEmailHandlers, ordersInboxNotificationHandler];
+const emailOutputPath = path.join(assetDir, "test-emails");
+const emailGlobalTemplateVars = {
+  baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
+  passwordResetUrl:
+    (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
+  verifyEmailAddressUrl:
+    (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+  fromAddress:
+    process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
+};
 
 const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   customFields: {
@@ -195,43 +229,23 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
       port: 3002,
     }),
     EmailPlugin.init(
-      process.env.NODE_ENV === "production"
+      useEmailDevMode
         ? {
-            templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
-            outputPath: path.join(assetDir, "test-emails"),
+            templateLoader: emailTemplateLoader,
+            devMode: true,
+            outputPath: emailOutputPath,
             route: "mailbox",
-            handlers: defaultEmailHandlers,
-            ...buildEmailTransport(),
-            globalTemplateVars: {
-              baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
-              passwordResetUrl:
-                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
-              verifyEmailAddressUrl:
-                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
-              // Resend rejects unverified domains; use SMTP_FROM=noreply@yourverifieddomain.com in prod
-              fromAddress:
-                process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
-            },
+            handlers: ordersAndDefaultEmailHandlers,
+            globalTemplateVars: emailGlobalTemplateVars,
           }
         : {
-            templateLoader: new FallbackEmailTemplateLoader(
-              path.join(__dirname, "..", "email-templates"),
-              path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
-            ),
-            devMode: true,
-            outputPath: path.join(assetDir, "test-emails"),
+            templateLoader: emailTemplateLoader,
+            outputPath: emailOutputPath,
             route: "mailbox",
-            handlers: [...defaultEmailHandlers, ordersInboxNotificationHandler],
-            globalTemplateVars: {
-              baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
-              passwordResetUrl:
-                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
-              verifyEmailAddressUrl:
-                (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
-              fromAddress:
-                process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
-            },
-          }
+            handlers: ordersAndDefaultEmailHandlers,
+            globalTemplateVars: emailGlobalTemplateVars,
+            ...buildEmailTransport(),
+          },
     ),
   ],
 });
