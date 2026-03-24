@@ -6,6 +6,9 @@ import type { StorefrontOrder } from "../../../lib/vendure"
 
 const ORDER_STORAGE_KEY = "vendure_last_order_v1"
 
+/** Stay below nginx `proxy_read_timeout` so the UI falls back to localStorage instead of hanging. */
+const ORDER_FETCH_TIMEOUT_MS = 25_000
+
 type StoredCheckout = {
   orderToken?: string
   orderNumber?: string
@@ -57,6 +60,20 @@ function formatAddress(addr: NonNullable<StorefrontOrder["shippingAddress"]>): s
   return parts.join(", ") || "—"
 }
 
+function readStoredCheckoutForCode(orderCode: string): StoredCheckout | null {
+  if (typeof window === "undefined") return null
+  const raw = window.localStorage.getItem(ORDER_STORAGE_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as StoredCheckout
+    const token = parsed.orderToken ?? parsed.orderNumber
+    if (token === orderCode && parsed.orderSummary) return parsed
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4 py-2 text-sm">
@@ -80,6 +97,7 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
       try {
         const res = await fetch(`/api/orders/by-code/${encodeURIComponent(orderCode)}`, {
           credentials: "include",
+          signal: AbortSignal.timeout(ORDER_FETCH_TIMEOUT_MS),
         })
         const data = (await res.json().catch(() => ({}))) as {
           order?: StorefrontOrder
@@ -91,23 +109,26 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
           setLoading(false)
           return
         }
-        const raw = typeof window !== "undefined" ? window.localStorage.getItem(ORDER_STORAGE_KEY) : null
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw) as StoredCheckout
-            const token = parsed.orderToken ?? parsed.orderNumber
-            if (token === orderCode && parsed.orderSummary) {
-              setFallback(parsed)
-              setLoading(false)
-              return
-            }
-          } catch {
-            /* ignore */
-          }
+        const fromStorage = readStoredCheckoutForCode(orderCode)
+        if (fromStorage) {
+          setFallback(fromStorage)
+          setLoading(false)
+          return
         }
         setError(data?.error ?? "We couldn’t load this order. Check your email for confirmation.")
-      } catch {
-        if (!cancelled) setError("Could not load order details.")
+      } catch (e) {
+        if (!cancelled) {
+          const fromStorage = readStoredCheckoutForCode(orderCode)
+          if (fromStorage) {
+            setFallback(fromStorage)
+          } else {
+            const msg =
+              e instanceof Error && e.name === "TimeoutError"
+                ? "Order lookup timed out. Try refreshing, or check your email for confirmation."
+                : "Could not load order details."
+            setError(msg)
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
