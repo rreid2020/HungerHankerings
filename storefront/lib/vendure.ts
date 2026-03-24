@@ -155,6 +155,8 @@ export type StorefrontCheckout = {
   lines: {
     id: string;
     quantity: number;
+    /** Line total ex. tax (OrderLine.discountedLinePrice). */
+    lineTotalNet?: { amount: number; currency: string };
     totalPrice?: { gross?: { amount: number; currency: string } };
     variant: {
       id: string;
@@ -264,9 +266,14 @@ export type StorefrontOrder = {
     productName: string;
     variantName?: string | null;
     quantity: number;
-    /** Unit price inc tax (major units). */
-    unitPrice: { gross: { amount: number; currency: string } };
-    /** Line total inc tax (unit × qty, major units). */
+    /** Unit prices (major units). */
+    unitPrice: {
+      net: { amount: number; currency: string };
+      gross: { amount: number; currency: string };
+    };
+    /** Line total ex. tax (discountedLinePrice). */
+    lineTotalNet: { amount: number; currency: string };
+    /** Line total inc tax. */
     lineTotalWithTax: { amount: number; currency: string };
     thumbnail?: { url: string | null } | null;
   }[];
@@ -325,6 +332,8 @@ export type RawVendureOrderForStorefront = {
     productVariant: { product: { name: string }; name: string };
     quantity: number;
     unitPriceWithTax?: unknown;
+    discountedUnitPrice?: unknown;
+    discountedLinePrice?: unknown;
     discountedLinePriceWithTax?: unknown;
     linePriceWithTax?: unknown;
   }>;
@@ -645,8 +654,9 @@ function mapVendureOrderToCheckout(order: {
   customFields?: { checkoutGiftSurchargeCents?: number | null } | null;
 } | null): StorefrontCheckout | null {
   if (!order) return null;
-  const currency =
-    (typeof order.currencyCode === "string" && order.currencyCode.trim()) || "CAD";
+  const currency = storefrontDisplayCurrency(
+    typeof order.currencyCode === "string" ? order.currencyCode : null,
+  );
   const minor = (v: unknown): number => {
     if (v == null) return 0;
     if (typeof v === "bigint") return Number(v) / 100;
@@ -671,6 +681,10 @@ function mapVendureOrderToCheckout(order: {
       order.lines?.map((line) => ({
         id: line.id,
         quantity: line.quantity,
+        lineTotalNet: {
+          amount: line.discountedLinePrice / 100,
+          currency,
+        },
         totalPrice: {
           gross: {
             amount: line.discountedLinePriceWithTax / 100,
@@ -1895,6 +1909,22 @@ export async function refreshToken(
 // Orders
 // ---------------------------------------------------------------------------
 
+/**
+ * Currency shown on the storefront (confirmation, cart-derived summaries).
+ * Vendure channels sometimes report `USD` while prices are Canadian — normalize to CAD.
+ * Set `NEXT_PUBLIC_STORE_CURRENCY` (ISO 4217) to override.
+ */
+export function storefrontDisplayCurrency(iso: string | undefined | null): string {
+  const fromEnv =
+    typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_STORE_CURRENCY?.trim().toUpperCase()
+      : "";
+  if (fromEnv && /^[A-Z]{3}$/.test(fromEnv)) return fromEnv;
+  const c = (iso ?? "").trim().toUpperCase();
+  if (c === "USD") return "CAD";
+  return c || "CAD";
+}
+
 /** Money fields are GraphQL `Money` scalars (minor units as number). */
 function moneyToMajor(val: unknown): number {
   if (val == null) return 0;
@@ -1999,6 +2029,8 @@ const shopOrderFieldsForStorefront = `
     id
     quantity
     unitPriceWithTax
+    discountedUnitPrice
+    discountedLinePrice
     discountedLinePriceWithTax
     linePriceWithTax
     productVariant { product { name } name }
@@ -2026,7 +2058,7 @@ const shopOrderFieldsForStorefront = `
 `;
 
 function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): StorefrontOrder {
-  const currency = (order.currencyCode as string)?.trim() || "CAD";
+  const currency = storefrontDisplayCurrency(order.currencyCode as string);
   const subNet = moneyToMajor(order.subTotal);
   const subGross = moneyToMajor(order.subTotalWithTax);
   const shipNet = moneyToMajor(order.shipping);
@@ -2059,22 +2091,42 @@ function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): Storefront
   const amountPaid =
     settledPaymentTotal > 0 ? { amount: settledPaymentTotal, currency } : null;
 
-  const lines =
-    order.lines?.map((l) => {
-      const lineGross = moneyToMajor(l.discountedLinePriceWithTax ?? l.linePriceWithTax);
-      const unitGross = moneyToMajor(l.unitPriceWithTax);
-      const lineTotal =
-        lineGross > 0 ? lineGross : (unitGross > 0 ? unitGross * l.quantity : 0);
-      return {
-        id: l.id,
-        productName: l.productVariant?.product?.name ?? "",
-        variantName: l.productVariant?.name ?? "",
-        quantity: l.quantity,
-        unitPrice: { gross: { amount: unitGross, currency } },
-        lineTotalWithTax: { amount: lineTotal, currency },
-        thumbnail: null,
-      };
-    }) ?? [];
+  const linesRaw = order.lines ?? [];
+  const sumLineGross = linesRaw.reduce(
+    (s, x) => s + moneyToMajor(x.discountedLinePriceWithTax ?? x.linePriceWithTax),
+    0,
+  );
+  const lines = linesRaw.map((l) => {
+    const lineGross = moneyToMajor(l.discountedLinePriceWithTax ?? l.linePriceWithTax);
+    let lineNet = moneyToMajor(l.discountedLinePrice ?? 0);
+    const unitGross = moneyToMajor(l.unitPriceWithTax);
+    const unitNet = moneyToMajor(l.discountedUnitPrice ?? 0);
+    const lineTotal =
+      lineGross > 0 ? lineGross : (unitGross > 0 ? unitGross * l.quantity : 0);
+    if (lineNet <= 0 && unitNet > 0) {
+      lineNet = unitNet * l.quantity;
+    }
+    if (lineNet <= 0 && lineGross > 0 && sumLineGross > 0 && subNet > 0) {
+      lineNet = (lineGross / sumLineGross) * subNet;
+    }
+    if (lineNet <= 0 && lineGross > 0) {
+      lineNet = lineGross;
+    }
+    const q = Math.max(1, l.quantity);
+    return {
+      id: l.id,
+      productName: l.productVariant?.product?.name ?? "",
+      variantName: l.productVariant?.name ?? "",
+      quantity: l.quantity,
+      unitPrice: {
+        net: { amount: unitNet > 0 ? unitNet : lineNet / q, currency },
+        gross: { amount: unitGross > 0 ? unitGross : lineTotal / q, currency },
+      },
+      lineTotalNet: { amount: lineNet, currency },
+      lineTotalWithTax: { amount: lineTotal, currency },
+      thumbnail: null,
+    };
+  });
 
   const totalExTaxAmount = subNet + shipNet + giftMajor;
 

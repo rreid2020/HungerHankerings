@@ -1,7 +1,14 @@
 import { redirect, notFound } from "next/navigation"
 import Image from "next/image"
 import { getAuthUser, getAuthToken } from "../../../../lib/auth"
-import { getOrderByToken } from "../../../../lib/vendure"
+import { getOrderByToken, storefrontDisplayCurrency } from "../../../../lib/vendure"
+
+function orderMoney(amount: number, currencyCode: string) {
+  return new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: storefrontDisplayCurrency(currencyCode),
+  }).format(amount)
+}
 
 export default async function OrderDetailPage({
   params
@@ -70,7 +77,10 @@ export default async function OrderDetailPage({
               <p>
                 <span className="text-muted-foreground">Total:</span>{" "}
                 <span className="font-medium text-lg">
-                  ${order.total.gross.amount.toFixed(2)} {order.total.gross.currency}
+                  {orderMoney(
+                    order.amountPaid?.amount ?? order.total.gross.amount,
+                    order.currencyCode,
+                  )}
                 </span>
               </p>
             </div>
@@ -130,10 +140,11 @@ export default async function OrderDetailPage({
               </div>
               <div className="text-right">
                 <p className="font-medium text-foreground">
-                  ${line.unitPrice.gross.amount.toFixed(2)}
+                  {orderMoney(line.unitPrice.net.amount, order.currencyCode)}
+                  <span className="block text-xs font-normal text-muted-foreground">each (ex. tax)</span>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  ${(line.unitPrice.gross.amount * line.quantity).toFixed(2)} total
+                  {orderMoney(line.lineTotalNet.amount, order.currencyCode)} line (ex. tax)
                 </p>
               </div>
             </div>

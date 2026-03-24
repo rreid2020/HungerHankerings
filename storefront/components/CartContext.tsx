@@ -93,7 +93,9 @@ export type StripePaymentPending = {
       productName: string
       variantName: string | null
       quantity: number
+      /** Unit price ex. tax (major units). */
       unitPrice: number
+      lineTotalNet?: number
       lineTotalWithTax?: number
     }[]
     shippingAddress?: {

@@ -15,7 +15,8 @@ import {
   customerLoginWithCookies,
   setOrderCheckoutGiftSurchargeCents,
   assertActiveOrderReadyForArrangingPayment,
-  type StorefrontAddressInput
+  type StorefrontAddressInput,
+  storefrontDisplayCurrency
 } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
 import { checkoutGiftSurchargeMinorUnits } from "../../../../lib/checkout-gift-surcharge"
@@ -263,10 +264,9 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
-        const currency =
-          preview?.currencyCode?.trim() ||
-          preview?.totalPrice?.gross?.currency ||
-          "CAD"
+        const currency = storefrontDisplayCurrency(
+          preview?.currencyCode?.trim() || preview?.totalPrice?.gross?.currency || undefined,
+        )
         const giftBoxCount =
           typeof body.giftBoxCount === "number" && Number.isFinite(body.giftBoxCount)
             ? Math.max(0, Math.floor(body.giftBoxCount))
@@ -319,16 +319,19 @@ export async function POST(request: NextRequest) {
                     ) / 100
                   : undefined,
             giftLineMessages: giftLines.length ? giftLines : undefined,
-            lines: (preview?.lines ?? []).map((l) => ({
-              productName: l.variant.product.name,
-              variantName: l.variant.name || null,
-              quantity: l.quantity,
-              unitPrice:
-                l.variant.pricing?.price?.gross?.amount ??
-                l.variant.pricing?.price?.net?.amount ??
-                0,
-              lineTotalWithTax: l.totalPrice?.gross?.amount
-            })),
+            lines: (preview?.lines ?? []).map((l) => {
+              const unitNet = l.variant.pricing?.price?.net?.amount ?? 0
+              const lineNet =
+                l.lineTotalNet?.amount ?? (unitNet > 0 ? unitNet * l.quantity : 0)
+              return {
+                productName: l.variant.product.name,
+                variantName: l.variant.name || null,
+                quantity: l.quantity,
+                unitPrice: unitNet,
+                lineTotalNet: lineNet > 0 ? lineNet : undefined,
+                lineTotalWithTax: l.totalPrice?.gross?.amount,
+              }
+            }),
             shippingAddress: {
               firstName: shipping.first_name?.trim() ?? "",
               lastName: shipping.last_name?.trim() ?? "",
@@ -408,7 +411,9 @@ export async function POST(request: NextRequest) {
       orderSummary: {
         email: email.trim(),
         total: result.order.total?.gross?.amount ?? 0,
-        currency: result.order.currencyCode ?? result.order.total?.gross?.currency ?? "CAD",
+        currency: storefrontDisplayCurrency(
+          result.order.currencyCode ?? result.order.total?.gross?.currency,
+        ),
         subTotalNet: result.order.subTotal?.net?.amount,
         subTotalGross: result.order.subTotalWithTax?.gross?.amount,
         shippingNet: result.order.shipping?.net?.amount,
@@ -426,8 +431,9 @@ export async function POST(request: NextRequest) {
           productName: l.productName,
           variantName: l.variantName ?? null,
           quantity: l.quantity,
-          unitPrice: l.unitPrice?.gross?.amount ?? 0,
-          lineTotalWithTax: l.lineTotalWithTax?.amount
+          unitPrice: l.unitPrice.net.amount,
+          lineTotalNet: l.lineTotalNet.amount,
+          lineTotalWithTax: l.lineTotalWithTax.amount,
         })),
         shippingAddress: result.order.shippingAddress
           ? {

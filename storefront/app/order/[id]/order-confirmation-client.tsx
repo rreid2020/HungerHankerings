@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import type { StorefrontOrder } from "../../../lib/vendure"
+import { storefrontDisplayCurrency, type StorefrontOrder } from "../../../lib/vendure"
 
 const ORDER_STORAGE_KEY = "vendure_last_order_v1"
 
@@ -31,6 +31,7 @@ type StoredCheckout = {
       variantName: string | null
       quantity: number
       unitPrice: number
+      lineTotalNet?: number
       lineTotalWithTax?: number
     }[]
     shippingAddress?: {
@@ -45,7 +46,10 @@ type StoredCheckout = {
 }
 
 function moneyFmt(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-CA", { style: "currency", currency }).format(amount)
+  return new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: storefrontDisplayCurrency(currency),
+  }).format(amount)
 }
 
 function formatAddress(addr: NonNullable<StorefrontOrder["shippingAddress"]>): string {
@@ -151,8 +155,8 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
   }
 
   if (order) {
-    const c = order.currencyCode || order.total.gross.currency
-    const taxFromSummary = order.taxSummary.reduce((s, t) => s + t.taxTotal.amount, 0)
+    const c = storefrontDisplayCurrency(order.currencyCode || order.total.gross.currency)
+    const taxTotalPaid = order.taxSummary.reduce((s, t) => s + t.taxTotal.amount, 0)
     const displayTotal =
       order.amountPaid && order.amountPaid.amount > 0 ? order.amountPaid.amount : order.total.gross.amount
 
@@ -183,7 +187,7 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                         <span className="text-muted-foreground">× {line.quantity}</span>
                       </span>
                       <span className="tabular-nums font-medium text-foreground">
-                        {moneyFmt(line.lineTotalWithTax?.amount ?? line.unitPrice.gross.amount * line.quantity, c)}
+                        {moneyFmt(line.lineTotalNet.amount, c)}
                       </span>
                     </li>
                   ))}
@@ -194,17 +198,9 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   {order.giftPackaging && order.giftPackaging.amount > 0 ? (
                     <Row label="Gift packaging" value={moneyFmt(order.giftPackaging.amount, c)} />
                   ) : null}
-                  {order.taxSummary.length > 0
-                    ? order.taxSummary.map((t, i) => (
-                        <Row
-                          key={i}
-                          label={`Tax: ${t.description} (${t.taxRate}%)`}
-                          value={moneyFmt(t.taxTotal.amount, c)}
-                        />
-                      ))
-                    : taxFromSummary > 0 ? (
-                        <Row label="Tax (total)" value={moneyFmt(taxFromSummary, c)} />
-                      ) : null}
+                  {taxTotalPaid > 0 ? (
+                    <Row label="Tax (total)" value={moneyFmt(taxTotalPaid, c)} />
+                  ) : null}
                   <div className="mt-2 flex justify-between border-t border-border pt-4 text-base font-semibold">
                     <span>{order.amountPaid ? "Total charged" : "Order total"}</span>
                     <span className="tabular-nums">{moneyFmt(displayTotal, c)}</span>
@@ -271,9 +267,10 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
 
   if (fallback?.orderSummary) {
     const s = fallback.orderSummary
-    const c = s.currency || "CAD"
-    const taxTotal =
-      s.taxLines?.reduce((acc, t) => acc + t.taxTotal, 0) ?? (typeof s.taxEstimate === "number" ? s.taxEstimate : 0)
+    const c = storefrontDisplayCurrency(s.currency)
+    const taxTotalPaid =
+      s.taxLines?.reduce((acc, t) => acc + t.taxTotal, 0) ??
+      (typeof s.taxEstimate === "number" ? s.taxEstimate : 0)
 
     return (
       <div className="min-h-[60vh] bg-gradient-to-b from-brand-50/40 via-background to-background">
@@ -293,25 +290,27 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
               <div className="mt-8 rounded-xl border border-border bg-muted/30 p-6">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h2>
                 <ul className="mt-4 divide-y divide-border border-t border-border">
-                  {s.lines.map((line, i) => (
-                    <li key={i} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
-                      <span className="text-foreground">
-                        {line.productName}
-                        {line.variantName ? ` — ${line.variantName}` : ""} × {line.quantity}
-                      </span>
-                      <span className="font-medium tabular-nums text-foreground">
-                        {moneyFmt(line.lineTotalWithTax ?? line.unitPrice * line.quantity, c)}
-                      </span>
-                    </li>
-                  ))}
+                  {s.lines.map((line, i) => {
+                    const lineEx =
+                      typeof line.lineTotalNet === "number" && line.lineTotalNet > 0
+                        ? line.lineTotalNet
+                        : line.unitPrice * line.quantity
+                    return (
+                      <li key={i} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                        <span className="text-foreground">
+                          {line.productName}
+                          {line.variantName ? ` — ${line.variantName}` : ""} × {line.quantity}
+                        </span>
+                        <span className="font-medium tabular-nums text-foreground">
+                          {moneyFmt(lineEx, c)}
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
                 <div className="mt-2 border-t border-border pt-2">
                   {typeof s.subTotalNet === "number" ? (
                     <Row label="Subtotal (ex. tax)" value={moneyFmt(s.subTotalNet, c)} />
-                  ) : null}
-                  {typeof s.subTotalGross === "number" &&
-                  (typeof s.subTotalNet !== "number" || s.subTotalGross - s.subTotalNet > 0.001) ? (
-                    <Row label="Subtotal (incl. tax)" value={moneyFmt(s.subTotalGross, c)} />
                   ) : null}
                   {typeof s.shippingNet === "number" ? (
                     <Row label="Shipping (ex. tax)" value={moneyFmt(s.shippingNet, c)} />
@@ -321,17 +320,9 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   {typeof s.giftPackagingAmount === "number" && s.giftPackagingAmount > 0 ? (
                     <Row label="Gift packaging" value={moneyFmt(s.giftPackagingAmount, c)} />
                   ) : null}
-                  {s.taxLines && s.taxLines.length > 0
-                    ? s.taxLines.map((t, i) => (
-                        <Row
-                          key={i}
-                          label={`Tax: ${t.description} (${t.taxRate}%)`}
-                          value={moneyFmt(t.taxTotal, c)}
-                        />
-                      ))
-                    : taxTotal > 0 ? (
-                        <Row label="Tax (estimated)" value={moneyFmt(taxTotal, c)} />
-                      ) : null}
+                  {taxTotalPaid > 0 ? (
+                    <Row label="Tax (total)" value={moneyFmt(taxTotalPaid, c)} />
+                  ) : null}
                   <div className="mt-2 flex justify-between border-t border-border pt-4 text-base font-semibold">
                     <span>{typeof s.amountPaid === "number" ? "Total charged" : "Total"}</span>
                     <span className="tabular-nums">
