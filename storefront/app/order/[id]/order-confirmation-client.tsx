@@ -252,6 +252,10 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                       value={moneyFmt(order.giftPackaging.amount, c)}
                     />
                   ) : null}
+                  <Row
+                    label="Subtotal (ex. tax)"
+                    value={moneyFmt(order.totalExTax.amount, c)}
+                  />
                   {taxTotalPaid > 0 ? (
                     <Row
                       label={taxTotalRowLabel(taxLabelRows, provCode)}
@@ -330,6 +334,29 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
       (typeof s.taxEstimate === "number" ? s.taxEstimate : 0)
     const giftEx = fallbackGiftPackagingExTax(s)
 
+    const lineExValue = (line: (typeof s.lines)[number]): number => {
+      if (typeof line.lineTotalNet === "number" && !Number.isNaN(line.lineTotalNet)) {
+        return line.lineTotalNet
+      }
+      if (s.lines.length === 1 && typeof s.subTotalNet === "number") {
+        return s.subTotalNet
+      }
+      return line.unitPrice * line.quantity
+    }
+
+    const productsExFallback =
+      typeof s.subTotalNet === "number"
+        ? s.subTotalNet
+        : s.lines.reduce((sum, line) => sum + lineExValue(line), 0)
+    const shipProv = s.shippingAddress?.countryArea ?? ""
+    const shipExFallback =
+      typeof s.shippingNet === "number"
+        ? s.shippingNet
+        : typeof s.shippingGross === "number" && s.shippingGross > 0
+          ? giftSurchargeNetMajorFromInclusiveGrossDollars(s.shippingGross, "CA", shipProv)
+          : 0
+    const preTaxSubtotalFallback = productsExFallback + shipExFallback + giftEx
+
     return (
       <div className="min-h-[60vh] bg-gradient-to-b from-brand-50/40 via-background to-background">
         <div className="container-page py-12 md:py-16">
@@ -349,15 +376,7 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h2>
                 <ul className="mt-4 divide-y divide-border border-t border-border">
                   {s.lines.map((line, i) => {
-                    const lineEx = (() => {
-                      if (typeof line.lineTotalNet === "number" && !Number.isNaN(line.lineTotalNet)) {
-                        return line.lineTotalNet
-                      }
-                      if (s.lines.length === 1 && typeof s.subTotalNet === "number") {
-                        return s.subTotalNet
-                      }
-                      return line.unitPrice * line.quantity
-                    })()
+                    const lineEx = lineExValue(line)
                     return (
                       <li key={i} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
                         <span className="text-foreground">
@@ -380,6 +399,7 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   {giftEx > 0 ? (
                     <Row label="Gift packaging (ex. tax)" value={moneyFmt(giftEx, c)} />
                   ) : null}
+                  <Row label="Subtotal (ex. tax)" value={moneyFmt(preTaxSubtotalFallback, c)} />
                   {taxTotalPaid > 0 ? (
                     <Row
                       label={taxTotalRowLabel(s.taxLines, s.shippingAddress?.countryArea)}
