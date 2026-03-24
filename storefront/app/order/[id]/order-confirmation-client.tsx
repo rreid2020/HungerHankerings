@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { giftSurchargeNetMajorFromInclusiveGrossDollars } from "../../../lib/checkout-gift-surcharge"
+import { CANADIAN_PROVINCES } from "../../../lib/shippingTax"
 import { storefrontDisplayCurrency, type StorefrontOrder } from "../../../lib/vendure"
 
 const ORDER_STORAGE_KEY = "vendure_last_order_v1"
@@ -22,6 +24,7 @@ type StoredCheckout = {
     shippingNet?: number
     shippingGross?: number
     taxEstimate?: number
+    giftPackagingNet?: number
     giftPackagingAmount?: number
     giftLineMessages?: { unitKey: string; message: string }[]
     amountPaid?: number
@@ -85,6 +88,49 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-right font-medium text-foreground tabular-nums">{value}</span>
     </div>
   )
+}
+
+function provinceDisplayName(code: string | null | undefined): string {
+  const c = code?.trim().toUpperCase() ?? ""
+  if (!c) return ""
+  return CANADIAN_PROVINCES.find((p) => p.code === c)?.name ?? c
+}
+
+/** Vendure may send 13 for 13% or 0.13 for 13%. */
+function formatTaxRatesForLabel(rates: number[]): string {
+  const parts = rates
+    .filter((r) => Number.isFinite(r) && r > 0)
+    .map((r) => {
+      const pct = r > 0 && r < 1 ? r * 100 : r
+      const rounded = Math.abs(pct - Math.round(pct)) < 0.001 ? Math.round(pct) : pct
+      return Number.isInteger(rounded) ? `${rounded}%` : `${rounded.toFixed(2)}%`
+    })
+  return [...new Set(parts)].join(" + ")
+}
+
+function taxTotalRowLabel(
+  taxLines: { description: string; taxRate: number; taxTotal: number }[] | undefined,
+  provinceCode: string | null | undefined
+): string {
+  const rates = taxLines?.length ? taxLines.map((t) => t.taxRate) : []
+  const rateStr = formatTaxRatesForLabel(rates)
+  const code = provinceCode?.trim().toUpperCase() ?? ""
+  const name = provinceDisplayName(code)
+  if (name && code && rateStr) return `Tax (total) — ${name} (${code}), ${rateStr}`
+  if (name && code) return `Tax (total) — ${name} (${code})`
+  if (rateStr) return `Tax (total) — ${rateStr}`
+  return "Tax (total)"
+}
+
+function fallbackGiftPackagingExTax(s: NonNullable<StoredCheckout["orderSummary"]>): number {
+  if (typeof s.giftPackagingNet === "number" && s.giftPackagingNet > 0) {
+    return s.giftPackagingNet
+  }
+  const prov = s.shippingAddress?.countryArea ?? ""
+  if (typeof s.giftPackagingAmount === "number" && s.giftPackagingAmount > 0) {
+    return giftSurchargeNetMajorFromInclusiveGrossDollars(s.giftPackagingAmount, "CA", prov)
+  }
+  return 0
 }
 
 export default function OrderConfirmationClient({ orderCode }: { orderCode: string }) {
@@ -159,6 +205,12 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
     const taxTotalPaid = order.taxSummary.reduce((s, t) => s + t.taxTotal.amount, 0)
     const displayTotal =
       order.amountPaid && order.amountPaid.amount > 0 ? order.amountPaid.amount : order.total.gross.amount
+    const taxLabelRows = order.taxSummary.map((t) => ({
+      description: t.description,
+      taxRate: t.taxRate,
+      taxTotal: t.taxTotal.amount,
+    }))
+    const provCode = order.shippingAddress?.countryArea ?? null
 
     return (
       <div className="min-h-[60vh] bg-gradient-to-b from-brand-50/40 via-background to-background">
@@ -193,13 +245,18 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   ))}
                 </ul>
                 <div className="mt-2 border-t border-border pt-2">
-                  <Row label="Subtotal (ex. tax)" value={moneyFmt(order.subTotal.net.amount, c)} />
                   <Row label="Shipping (ex. tax)" value={moneyFmt(order.shipping.net.amount, c)} />
                   {order.giftPackaging && order.giftPackaging.amount > 0 ? (
-                    <Row label="Gift packaging" value={moneyFmt(order.giftPackaging.amount, c)} />
+                    <Row
+                      label="Gift packaging (ex. tax)"
+                      value={moneyFmt(order.giftPackaging.amount, c)}
+                    />
                   ) : null}
                   {taxTotalPaid > 0 ? (
-                    <Row label="Tax (total)" value={moneyFmt(taxTotalPaid, c)} />
+                    <Row
+                      label={taxTotalRowLabel(taxLabelRows, provCode)}
+                      value={moneyFmt(taxTotalPaid, c)}
+                    />
                   ) : null}
                   <div className="mt-2 flex justify-between border-t border-border pt-4 text-base font-semibold">
                     <span>{order.amountPaid ? "Total charged" : "Order total"}</span>
@@ -271,6 +328,7 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
     const taxTotalPaid =
       s.taxLines?.reduce((acc, t) => acc + t.taxTotal, 0) ??
       (typeof s.taxEstimate === "number" ? s.taxEstimate : 0)
+    const giftEx = fallbackGiftPackagingExTax(s)
 
     return (
       <div className="min-h-[60vh] bg-gradient-to-b from-brand-50/40 via-background to-background">
@@ -291,10 +349,15 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h2>
                 <ul className="mt-4 divide-y divide-border border-t border-border">
                   {s.lines.map((line, i) => {
-                    const lineEx =
-                      typeof line.lineTotalNet === "number" && line.lineTotalNet > 0
-                        ? line.lineTotalNet
-                        : line.unitPrice * line.quantity
+                    const lineEx = (() => {
+                      if (typeof line.lineTotalNet === "number" && !Number.isNaN(line.lineTotalNet)) {
+                        return line.lineTotalNet
+                      }
+                      if (s.lines.length === 1 && typeof s.subTotalNet === "number") {
+                        return s.subTotalNet
+                      }
+                      return line.unitPrice * line.quantity
+                    })()
                     return (
                       <li key={i} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
                         <span className="text-foreground">
@@ -309,19 +372,19 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   })}
                 </ul>
                 <div className="mt-2 border-t border-border pt-2">
-                  {typeof s.subTotalNet === "number" ? (
-                    <Row label="Subtotal (ex. tax)" value={moneyFmt(s.subTotalNet, c)} />
-                  ) : null}
                   {typeof s.shippingNet === "number" ? (
                     <Row label="Shipping (ex. tax)" value={moneyFmt(s.shippingNet, c)} />
                   ) : typeof s.shippingGross === "number" && s.shippingGross > 0 ? (
                     <Row label="Shipping (incl. tax)" value={moneyFmt(s.shippingGross, c)} />
                   ) : null}
-                  {typeof s.giftPackagingAmount === "number" && s.giftPackagingAmount > 0 ? (
-                    <Row label="Gift packaging" value={moneyFmt(s.giftPackagingAmount, c)} />
+                  {giftEx > 0 ? (
+                    <Row label="Gift packaging (ex. tax)" value={moneyFmt(giftEx, c)} />
                   ) : null}
                   {taxTotalPaid > 0 ? (
-                    <Row label="Tax (total)" value={moneyFmt(taxTotalPaid, c)} />
+                    <Row
+                      label={taxTotalRowLabel(s.taxLines, s.shippingAddress?.countryArea)}
+                      value={moneyFmt(taxTotalPaid, c)}
+                    />
                   ) : null}
                   <div className="mt-2 flex justify-between border-t border-border pt-4 text-base font-semibold">
                     <span>{typeof s.amountPaid === "number" ? "Total charged" : "Total"}</span>

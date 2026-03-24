@@ -85,6 +85,9 @@ export type StripePaymentPending = {
     shippingNet?: number
     shippingGross?: number
     taxEstimate?: number
+    /** Pre-tax gift wrap total ($3.99 × boxes). */
+    giftPackagingNet?: number
+    /** Tax-inclusive total charged for gift add-on (Stripe path); prefer giftPackagingNet for display. */
     giftPackagingAmount?: number
     giftLineMessages?: { unitKey: string; message: string }[]
     amountPaid?: number

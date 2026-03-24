@@ -6,6 +6,30 @@ import { getTaxRate } from "./shippingTax"
 
 export const CHECKOUT_GIFT_BOX_FEE_DOLLARS = 3.99
 
+/**
+ * Stored `checkoutGiftSurchargeCents` / Stripe add-on is **tax-inclusive** at the shipping province rate.
+ * Convert to pre-tax dollars for receipts and confirmation UI.
+ */
+export function giftSurchargeNetMajorFromInclusiveMinorCents(
+  inclusiveMinor: number,
+  countryCode: string,
+  province: string
+): number {
+  if (!Number.isFinite(inclusiveMinor) || inclusiveMinor <= 0) return 0
+  return giftSurchargeNetMajorFromInclusiveGrossDollars(inclusiveMinor / 100, countryCode, province)
+}
+
+export function giftSurchargeNetMajorFromInclusiveGrossDollars(
+  grossMajor: number,
+  countryCode: string,
+  province: string
+): number {
+  if (!Number.isFinite(grossMajor) || grossMajor <= 0) return 0
+  const rate = getTaxRate(countryCode, province)
+  if (rate <= 0) return grossMajor
+  return grossMajor / (1 + rate)
+}
+
 /** Minor currency units (e.g. cents for CAD) to add to Stripe on top of Vendure order.totalWithTax. */
 export function checkoutGiftSurchargeMinorUnits(
   giftBoxCount: number,

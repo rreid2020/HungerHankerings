@@ -19,7 +19,10 @@ import {
   storefrontDisplayCurrency
 } from "../../../../lib/vendure"
 import { cookieSecureFromRequest } from "../../../../lib/cookie-secure"
-import { checkoutGiftSurchargeMinorUnits } from "../../../../lib/checkout-gift-surcharge"
+import {
+  CHECKOUT_GIFT_BOX_FEE_DOLLARS,
+  checkoutGiftSurchargeMinorUnits
+} from "../../../../lib/checkout-gift-surcharge"
 
 // Vendure: active order is from session (cookie). Forward request cookie to all Vendure calls.
 
@@ -307,6 +310,8 @@ export async function POST(request: NextRequest) {
                 ? preview.subtotalPrice.gross.amount - preview.subtotalPrice.net.amount
                 : undefined,
             amountPaid: preview?.totalPrice?.gross?.amount,
+            giftPackagingNet:
+              giftBoxCount > 0 ? giftBoxCount * CHECKOUT_GIFT_BOX_FEE_DOLLARS : undefined,
             giftPackagingAmount:
               typeof preview?.giftPackagingAmount === "number" && preview.giftPackagingAmount > 0
                 ? preview.giftPackagingAmount
@@ -423,7 +428,7 @@ export async function POST(request: NextRequest) {
           taxRate: t.taxRate,
           taxTotal: t.taxTotal.amount
         })),
-        giftPackagingAmount: result.order.giftPackaging?.amount,
+        giftPackagingNet: result.order.giftPackaging?.amount,
         giftLineMessages:
           result.order.giftLineMessages?.length ? result.order.giftLineMessages : undefined,
         amountPaid: result.order.amountPaid?.amount,

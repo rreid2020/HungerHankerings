@@ -2,6 +2,8 @@
  * Vendure Shop API client. Types represent the storefront’s domain model (orders, products, checkout, customer).
  */
 
+import { giftSurchargeNetMajorFromInclusiveMinorCents } from "./checkout-gift-surcharge";
+
 const shopApiUrl =
   process.env.VENDURE_SHOP_API_URL ||
   process.env.NEXT_PUBLIC_VENDURE_SHOP_API_URL ||
@@ -2065,12 +2067,15 @@ function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): Storefront
   const shipGross = moneyToMajor(order.shippingWithTax);
   const totalGross = moneyToMajor(order.totalWithTax);
   const giftCentsRaw = order.customFields?.checkoutGiftSurchargeCents;
-  const giftMajor =
+  const shipForGift = order.shippingAddress;
+  const giftCountry = (shipForGift?.country ?? "CA").toString();
+  const giftProvince = (shipForGift?.province ?? "").toString();
+  const giftNetMajor =
     typeof giftCentsRaw === "number" && Number.isFinite(giftCentsRaw) && giftCentsRaw > 0
-      ? giftCentsRaw / 100
+      ? giftSurchargeNetMajorFromInclusiveMinorCents(giftCentsRaw, giftCountry, giftProvince)
       : 0;
   const giftPackaging =
-    giftMajor > 0 ? { amount: giftMajor, currency } : null;
+    giftNetMajor > 0 ? { amount: giftNetMajor, currency } : null;
 
   const taxSummary =
     order.taxSummary?.map((row) => ({
@@ -2128,7 +2133,7 @@ function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): Storefront
     };
   });
 
-  const totalExTaxAmount = subNet + shipNet + giftMajor;
+  const totalExTaxAmount = subNet + shipNet + giftNetMajor;
 
   return {
     id: order.id,
