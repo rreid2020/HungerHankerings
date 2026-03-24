@@ -8,6 +8,7 @@ import {
   useMemo,
   useState
 } from "react"
+import { clearCheckoutDraftFromBrowser } from "../lib/checkout-draft"
 import {
   checkoutLineDelete,
   checkoutLineUpdate,
@@ -79,11 +80,21 @@ export type StripePaymentPending = {
     email: string
     total: number
     currency: string
+    subTotalNet?: number
+    subTotalGross?: number
+    shippingNet?: number
+    shippingGross?: number
+    taxEstimate?: number
+    giftPackagingAmount?: number
+    giftLineMessages?: { unitKey: string; message: string }[]
+    amountPaid?: number
+    taxLines?: { description: string; taxRate: number; taxTotal: number }[]
     lines: {
       productName: string
       variantName: string | null
       quantity: number
       unitPrice: number
+      lineTotalWithTax?: number
     }[]
     shippingAddress?: {
       firstName: string
@@ -104,6 +115,7 @@ type CartContextValue = {
   updateItem: (lineId: string, quantity: number) => Promise<void>
   removeItem: (lineId: string) => Promise<void>
   clearCart: () => void
+  resetCartSession: () => Promise<void>
   /** Refetch active order from Vendure and update cart (e.g. after setting shipping address so tax/shipping are recalculated). */
   refreshCart: () => Promise<void>
   completeCart: (
@@ -253,16 +265,16 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setUpdating(true)
     try {
       const checkout = await checkoutLineDelete(checkoutId, lineId)
-      setCart(mapCheckoutToCart(checkout))
+      if (!checkout.lines?.length) {
+        setCheckoutId(null)
+        setCart(buildCart([]))
+      } else {
+        setCheckoutId(checkout.id)
+        setCart(mapCheckoutToCart(checkout))
+      }
     } finally {
       setUpdating(false)
     }
-  }
-
-  const clearCart = () => {
-    const cleared = buildCart([])
-    setCart(cleared)
-    setCheckoutId(null)
   }
 
   const refreshCart = useCallback(async () => {
@@ -279,6 +291,31 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       // Keep current cart on error
     }
   }, [])
+
+  const resetCartSession = useCallback(async () => {
+    clearCheckoutDraftFromBrowser()
+    setUpdating(true)
+    try {
+      const latest = await getActiveOrder()
+      const lineIds = latest?.lines?.map((l) => l.id) ?? []
+      for (const lineId of lineIds) {
+        await checkoutLineDelete("", lineId)
+      }
+    } catch {
+      /* still clear local UI */
+    } finally {
+      setUpdating(false)
+    }
+    setCheckoutId(null)
+    setCart(buildCart([]))
+    await refreshCart()
+  }, [refreshCart])
+
+  const clearCart = () => {
+    const cleared = buildCart([])
+    setCart(cleared)
+    setCheckoutId(null)
+  }
 
   const completeCart = async (
     options?: CheckoutOptions
@@ -392,10 +429,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       updateItem,
       removeItem,
       clearCart,
+      resetCartSession,
       refreshCart,
       completeCart
     }),
-    [cart, loading, updating, refreshCart]
+    [cart, loading, updating, refreshCart, resetCartSession]
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

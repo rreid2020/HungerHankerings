@@ -13,6 +13,9 @@ import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
+import { FallbackEmailTemplateLoader } from "./fallback-email-template-loader";
+import { ordersInboxNotificationHandler } from "./orders-inbox-email-handler";
+import { RelaxedOrderByCodeAccessStrategy } from "./relaxed-order-by-code-access-strategy";
 import { canadianProvinceTaxZoneStrategy } from "./plugins/tax/canadian-province-tax-zone-strategy";
 import { PostalZonePlugin } from "./plugins/shipping-plugin/postal-zone.plugin";
 import {
@@ -153,6 +156,8 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     guestCheckoutStrategy: new LinkGuestCheckoutStrategy({
       allowGuestCheckoutForRegisteredCustomers: true,
     }),
+    /** Guest confirmation: allow orderByCode when `orderPlacedAt` not yet set (Stripe lag). */
+    orderByCodeAccessStrategy: new RelaxedOrderByCodeAccessStrategy("2h"),
   },
   // Checkout note: if the default Customer role includes Permission.Owner, the Shop API can return
   // empty nextOrderStates / skip transitions for logged-in users. Prefer Customer having UpdateOrder
@@ -209,11 +214,14 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
             },
           }
         : {
-            templatePath: path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+            templateLoader: new FallbackEmailTemplateLoader(
+              path.join(__dirname, "..", "email-templates"),
+              path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
+            ),
             devMode: true,
             outputPath: path.join(assetDir, "test-emails"),
             route: "mailbox",
-            handlers: defaultEmailHandlers,
+            handlers: [...defaultEmailHandlers, ordersInboxNotificationHandler],
             globalTemplateVars: {
               baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
               passwordResetUrl:

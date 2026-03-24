@@ -14,11 +14,21 @@ type StoredCheckout = {
     email: string
     total: number
     currency: string
+    subTotalNet?: number
+    subTotalGross?: number
+    shippingNet?: number
+    shippingGross?: number
+    taxEstimate?: number
+    giftPackagingAmount?: number
+    giftLineMessages?: { unitKey: string; message: string }[]
+    amountPaid?: number
+    taxLines?: { description: string; taxRate: number; taxTotal: number }[]
     lines: {
       productName: string
       variantName: string | null
       quantity: number
       unitPrice: number
+      lineTotalWithTax?: number
     }[]
     shippingAddress?: {
       firstName: string
@@ -31,6 +41,10 @@ type StoredCheckout = {
   }
 }
 
+function moneyFmt(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-CA", { style: "currency", currency }).format(amount)
+}
+
 function formatAddress(addr: NonNullable<StorefrontOrder["shippingAddress"]>): string {
   const parts = [
     [addr.firstName, addr.lastName].filter(Boolean).join(" "),
@@ -41,6 +55,15 @@ function formatAddress(addr: NonNullable<StorefrontOrder["shippingAddress"]>): s
     addr.country?.country ?? addr.country?.code,
   ].filter(Boolean)
   return parts.join(", ") || "—"
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4 py-2 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right font-medium text-foreground tabular-nums">{value}</span>
+    </div>
+  )
 }
 
 export default function OrderConfirmationClient({ orderCode }: { orderCode: string }) {
@@ -97,63 +120,129 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
 
   if (loading) {
     return (
-      <div className="container-page py-12">
-        <p className="text-sm text-muted-foreground">Loading your order…</p>
+      <div className="container-page py-16">
+        <div className="mx-auto max-w-lg animate-pulse rounded-2xl border border-border bg-card p-8">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="mt-4 h-4 w-full rounded bg-muted" />
+        </div>
       </div>
     )
   }
 
   if (order) {
+    const c = order.currencyCode || order.total.gross.currency
+    const taxFromSummary = order.taxSummary.reduce((s, t) => s + t.taxTotal.amount, 0)
+    const displayTotal =
+      order.amountPaid && order.amountPaid.amount > 0 ? order.amountPaid.amount : order.total.gross.amount
+
     return (
-      <div className="container-page py-12">
-        <h1 className="text-3xl font-semibold text-foreground">Payment successful</h1>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Thank you! A confirmation email will be sent to the address you used at checkout (when email is
-          configured on the server).
-        </p>
-        <div className="mt-6 space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <p className="text-sm text-muted-foreground">Order number</p>
-            <p className="text-lg font-semibold text-foreground">#{order.number}</p>
-          </div>
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold text-foreground">Order details</h2>
-            <ul className="mt-4 space-y-2 border-t border-border pt-4">
-              {order.lines?.map((line) => (
-                <li key={line.id} className="flex justify-between text-sm">
-                  <span className="text-foreground">
-                    {line.productName}
-                    {line.variantName ? ` — ${line.variantName}` : ""} × {line.quantity}
-                  </span>
-                  <span className="text-foreground">
-                    ${(line.unitPrice?.gross?.amount ?? 0).toFixed(2)}{" "}
-                    {line.unitPrice?.gross?.currency ?? "CAD"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 flex justify-between border-t border-border pt-4 font-semibold text-foreground">
-              <span>Total</span>
-              <span>
-                ${(order.total?.gross?.amount ?? 0).toFixed(2)} {order.total?.gross?.currency ?? "CAD"}
-              </span>
-            </p>
-          </div>
-          {order.shippingAddress && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold text-foreground">Shipping address</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{formatAddress(order.shippingAddress)}</p>
+      <div className="min-h-[60vh] bg-gradient-to-b from-brand-50/40 via-background to-background">
+        <div className="container-page py-12 md:py-16">
+          <div className="mx-auto max-w-2xl">
+            <div className="rounded-2xl border border-brand-200/60 bg-card/95 p-8 shadow-sm ring-1 ring-black/5 md:p-10">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">Thank you</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                Payment successful
+              </h1>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                Order <span className="font-mono font-semibold text-foreground">#{order.number}</span> is
+                confirmed. We’ve sent a receipt to your email when outgoing mail is configured on the server.
+              </p>
+
+              <div className="mt-8 rounded-xl border border-border bg-muted/30 p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Order summary
+                </h2>
+                <ul className="mt-4 divide-y divide-border border-t border-border">
+                  {order.lines?.map((line) => (
+                    <li key={line.id} className="flex flex-wrap items-start justify-between gap-2 py-3 text-sm">
+                      <span className="text-foreground">
+                        {line.productName}
+                        {line.variantName ? ` — ${line.variantName}` : ""}{" "}
+                        <span className="text-muted-foreground">× {line.quantity}</span>
+                      </span>
+                      <span className="tabular-nums font-medium text-foreground">
+                        {moneyFmt(line.lineTotalWithTax?.amount ?? line.unitPrice.gross.amount * line.quantity, c)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2 border-t border-border pt-2">
+                  <Row label="Subtotal (ex. tax)" value={moneyFmt(order.subTotal.net.amount, c)} />
+                  <Row label="Shipping (ex. tax)" value={moneyFmt(order.shipping.net.amount, c)} />
+                  {order.giftPackaging && order.giftPackaging.amount > 0 ? (
+                    <Row label="Gift packaging" value={moneyFmt(order.giftPackaging.amount, c)} />
+                  ) : null}
+                  {order.taxSummary.length > 0
+                    ? order.taxSummary.map((t, i) => (
+                        <Row
+                          key={i}
+                          label={`Tax: ${t.description} (${t.taxRate}%)`}
+                          value={moneyFmt(t.taxTotal.amount, c)}
+                        />
+                      ))
+                    : taxFromSummary > 0 ? (
+                        <Row label="Tax (total)" value={moneyFmt(taxFromSummary, c)} />
+                      ) : null}
+                  <div className="mt-2 flex justify-between border-t border-border pt-4 text-base font-semibold">
+                    <span>{order.amountPaid ? "Total charged" : "Order total"}</span>
+                    <span className="tabular-nums">{moneyFmt(displayTotal, c)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {order.giftLineMessages.length > 0 ? (
+                <div className="mt-6 rounded-xl border border-amber-200/80 bg-amber-50/50 p-6 dark:bg-amber-950/20">
+                  <h2 className="text-sm font-semibold text-foreground">Gift messages</h2>
+                  <ul className="mt-3 space-y-3 text-sm">
+                    {order.giftLineMessages.map((g) => (
+                      <li key={g.unitKey} className="rounded-lg bg-background/80 px-3 py-2 ring-1 ring-border">
+                        <span className="text-xs font-medium uppercase text-muted-foreground">
+                          Box {g.unitKey.replace(/-/g, " · ")}
+                        </span>
+                        <p className="mt-1 text-foreground">{g.message}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {order.shippingAddress ? (
+                  <div className="rounded-xl border border-border bg-card p-5">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Shipping address
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-foreground">
+                      {formatAddress(order.shippingAddress)}
+                    </p>
+                  </div>
+                ) : null}
+                {order.billingAddress ? (
+                  <div className="rounded-xl border border-border bg-card p-5">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Billing address
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-foreground">
+                      {formatAddress(order.billingAddress)}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
+              <p className="mt-10 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <Link href="/themed-snack-boxes" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
+                  Continue shopping
+                </Link>
+                <span aria-hidden className="text-border">
+                  ·
+                </span>
+                <Link href="/account/orders" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
+                  View all orders
+                </Link>
+              </p>
             </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            <Link href="/shop" className="text-primary hover:underline">
-              Continue shopping
-            </Link>
-            {" · "}
-            <Link href="/account/orders" className="text-primary hover:underline">
-              View all orders
-            </Link>
-          </p>
+          </div>
         </div>
       </div>
     )
@@ -161,74 +250,129 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
 
   if (fallback?.orderSummary) {
     const s = fallback.orderSummary
+    const c = s.currency || "CAD"
+    const taxTotal =
+      s.taxLines?.reduce((acc, t) => acc + t.taxTotal, 0) ?? (typeof s.taxEstimate === "number" ? s.taxEstimate : 0)
+
     return (
-      <div className="container-page py-12">
-        <h1 className="text-3xl font-semibold text-foreground">Payment successful</h1>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Thank you! Your order <span className="font-medium text-foreground">#{fallback.orderNumber ?? orderCode}</span>{" "}
-          was placed. We’ll email {s.email} when outgoing mail is configured on the server.
-        </p>
-        <div className="mt-6 space-y-6">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold text-foreground">Order details</h2>
-            <ul className="mt-4 space-y-2 border-t border-border pt-4">
-              {s.lines.map((line, i) => (
-                <li key={i} className="flex justify-between text-sm">
-                  <span className="text-foreground">
-                    {line.productName}
-                    {line.variantName ? ` — ${line.variantName}` : ""} × {line.quantity}
-                  </span>
-                  <span className="text-foreground">
-                    ${(line.unitPrice * line.quantity).toFixed(2)} {s.currency}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 flex justify-between border-t border-border pt-4 font-semibold text-foreground">
-              <span>Total</span>
-              <span>
-                ${s.total.toFixed(2)} {s.currency}
-              </span>
-            </p>
-          </div>
-          {s.shippingAddress && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold text-foreground">Shipping address</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {[
-                  [s.shippingAddress.firstName, s.shippingAddress.lastName].filter(Boolean).join(" "),
-                  s.shippingAddress.streetAddress1,
-                  s.shippingAddress.city,
-                  s.shippingAddress.countryArea,
-                  s.shippingAddress.postalCode,
-                ]
-                  .filter(Boolean)
-                  .join(", ")}
+      <div className="min-h-[60vh] bg-gradient-to-b from-brand-50/40 via-background to-background">
+        <div className="container-page py-12 md:py-16">
+          <div className="mx-auto max-w-2xl">
+            <div className="rounded-2xl border border-brand-200/60 bg-card/95 p-8 shadow-sm ring-1 ring-black/5 md:p-10">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Payment successful</h1>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                Thank you! Order{" "}
+                <span className="font-mono font-semibold text-foreground">
+                  #{fallback.orderNumber ?? orderCode}
+                </span>{" "}
+                was placed. We’ll email <span className="font-medium text-foreground">{s.email}</span> when
+                outgoing mail is configured.
+              </p>
+
+              <div className="mt-8 rounded-xl border border-border bg-muted/30 p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h2>
+                <ul className="mt-4 divide-y divide-border border-t border-border">
+                  {s.lines.map((line, i) => (
+                    <li key={i} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                      <span className="text-foreground">
+                        {line.productName}
+                        {line.variantName ? ` — ${line.variantName}` : ""} × {line.quantity}
+                      </span>
+                      <span className="font-medium tabular-nums text-foreground">
+                        {moneyFmt(line.lineTotalWithTax ?? line.unitPrice * line.quantity, c)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-2 border-t border-border pt-2">
+                  {typeof s.subTotalNet === "number" ? (
+                    <Row label="Subtotal (ex. tax)" value={moneyFmt(s.subTotalNet, c)} />
+                  ) : null}
+                  {typeof s.shippingNet === "number" ? (
+                    <Row label="Shipping (ex. tax)" value={moneyFmt(s.shippingNet, c)} />
+                  ) : null}
+                  {typeof s.giftPackagingAmount === "number" && s.giftPackagingAmount > 0 ? (
+                    <Row label="Gift packaging" value={moneyFmt(s.giftPackagingAmount, c)} />
+                  ) : null}
+                  {s.taxLines && s.taxLines.length > 0
+                    ? s.taxLines.map((t, i) => (
+                        <Row
+                          key={i}
+                          label={`Tax: ${t.description} (${t.taxRate}%)`}
+                          value={moneyFmt(t.taxTotal, c)}
+                        />
+                      ))
+                    : taxTotal > 0 ? (
+                        <Row label="Tax (estimated)" value={moneyFmt(taxTotal, c)} />
+                      ) : null}
+                  <div className="mt-2 flex justify-between border-t border-border pt-4 text-base font-semibold">
+                    <span>{typeof s.amountPaid === "number" ? "Total charged" : "Total"}</span>
+                    <span className="tabular-nums">
+                      {moneyFmt(typeof s.amountPaid === "number" ? s.amountPaid : s.total, c)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {s.giftLineMessages?.length ? (
+                <div className="mt-6 rounded-xl border border-amber-200/80 bg-amber-50/50 p-6">
+                  <h2 className="text-sm font-semibold text-foreground">Gift messages</h2>
+                  <ul className="mt-3 space-y-3 text-sm">
+                    {s.giftLineMessages.map((g) => (
+                      <li key={g.unitKey} className="rounded-lg bg-background/80 px-3 py-2 ring-1 ring-border">
+                        <span className="text-xs font-medium uppercase text-muted-foreground">{g.unitKey}</span>
+                        <p className="mt-1 text-foreground">{g.message}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {s.shippingAddress ? (
+                <div className="mt-6 rounded-xl border border-border bg-card p-5">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Shipping address
+                  </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {[
+                      [s.shippingAddress.firstName, s.shippingAddress.lastName].filter(Boolean).join(" "),
+                      s.shippingAddress.streetAddress1,
+                      s.shippingAddress.city,
+                      s.shippingAddress.countryArea,
+                      s.shippingAddress.postalCode,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                </div>
+              ) : null}
+
+              <p className="mt-8 text-sm text-muted-foreground">
+                <Link href="/themed-snack-boxes" className="font-medium text-brand-600 hover:underline">
+                  Continue shopping
+                </Link>
               </p>
             </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            <Link href="/shop" className="text-primary hover:underline">
-              Continue shopping
-            </Link>
-          </p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="container-page py-12">
-      <h1 className="text-3xl font-semibold text-foreground">Order</h1>
-      <p className="mt-4 text-sm text-destructive">{error}</p>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Reference: <span className="font-mono">{orderCode}</span>
-      </p>
-      <p className="mt-6 text-sm text-muted-foreground">
-        <Link href="/shop" className="text-primary hover:underline">
-          Continue shopping
-        </Link>
-      </p>
+    <div className="container-page py-16">
+      <div className="mx-auto max-w-lg rounded-2xl border border-destructive/30 bg-destructive/5 p-8">
+        <h1 className="text-xl font-semibold text-foreground">Order</h1>
+        <p className="mt-3 text-sm text-destructive">{error}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Reference: <span className="font-mono">{orderCode}</span>
+        </p>
+        <p className="mt-6 text-sm">
+          <Link href="/themed-snack-boxes" className="font-medium text-brand-600 hover:underline">
+            Continue shopping
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

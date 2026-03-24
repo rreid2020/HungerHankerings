@@ -1,0 +1,64 @@
+{{> header title="New store order" }}
+
+<mj-section background-color="#f5f5f5">
+  <mj-column>
+    <mj-text>
+      <strong>Order:</strong> {{ order.code }}<br/>
+      <strong>Customer:</strong> {{ order.customer.firstName }} {{ order.customer.lastName }} &lt;{{ order.customer.emailAddress }}&gt;<br/>
+      <strong>State:</strong> {{ order.state }}
+    </mj-text>
+  </mj-column>
+</mj-section>
+
+<mj-section>
+  <mj-column>
+    <mj-text font-size="16px" font-weight="bold">Lines</mj-text>
+    {{#each order.lines}}
+    <mj-text padding-top="4px">
+      {{ productVariant.product.name }} — {{ productVariant.name }} × {{ quantity }}
+      <br/><span style="color:#666">Line total (incl. tax): {{ formatMoney discountedLinePriceWithTax order.currencyCode 'en-CA' }}</span>
+    </mj-text>
+    {{/each}}
+  </mj-column>
+</mj-section>
+
+<mj-section background-color="#fafafa">
+  <mj-column>
+    <mj-text><strong>Totals (Vendure)</strong></mj-text>
+    <mj-text padding-top="4px">
+      Subtotal (ex. tax): {{ formatMoney order.subTotal order.currencyCode 'en-CA' }}<br/>
+      Shipping (ex. tax): {{ formatMoney order.shipping order.currencyCode 'en-CA' }}<br/>
+      Shipping (incl. tax): {{ formatMoney order.shippingWithTax order.currencyCode 'en-CA' }}<br/>
+      {{#if giftFeeMinor}}
+      Gift packaging (add-on): {{ formatMoney giftFeeMinor order.currencyCode 'en-CA' }}<br/>
+      {{/if}}
+      Total (incl. tax): {{ formatMoney order.totalWithTax order.currencyCode 'en-CA' }}
+    </mj-text>
+  </mj-column>
+</mj-section>
+
+{{#if giftLines.length}}
+<mj-section background-color="#fff8e6">
+  <mj-column>
+    <mj-text font-size="16px" font-weight="bold">Gift notes</mj-text>
+    {{#each giftLines}}
+    <mj-text padding-top="6px"><strong>{{ this.unitKey }}</strong><br/>{{ this.message }}</mj-text>
+    {{/each}}
+  </mj-column>
+</mj-section>
+{{/if}}
+
+<mj-section>
+  <mj-column>
+    {{#with order.shippingAddress}}
+    <mj-text><strong>Ship to</strong><br/>
+      {{ fullName }}<br/>
+      {{ streetLine1 }}{{#if streetLine2}}<br/>{{ streetLine2 }}{{/if}}<br/>
+      {{ city }}, {{ province }} {{ postalCode }}<br/>
+      {{ country }}
+    </mj-text>
+    {{/with}}
+  </mj-column>
+</mj-section>
+
+{{> footer }}

@@ -7,6 +7,7 @@ import {
   useState,
   useCallback
 } from "react"
+import { clearCheckoutDraftFromBrowser } from "../lib/checkout-draft"
 
 export type AuthUser = {
   id: string
@@ -117,7 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Clear checkout draft so next visit doesn't show previous user's addresses/contact
     if (typeof window !== "undefined") {
       try {
-        window.localStorage.removeItem("hungerhankerings_checkout_draft_v1")
+        clearCheckoutDraftFromBrowser()
       } catch {
         /* ignore */
       }

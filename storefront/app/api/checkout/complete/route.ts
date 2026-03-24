@@ -263,6 +263,19 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
+        const currency = preview?.totalPrice?.gross?.currency ?? "CAD"
+        const giftBoxCount =
+          typeof body.giftBoxCount === "number" && Number.isFinite(body.giftBoxCount)
+            ? Math.max(0, Math.floor(body.giftBoxCount))
+            : 0
+        const giftLines: { unitKey: string; message: string }[] = []
+        const gbu = body.giftByLineUnit
+        if (gbu && typeof gbu === "object") {
+          for (const [unitKey, v] of Object.entries(gbu)) {
+            const msg = v && typeof v === "object" && "giftMessage" in v ? String((v as { giftMessage?: string }).giftMessage ?? "").trim() : ""
+            if (msg) giftLines.push({ unitKey, message: msg })
+          }
+        }
         const json = NextResponse.json({
           confirmationNeeded: true,
           clientSecret,
@@ -271,7 +284,25 @@ export async function POST(request: NextRequest) {
           orderSummary: {
             email: email.trim(),
             total: preview?.totalPrice?.gross?.amount ?? 0,
-            currency: preview?.totalPrice?.gross?.currency ?? "CAD",
+            currency,
+            subTotalNet: preview?.subtotalPrice?.net?.amount,
+            subTotalGross: preview?.subtotalPrice?.gross?.amount,
+            shippingNet: preview?.shippingPrice?.net?.amount,
+            shippingGross: preview?.shippingPrice?.gross?.amount,
+            taxEstimate:
+              preview?.subtotalPrice?.gross?.amount != null && preview?.subtotalPrice?.net?.amount != null
+                ? preview.subtotalPrice.gross.amount - preview.subtotalPrice.net.amount
+                : undefined,
+            giftPackagingAmount:
+              giftBoxCount > 0
+                ? checkoutGiftSurchargeMinorUnits(
+                    giftBoxCount,
+                    preview?.lines?.reduce((s, l) => s + l.quantity, 0) ?? 0,
+                    toCountryCode(shipping.country),
+                    (shipping.province ?? "").trim()
+                  ) / 100
+                : undefined,
+            giftLineMessages: giftLines.length ? giftLines : undefined,
             lines: (preview?.lines ?? []).map((l) => ({
               productName: l.variant.product.name,
               variantName: l.variant.name || null,
@@ -279,7 +310,8 @@ export async function POST(request: NextRequest) {
               unitPrice:
                 l.variant.pricing?.price?.gross?.amount ??
                 l.variant.pricing?.price?.net?.amount ??
-                0
+                0,
+              lineTotalWithTax: l.totalPrice?.gross?.amount
             })),
             shippingAddress: {
               firstName: shipping.first_name?.trim() ?? "",
@@ -360,12 +392,26 @@ export async function POST(request: NextRequest) {
       orderSummary: {
         email: email.trim(),
         total: result.order.total?.gross?.amount ?? 0,
-        currency: result.order.total?.gross?.currency ?? "CAD",
+        currency: result.order.currencyCode ?? result.order.total?.gross?.currency ?? "CAD",
+        subTotalNet: result.order.subTotal?.net?.amount,
+        subTotalGross: result.order.subTotalWithTax?.gross?.amount,
+        shippingNet: result.order.shipping?.net?.amount,
+        shippingGross: result.order.shippingWithTax?.gross?.amount,
+        taxLines: result.order.taxSummary?.map((t) => ({
+          description: t.description,
+          taxRate: t.taxRate,
+          taxTotal: t.taxTotal.amount
+        })),
+        giftPackagingAmount: result.order.giftPackaging?.amount,
+        giftLineMessages:
+          result.order.giftLineMessages?.length ? result.order.giftLineMessages : undefined,
+        amountPaid: result.order.amountPaid?.amount,
         lines: (result.order.lines ?? []).map((l) => ({
           productName: l.productName,
           variantName: l.variantName ?? null,
           quantity: l.quantity,
-          unitPrice: l.unitPrice?.gross?.amount ?? 0
+          unitPrice: l.unitPrice?.gross?.amount ?? 0,
+          lineTotalWithTax: l.lineTotalWithTax?.amount
         })),
         shippingAddress: result.order.shippingAddress
           ? {

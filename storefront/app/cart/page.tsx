@@ -20,7 +20,7 @@ function parseTitle(title: string): { name: string; variant: string } {
 }
 
 const CartPage = () => {
-  const { cart, loading, updateItem, removeItem } = useCart()
+  const { cart, loading, updating, updateItem, removeItem, resetCartSession } = useCart()
 
   if (loading) {
     return <div className="container-page py-12">Loading cart...</div>
@@ -41,7 +41,27 @@ const CartPage = () => {
   return (
     <div className="container-page grid gap-10 py-12 lg:grid-cols-[1.3fr_0.7fr]">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Shopping Cart</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-foreground">Shopping Cart</h1>
+          <button
+            type="button"
+            disabled={updating}
+            onClick={() => {
+              if (
+                typeof window !== "undefined" &&
+                !window.confirm(
+                  "Remove all items and clear saved checkout details stored in this browser?"
+                )
+              ) {
+                return
+              }
+              void resetCartSession()
+            }}
+            className="text-sm font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground disabled:opacity-50"
+          >
+            Empty cart &amp; clear saved checkout
+          </button>
+        </div>
         <ul className="mt-6 divide-y divide-gray-200 border-t border-gray-200">
           {cart.items.map((item) => {
             const { name, variant } = parseTitle(item.title)

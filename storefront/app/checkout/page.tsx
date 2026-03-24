@@ -9,6 +9,7 @@ import { useAuth } from "../../components/AuthContext"
 import { useGooglePlacesScript } from "../../hooks/useGooglePlacesScript"
 import { getTaxRate, CANADIAN_PROVINCES } from "../../lib/shippingTax"
 import { CHECKOUT_GIFT_BOX_FEE_DOLLARS } from "../../lib/checkout-gift-surcharge"
+import { CHECKOUT_DRAFT_STORAGE_KEY } from "../../lib/checkout-draft"
 import {
   checkoutShippingAddressUpdate,
   getCheckoutShippingMethods,
@@ -21,8 +22,6 @@ import { loadStripe, type StripeCardElement } from "@stripe/stripe-js"
 
 const GIFT_BOX_FEE = CHECKOUT_GIFT_BOX_FEE_DOLLARS
 const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
-const CHECKOUT_DRAFT_KEY = "hungerhankerings_checkout_draft_v1"
-
 const unitKey = (lineId: string, unitIndex: number) => `${lineId}-${unitIndex}`
 
 /** Fallback when Vendure countries are not yet loaded or API fails */
@@ -41,7 +40,8 @@ const inputClass =
   "rounded-md border border-gray-300 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
 const CheckoutPage = () => {
-  const { cart, loading, updating, completeCart, clearCart, updateItem, removeItem, refreshCart } = useCart()
+  const { cart, loading, updating, completeCart, clearCart, updateItem, removeItem, refreshCart, resetCartSession } =
+    useCart()
   const { user, login: authLogin } = useAuth()
   const router = useRouter()
   const isLoggedIn = !!user
@@ -146,7 +146,7 @@ const CheckoutPage = () => {
   useEffect(() => {
     if (typeof window === "undefined") return
     try {
-      const raw = window.localStorage.getItem(CHECKOUT_DRAFT_KEY)
+      const raw = window.localStorage.getItem(CHECKOUT_DRAFT_STORAGE_KEY)
       if (!raw) return
       const draft = JSON.parse(raw) as {
         billing?: Partial<AddressFields>
@@ -250,7 +250,7 @@ const CheckoutPage = () => {
     }
     try {
       window.localStorage.setItem(
-        CHECKOUT_DRAFT_KEY,
+        CHECKOUT_DRAFT_STORAGE_KEY,
         JSON.stringify({
           billing,
           shipping,
@@ -330,6 +330,33 @@ const CheckoutPage = () => {
       country: get("checkout-billing-country") || "CA"
     })
   }, [])
+
+  const handleStartFreshCheckout = useCallback(async () => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        "Empty your cart and clear saved billing/shipping stored in this browser on this device?"
+      )
+    ) {
+      return
+    }
+    setCheckoutError(null)
+    try {
+      await resetCartSession()
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : "Could not reset cart.")
+      return
+    }
+    setBilling(emptyAddress)
+    setShipping(emptyAddress)
+    setNameOnCard("")
+    nameOnCardEditedByUser.current = false
+    setGiftByLineUnit({})
+    setCustomAddresses([])
+    setAssignment({ main: {}, custom: [] })
+    setCreateAccount(false)
+    setCreateAccountPassword("")
+  }, [resetCartSession])
 
   /** Only keys for units that still exist on the current cart (stale draft keys must not affect fees). */
   const validGiftUnitKeys = useMemo(() => {
@@ -1000,7 +1027,7 @@ const CheckoutPage = () => {
               orderSummary: result.orderSummary
             })
           )
-          window.localStorage.removeItem(CHECKOUT_DRAFT_KEY)
+          window.localStorage.removeItem(CHECKOUT_DRAFT_STORAGE_KEY)
         } catch {
           /* ignore */
         }
@@ -1011,7 +1038,7 @@ const CheckoutPage = () => {
 
       if (result && typeof result === "string") {
         try {
-          window.localStorage.removeItem(CHECKOUT_DRAFT_KEY)
+          window.localStorage.removeItem(CHECKOUT_DRAFT_STORAGE_KEY)
         } catch {
           /* ignore */
         }
@@ -1029,7 +1056,17 @@ const CheckoutPage = () => {
       <div className="space-y-10">
         <form id="checkout-form" className="space-y-10" onSubmit={handleSubmit}>
           <section>
-            <h2 className="text-base font-semibold text-foreground">Contact information</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-foreground">Contact information</h2>
+              <button
+                type="button"
+                onClick={() => void handleStartFreshCheckout()}
+                disabled={updating || processing}
+                className="text-sm font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground disabled:opacity-50"
+              >
+                Start over — empty cart &amp; clear saved details
+              </button>
+            </div>
             <div className="mt-4 space-y-4">
               <input
                 id="checkout-email"

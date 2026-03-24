@@ -224,13 +224,39 @@ export type StorefrontOrder = {
   number: string;
   created: string;
   status: string;
+  currencyCode: string;
+  /** Product lines + prorated discounts, excluding tax (matches Vendure `subTotal`). */
+  subTotal: { net: { amount: number; currency: string } };
+  /** Product lines subtotal including tax. */
+  subTotalWithTax: { gross: { amount: number; currency: string } };
+  /** Shipping ex tax. */
+  shipping: { net: { amount: number; currency: string } };
+  /** Shipping inc tax. */
+  shippingWithTax: { gross: { amount: number; currency: string } };
+  /** Tax rows from Vendure (rate, base, tax charged). */
+  taxSummary: Array<{
+    description: string;
+    taxRate: number;
+    taxBase: { amount: number; currency: string };
+    taxTotal: { amount: number; currency: string };
+  }>;
+  /** Checkout gift add-on from order custom field (not always in line subtotals); same currency. */
+  giftPackaging?: { amount: number; currency: string } | null;
+  /** Parsed from settled payment metadata when present. */
+  giftLineMessages: Array<{ unitKey: string; message: string }>;
+  /** Total ex tax (subTotal + shipping + gift packaging in major units, approximate). */
+  totalExTax: { amount: number; currency: string };
   total: { gross: { amount: number; currency: string } };
+  amountPaid?: { amount: number; currency: string } | null;
   lines: {
     id: string;
     productName: string;
     variantName?: string | null;
     quantity: number;
+    /** Unit price inc tax (major units). */
     unitPrice: { gross: { amount: number; currency: string } };
+    /** Line total inc tax (unit × qty, major units). */
+    lineTotalWithTax: { amount: number; currency: string };
     thumbnail?: { url: string | null } | null;
   }[];
   shippingAddress?: {
@@ -254,6 +280,62 @@ export type StorefrontOrder = {
     country: { code: string; country: string };
     countryArea?: string | null;
     phone?: string | null;
+  } | null;
+};
+
+/** Raw Shop API order shape before {@link mapVendureOrderToOrder} (GraphQL `Money` = minor units). */
+export type RawVendureOrderForStorefront = {
+  id: string;
+  code: string;
+  createdAt: string;
+  state: string;
+  currencyCode?: string;
+  subTotal?: unknown;
+  subTotalWithTax?: unknown;
+  shipping?: unknown;
+  shippingWithTax?: unknown;
+  total?: unknown;
+  totalWithTax?: unknown;
+  taxSummary?: Array<{
+    description: string;
+    taxRate: number;
+    taxBase: unknown;
+    taxTotal: unknown;
+  }>;
+  customFields?: { checkoutGiftSurchargeCents?: number | null } | null;
+  payments?: Array<{
+    state?: string;
+    method?: string;
+    amount?: unknown;
+    metadata?: unknown;
+  }>;
+  lines?: Array<{
+    id: string;
+    productVariant: { product: { name: string }; name: string };
+    quantity: number;
+    unitPriceWithTax?: unknown;
+    discountedLinePriceWithTax?: unknown;
+    linePriceWithTax?: unknown;
+  }>;
+  shippingAddress?: {
+    fullName?: string | null;
+    streetLine1?: string | null;
+    streetLine2?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    province?: string | null;
+    phoneNumber?: string | null;
+  } | null;
+  billingAddress?: {
+    fullName?: string | null;
+    streetLine1?: string | null;
+    streetLine2?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    province?: string | null;
+    phoneNumber?: string | null;
   } | null;
 };
 
@@ -1267,7 +1349,7 @@ export async function checkoutComplete(
 
   try {
     const paymentResult = await fetchVendure<{
-      addPaymentToOrder?: Parameters<typeof mapVendureOrderToOrder>[0] & {
+      addPaymentToOrder?: RawVendureOrderForStorefront & {
         message?: string;
         __typename?: string;
       };
@@ -1298,7 +1380,7 @@ export async function checkoutComplete(
       };
     }
     if (raw && typeof raw === "object" && "code" in raw && (raw as { code?: string }).code) {
-      const mapped = mapVendureOrderToOrder(raw as Parameters<typeof mapVendureOrderToOrder>[0]);
+      const mapped = mapVendureOrderToOrder(raw as RawVendureOrderForStorefront);
       return {
         order: mapped,
         confirmationNeeded: false,
@@ -1338,6 +1420,7 @@ export async function checkoutComplete(
       errors: [],
     };
   } catch {
+    const currency = "CAD";
     return {
       order: {
         id: orderCode,
@@ -1345,7 +1428,17 @@ export async function checkoutComplete(
         number: orderCode,
         created: new Date().toISOString(),
         status: "PaymentSettled",
-        total: { gross: { amount: 0, currency: "CAD" } },
+        currencyCode: currency,
+        subTotal: { net: { amount: 0, currency } },
+        subTotalWithTax: { gross: { amount: 0, currency } },
+        shipping: { net: { amount: 0, currency } },
+        shippingWithTax: { gross: { amount: 0, currency } },
+        taxSummary: [],
+        giftPackaging: null,
+        giftLineMessages: [],
+        totalExTax: { amount: 0, currency },
+        total: { gross: { amount: 0, currency } },
+        amountPaid: null,
         lines: [],
         shippingAddress: null,
         billingAddress: undefined,
@@ -1747,19 +1840,113 @@ export async function refreshToken(
 // Orders
 // ---------------------------------------------------------------------------
 
-/** Shop API Order fields needed by mapVendureOrderToOrder (also used after addPaymentToOrder). */
+/** Money fields are GraphQL `Money` scalars (minor units as number). */
+function moneyToMajor(val: unknown): number {
+  if (val == null) return 0;
+  if (typeof val === "bigint") return Number(val) / 100;
+  if (typeof val === "number" && Number.isFinite(val)) return val / 100;
+  if (typeof val === "string" && val.trim() !== "") {
+    const n = Number(val);
+    return Number.isFinite(n) ? n / 100 : 0;
+  }
+  return 0;
+}
+
+function parseGiftFromPaymentMetadata(payments: unknown): { unitKey: string; message: string }[] {
+  if (!Array.isArray(payments)) return [];
+  const out: { unitKey: string; message: string }[] = [];
+  for (const p of payments) {
+    if (!p || typeof p !== "object") continue;
+    const st = (p as { state?: string }).state;
+    if (st !== "Settled" && st !== "Authorized") continue;
+    const meta = (p as { metadata?: unknown }).metadata;
+    let raw: string | undefined;
+    if (meta && typeof meta === "object" && "gift_by_line_unit_json" in meta) {
+      const v = (meta as Record<string, unknown>).gift_by_line_unit_json;
+      if (typeof v === "string") raw = v;
+    }
+    if (!raw?.trim()) continue;
+    try {
+      const obj = JSON.parse(raw) as Record<string, { giftMessage?: string }>;
+      for (const [key, v] of Object.entries(obj)) {
+        const msg = v?.giftMessage?.trim();
+        if (msg) out.push({ unitKey: key, message: msg });
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return out;
+}
+
+function mapVendureAddressToStorefront(
+  addr:
+    | {
+        fullName?: string | null;
+        streetLine1?: string | null;
+        streetLine2?: string | null;
+        city?: string | null;
+        postalCode?: string | null;
+        country?: string | null;
+        province?: string | null;
+        phoneNumber?: string | null;
+      }
+    | null
+    | undefined
+): StorefrontOrder["shippingAddress"] {
+  if (!addr) return null;
+  const parts = (addr.fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  const first = parts[0] ?? "";
+  const last = parts.slice(1).join(" ");
+  const code = (addr.country ?? "").trim();
+  return {
+    firstName: first,
+    lastName: last,
+    streetAddress1: addr.streetLine1 ?? "",
+    streetAddress2: addr.streetLine2 ?? null,
+    city: addr.city ?? "",
+    postalCode: addr.postalCode ?? "",
+    country: { code, country: code },
+    countryArea: addr.province ?? null,
+    phone: addr.phoneNumber ?? null,
+  };
+}
+
+/** Shop API Order fields for confirmation / checkout complete mapping. */
 const shopOrderFieldsForStorefront = `
   id
   code
   createdAt
   state
+  currencyCode
+  subTotal
+  subTotalWithTax
+  shipping
+  shippingWithTax
+  total
   totalWithTax
+  taxSummary {
+    description
+    taxRate
+    taxBase
+    taxTotal
+  }
+  customFields {
+    checkoutGiftSurchargeCents
+  }
+  payments {
+    state
+    method
+    amount
+    metadata
+  }
   lines {
     id
     quantity
     unitPriceWithTax
+    discountedLinePriceWithTax
+    linePriceWithTax
     productVariant { product { name } name }
-    featuredAsset { preview }
   }
   shippingAddress {
     fullName
@@ -1771,126 +1958,112 @@ const shopOrderFieldsForStorefront = `
     province
     phoneNumber
   }
+  billingAddress {
+    fullName
+    streetLine1
+    streetLine2
+    city
+    postalCode
+    country
+    province
+    phoneNumber
+  }
 `;
 
-function mapVendureOrderToOrder(order: {
-  id: string;
-  code: string;
-  createdAt: string;
-  state: string;
-  totalWithTax: number;
-  lines?: Array<{
-    id: string;
-    productVariant: { product: { name: string }; name: string };
-    quantity: number;
-    unitPriceWithTax: number;
-    featuredAsset?: { preview?: string } | null;
-  }>;
-  shippingAddress?: {
-    fullName?: string;
-    streetLine1?: string;
-    streetLine2?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-    province?: string;
-    phoneNumber?: string;
-  } | null;
-  billingAddress?: Record<string, unknown> | null;
-}): StorefrontOrder {
-  const currency = "CAD";
-  const [first = "", last = ""] = (order.shippingAddress?.fullName ?? "").split(" ");
+function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): StorefrontOrder {
+  const currency = (order.currencyCode as string)?.trim() || "CAD";
+  const subNet = moneyToMajor(order.subTotal);
+  const subGross = moneyToMajor(order.subTotalWithTax);
+  const shipNet = moneyToMajor(order.shipping);
+  const shipGross = moneyToMajor(order.shippingWithTax);
+  const totalGross = moneyToMajor(order.totalWithTax);
+  const giftCentsRaw = order.customFields?.checkoutGiftSurchargeCents;
+  const giftMajor =
+    typeof giftCentsRaw === "number" && Number.isFinite(giftCentsRaw) && giftCentsRaw > 0
+      ? giftCentsRaw / 100
+      : 0;
+  const giftPackaging =
+    giftMajor > 0 ? { amount: giftMajor, currency } : null;
+
+  const taxSummary =
+    order.taxSummary?.map((row) => ({
+      description: row.description ?? "",
+      taxRate: row.taxRate ?? 0,
+      taxBase: { amount: moneyToMajor(row.taxBase), currency },
+      taxTotal: { amount: moneyToMajor(row.taxTotal), currency },
+    })) ?? [];
+
+  let settledPaymentTotal = 0;
+  if (Array.isArray(order.payments)) {
+    for (const p of order.payments) {
+      if (p?.state === "Settled") {
+        settledPaymentTotal += moneyToMajor(p.amount);
+      }
+    }
+  }
+  const amountPaid =
+    settledPaymentTotal > 0 ? { amount: settledPaymentTotal, currency } : null;
+
+  const lines =
+    order.lines?.map((l) => {
+      const lineGross = moneyToMajor(l.discountedLinePriceWithTax ?? l.linePriceWithTax);
+      const unitGross = moneyToMajor(l.unitPriceWithTax);
+      const lineTotal =
+        lineGross > 0 ? lineGross : (unitGross > 0 ? unitGross * l.quantity : 0);
+      return {
+        id: l.id,
+        productName: l.productVariant?.product?.name ?? "",
+        variantName: l.productVariant?.name ?? "",
+        quantity: l.quantity,
+        unitPrice: { gross: { amount: unitGross, currency } },
+        lineTotalWithTax: { amount: lineTotal, currency },
+        thumbnail: null,
+      };
+    }) ?? [];
+
+  const totalExTaxAmount = subNet + shipNet + giftMajor;
+
   return {
     id: order.id,
     token: order.code,
     number: order.code,
     created: order.createdAt,
     status: order.state,
-    total: { gross: { amount: order.totalWithTax / 100, currency } },
-    lines:
-      order.lines?.map((l) => ({
-        id: l.id,
-        productName: l.productVariant?.product?.name ?? "",
-        variantName: l.productVariant?.name ?? "",
-        quantity: l.quantity,
-        unitPrice: { gross: { amount: (l.unitPriceWithTax ?? 0) / 100, currency } },
-        thumbnail: l.featuredAsset?.preview != null ? { url: l.featuredAsset.preview } : null,
-      })) ?? [],
-    shippingAddress: order.shippingAddress
-      ? {
-          firstName: first,
-          lastName: last,
-          streetAddress1: order.shippingAddress.streetLine1 ?? "",
-          streetAddress2: order.shippingAddress.streetLine2 ?? null,
-          city: order.shippingAddress.city ?? "",
-          postalCode: order.shippingAddress.postalCode ?? "",
-          country: (() => {
-            const code = (order.shippingAddress.country ?? "").trim()
-            return { code, country: code }
-          })(),
-          countryArea: order.shippingAddress.province ?? null,
-          phone: order.shippingAddress.phoneNumber ?? null,
-        }
-      : null,
-    billingAddress: undefined,
+    currencyCode: currency,
+    subTotal: { net: { amount: subNet, currency } },
+    subTotalWithTax: { gross: { amount: subGross, currency } },
+    shipping: { net: { amount: shipNet, currency } },
+    shippingWithTax: { gross: { amount: shipGross, currency } },
+    taxSummary,
+    giftPackaging,
+    giftLineMessages: parseGiftFromPaymentMetadata(order.payments),
+    totalExTax: { amount: totalExTaxAmount, currency },
+    total: { gross: { amount: totalGross, currency } },
+    amountPaid,
+    lines,
+    shippingAddress: mapVendureAddressToStorefront(order.shippingAddress),
+    billingAddress: mapVendureAddressToStorefront(order.billingAddress) || undefined,
   };
 }
 
-async function getOrderByCode(code: string, opts?: VendureRequestOptions): Promise<{
-  id: string;
-  code: string;
-  createdAt: string;
-  state: string;
-  totalWithTax: number;
-  lines?: Array<{
-    id: string;
-    productVariant: { product: { name: string }; name: string };
-    quantity: number;
-    unitPriceWithTax: number;
-    featuredAsset?: { preview?: string } | null;
-  }>;
-  shippingAddress?: {
-    fullName?: string;
-    streetLine1?: string;
-    streetLine2?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-    province?: string;
-    phoneNumber?: string;
-  } | null;
-} | null> {
+async function getOrderByCode(
+  code: string,
+  opts?: VendureRequestOptions
+): Promise<RawVendureOrderForStorefront | null> {
   const data = await fetchVendure<{
-    orderByCode: Parameters<typeof mapVendureOrderToOrder>[0] | null;
-  }>(`
+    orderByCode: RawVendureOrderForStorefront | null;
+  }>(
+    `
     query OrderByCode($code: String!) {
       orderByCode(code: $code) {
-        id
-        code
-        createdAt
-        state
-        totalWithTax
-        lines {
-          id
-          quantity
-          unitPriceWithTax
-          productVariant { product { name } name }
-          featuredAsset { preview }
-        }
-        shippingAddress {
-          fullName
-          streetLine1
-          streetLine2
-          city
-          postalCode
-          country
-          province
-          phoneNumber
-        }
+        ${shopOrderFieldsForStorefront}
       }
     }
-  `, { code }, opts);
-  return data.orderByCode as Parameters<typeof mapVendureOrderToOrder>[0] | null;
+  `,
+    { code },
+    opts
+  );
+  return data.orderByCode;
 }
 
 export async function getCustomerOrders(
@@ -1903,7 +2076,7 @@ export async function getCustomerOrders(
     const data = await fetchVendure<{
       activeCustomer: {
         orders: {
-          items: Parameters<typeof mapVendureOrderToOrder>[0][];
+          items: RawVendureOrderForStorefront[];
           totalItems: number;
         };
       } | null;
@@ -1912,28 +2085,7 @@ export async function getCustomerOrders(
       activeCustomer {
         orders(options: { take: $take, skip: $skip }) {
           items {
-            id
-            code
-            createdAt
-            state
-            totalWithTax
-            lines {
-              id
-              quantity
-              unitPriceWithTax
-              productVariant { product { name } name }
-              featuredAsset { preview }
-            }
-            shippingAddress {
-              fullName
-              streetLine1
-              streetLine2
-              city
-              postalCode
-              country
-              province
-              phoneNumber
-            }
+            ${shopOrderFieldsForStorefront}
           }
           totalItems
         }
