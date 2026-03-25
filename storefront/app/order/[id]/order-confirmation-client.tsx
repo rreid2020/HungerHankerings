@@ -30,6 +30,8 @@ type StoredCheckout = {
     amountPaid?: number
     taxLines?: { description: string; taxRate: number; taxTotal: number }[]
     lines: {
+      /** Vendure order line id; matches gift `unitKey` prefix `${lineId}-${unitIndex}`. */
+      lineId?: string
       productName: string
       variantName: string | null
       quantity: number
@@ -120,6 +122,60 @@ function taxTotalRowLabel(
   if (name && code) return `Tax (total) — ${name} (${code})`
   if (rateStr) return `Tax (total) — ${rateStr}`
   return "Tax (total)"
+}
+
+/** Gift keys are `${orderLineId}-${unitIndex}` (see checkout `unitKey`). */
+function parseGiftUnitKey(unitKey: string): { lineId: string; unitIndex: number } | null {
+  const lastDash = unitKey.lastIndexOf("-")
+  if (lastDash < 0) return null
+  const lineId = unitKey.slice(0, lastDash)
+  const unitStr = unitKey.slice(lastDash + 1)
+  const unitIndex = Number.parseInt(unitStr, 10)
+  if (!Number.isFinite(unitIndex) || String(unitIndex) !== unitStr) return null
+  return { lineId, unitIndex }
+}
+
+function lineTitle(l: { productName: string; variantName?: string | null }): string {
+  const v = l.variantName?.trim()
+  return v ? `${l.productName} — ${v}` : l.productName
+}
+
+function giftMessageCaption(
+  unitKey: string,
+  orderLines: StorefrontOrder["lines"] | undefined,
+  summaryLines: NonNullable<StoredCheckout["orderSummary"]>["lines"] | undefined,
+): string {
+  const parsed = parseGiftUnitKey(unitKey)
+  if (!parsed) return "Gift message"
+
+  if (orderLines?.length) {
+    const line = orderLines.find((l) => l.id === parsed.lineId)
+    if (line) {
+      const title = lineTitle(line)
+      return line.quantity > 1
+        ? `${title} — Box ${parsed.unitIndex + 1} of ${line.quantity}`
+        : title
+    }
+  }
+
+  if (summaryLines?.length) {
+    const withId = summaryLines.find((l) => l.lineId === parsed.lineId)
+    if (withId) {
+      const title = lineTitle(withId)
+      return withId.quantity > 1
+        ? `${title} — Box ${parsed.unitIndex + 1} of ${withId.quantity}`
+        : title
+    }
+    if (summaryLines.length === 1) {
+      const only = summaryLines[0]
+      const title = lineTitle(only)
+      return only.quantity > 1
+        ? `${title} — Box ${parsed.unitIndex + 1} of ${only.quantity}`
+        : title
+    }
+  }
+
+  return "Gift message"
 }
 
 function fallbackGiftPackagingExTax(s: NonNullable<StoredCheckout["orderSummary"]>): number {
@@ -275,8 +331,8 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   <ul className="mt-3 space-y-3 text-sm">
                     {order.giftLineMessages.map((g) => (
                       <li key={g.unitKey} className="rounded-lg bg-background/80 px-3 py-2 ring-1 ring-border">
-                        <span className="text-xs font-medium uppercase text-muted-foreground">
-                          Box {g.unitKey.replace(/-/g, " · ")}
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {giftMessageCaption(g.unitKey, order.lines, undefined)}
                         </span>
                         <p className="mt-1 text-foreground">{g.message}</p>
                       </li>
@@ -421,7 +477,9 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                   <ul className="mt-3 space-y-3 text-sm">
                     {s.giftLineMessages.map((g) => (
                       <li key={g.unitKey} className="rounded-lg bg-background/80 px-3 py-2 ring-1 ring-border">
-                        <span className="text-xs font-medium uppercase text-muted-foreground">{g.unitKey}</span>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {giftMessageCaption(g.unitKey, undefined, s.lines)}
+                        </span>
                         <p className="mt-1 text-foreground">{g.message}</p>
                       </li>
                     ))}

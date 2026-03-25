@@ -329,6 +329,7 @@ export async function POST(request: NextRequest) {
               const lineNet =
                 l.lineTotalNet?.amount ?? (unitNet > 0 ? unitNet * l.quantity : 0)
               return {
+                lineId: l.id,
                 productName: l.variant.product.name,
                 variantName: l.variant.name || null,
                 quantity: l.quantity,
@@ -433,6 +434,7 @@ export async function POST(request: NextRequest) {
           result.order.giftLineMessages?.length ? result.order.giftLineMessages : undefined,
         amountPaid: result.order.amountPaid?.amount,
         lines: (result.order.lines ?? []).map((l) => ({
+          lineId: l.id,
           productName: l.productName,
           variantName: l.variantName ?? null,
           quantity: l.quantity,

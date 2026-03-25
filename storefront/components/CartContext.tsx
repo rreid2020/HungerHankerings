@@ -93,6 +93,7 @@ export type StripePaymentPending = {
     amountPaid?: number
     taxLines?: { description: string; taxRate: number; taxTotal: number }[]
     lines: {
+      lineId?: string
       productName: string
       variantName: string | null
       quantity: number
