@@ -18,5 +18,10 @@
   },
   "devDependencies": {
     "typescript": "^5.3.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@vendure/payments-plugin@2.3.3": "patches/@vendure__payments-plugin@2.3.3.patch"
+    }
   }
 }
