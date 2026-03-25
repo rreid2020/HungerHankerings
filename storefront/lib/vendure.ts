@@ -345,7 +345,7 @@ export type RawVendureOrderForStorefront = {
     streetLine2?: string | null;
     city?: string | null;
     postalCode?: string | null;
-    country?: string | null;
+    country?: string | { code?: string | null; name?: string | null } | null;
     province?: string | null;
     phoneNumber?: string | null;
   } | null;
@@ -355,7 +355,7 @@ export type RawVendureOrderForStorefront = {
     streetLine2?: string | null;
     city?: string | null;
     postalCode?: string | null;
-    country?: string | null;
+    country?: string | { code?: string | null; name?: string | null } | null;
     province?: string | null;
     phoneNumber?: string | null;
   } | null;
@@ -1740,7 +1740,7 @@ export async function getCurrentCustomer(
         streetLine2?: string;
         city?: string;
         postalCode?: string;
-        country?: string;
+        country?: { code?: string; name?: string } | null;
         province?: string;
         phoneNumber?: string;
         defaultShippingAddress?: boolean;
@@ -1762,7 +1762,7 @@ export async function getCurrentCustomer(
           streetLine2
           city
           postalCode
-          country
+          country { code name }
           province
           phoneNumber
           defaultShippingAddress
@@ -1785,7 +1785,7 @@ export async function getCurrentCustomer(
     addresses:
       c.addresses?.map((a) => {
         const [f = "", l = ""] = (a.fullName ?? "").split(" ");
-        const code = (typeof a.country === "string" ? a.country : "").trim();
+        const { code, label } = vendureGraphqlCountryToStorefront(a.country);
         return {
           id: a.id,
           firstName: f,
@@ -1794,7 +1794,7 @@ export async function getCurrentCustomer(
           streetLine2: a.streetLine2 ?? null,
           city: a.city ?? "",
           postalCode: a.postalCode ?? "",
-          country: { code, country: code },
+          country: { code, country: label || code },
           countryArea: a.province ?? null,
           phone: a.phoneNumber ?? null,
           isDefaultShippingAddress: a.defaultShippingAddress ?? false,
@@ -1966,6 +1966,22 @@ function parseGiftFromPaymentMetadata(payments: unknown): { unitKey: string; mes
   return out;
 }
 
+/** Vendure Shop API uses `Country` object on Address, not a string. */
+function vendureGraphqlCountryToStorefront(country: unknown): { code: string; label: string } {
+  if (country == null) return { code: "", label: "" };
+  if (typeof country === "string") {
+    const c = country.trim();
+    return { code: c, label: c };
+  }
+  if (typeof country === "object" && country !== null && "code" in country) {
+    const o = country as { code?: string | null; name?: string | null };
+    const code = String(o.code ?? "").trim();
+    const name = String(o.name ?? "").trim();
+    return { code, label: name || code };
+  }
+  return { code: "", label: "" };
+}
+
 function mapVendureAddressToStorefront(
   addr:
     | {
@@ -1974,7 +1990,7 @@ function mapVendureAddressToStorefront(
         streetLine2?: string | null;
         city?: string | null;
         postalCode?: string | null;
-        country?: string | null;
+        country?: string | { code?: string | null; name?: string | null } | null;
         province?: string | null;
         phoneNumber?: string | null;
       }
@@ -1985,7 +2001,7 @@ function mapVendureAddressToStorefront(
   const parts = (addr.fullName ?? "").trim().split(/\s+/).filter(Boolean);
   const first = parts[0] ?? "";
   const last = parts.slice(1).join(" ");
-  const code = (addr.country ?? "").trim();
+  const { code, label } = vendureGraphqlCountryToStorefront(addr.country);
   return {
     firstName: first,
     lastName: last,
@@ -1993,7 +2009,7 @@ function mapVendureAddressToStorefront(
     streetAddress2: addr.streetLine2 ?? null,
     city: addr.city ?? "",
     postalCode: addr.postalCode ?? "",
-    country: { code, country: code },
+    country: { code, country: label || code },
     countryArea: addr.province ?? null,
     phone: addr.phoneNumber ?? null,
   };
@@ -2043,7 +2059,7 @@ const shopOrderFieldsForStorefront = `
     streetLine2
     city
     postalCode
-    country
+    country { code name }
     province
     phoneNumber
   }
@@ -2053,7 +2069,7 @@ const shopOrderFieldsForStorefront = `
     streetLine2
     city
     postalCode
-    country
+    country { code name }
     province
     phoneNumber
   }
@@ -2068,7 +2084,7 @@ function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): Storefront
   const totalGross = moneyToMajor(order.totalWithTax);
   const giftCentsRaw = order.customFields?.checkoutGiftSurchargeCents;
   const shipForGift = order.shippingAddress;
-  const giftCountry = (shipForGift?.country ?? "CA").toString();
+  const giftCountry = vendureGraphqlCountryToStorefront(shipForGift?.country).code || "CA";
   const giftProvince = (shipForGift?.province ?? "").toString();
   const giftNetMajor =
     typeof giftCentsRaw === "number" && Number.isFinite(giftCentsRaw) && giftCentsRaw > 0
