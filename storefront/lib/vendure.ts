@@ -1004,6 +1004,21 @@ function toVendureAddress(addr: StorefrontAddressInput) {
   };
 }
 
+function buildCreateCustomerAddressInput(
+  addr: StorefrontAddressInput,
+  options?: { defaultShippingAddress?: boolean; defaultBillingAddress?: boolean },
+): ReturnType<typeof toVendureAddress> & {
+  defaultShippingAddress?: boolean;
+  defaultBillingAddress?: boolean;
+} {
+  const base = toVendureAddress(addr);
+  return {
+    ...base,
+    ...(options?.defaultShippingAddress ? { defaultShippingAddress: true } : {}),
+    ...(options?.defaultBillingAddress ? { defaultBillingAddress: true } : {}),
+  };
+}
+
 /** Shop API mutations return Order | ErrorResult; ensure we got an order id. */
 function assertShopOrderMutationPayload(
   payload: { id?: string; message?: string; errorCode?: string } | null | undefined,
@@ -1804,10 +1819,15 @@ export async function getCurrentCustomer(
   };
 }
 
+export type AccountAddressCreateOptions = {
+  defaultShippingAddress?: boolean;
+  defaultBillingAddress?: boolean;
+};
+
 export async function accountAddressCreate(
   token: string,
   input: StorefrontAddressInput,
-  _type?: "BILLING" | "SHIPPING"
+  options?: AccountAddressCreateOptions
 ): Promise<{ addressId?: string; errors?: { message: string; field?: string }[] }> {
   const data = await fetchVendure<{
     createCustomerAddress: {
@@ -1821,12 +1841,103 @@ export async function accountAddressCreate(
         ... on ErrorResult { message errorCode }
       }
     }
-  `, { input: toVendureAddress(input) }, { authToken: token });
+  `, { input: buildCreateCustomerAddressInput(input, options) }, { authToken: token });
   const result = (data as { createCustomerAddress?: { id?: string; message?: string } }).createCustomerAddress;
   if (result && "message" in result && result.message) {
     return { errors: [{ message: result.message }] };
   }
   return { addressId: (result as { id?: string })?.id };
+}
+
+function isCompleteStorefrontAddress(a: StorefrontAddressInput): boolean {
+  return Boolean(
+    a.firstName?.trim() &&
+      a.lastName?.trim() &&
+      a.streetAddress1?.trim() &&
+      a.city?.trim() &&
+      a.postalCode?.trim() &&
+      a.country?.trim(),
+  );
+}
+
+function storefrontAddressSignature(a: StorefrontAddressInput): string {
+  const n = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const pc = n(a.postalCode).replace(/\s/g, "");
+  return [
+    n(a.firstName),
+    n(a.lastName),
+    n(a.streetAddress1),
+    n(a.streetAddress2 ?? ""),
+    n(a.city),
+    pc,
+    n(a.countryArea ?? ""),
+    n(a.country),
+  ].join("\u0001");
+}
+
+function signatureFromCustomerAddress(addr: NonNullable<StorefrontCustomer["addresses"]>[number]): string {
+  return storefrontAddressSignature({
+    firstName: addr.firstName,
+    lastName: addr.lastName,
+    streetAddress1: addr.streetAddress1,
+    streetAddress2: addr.streetAddress2 ?? null,
+    city: addr.city,
+    postalCode: addr.postalCode,
+    country: addr.country.code,
+    countryArea: addr.countryArea ?? null,
+    phone: addr.phone ?? null,
+  });
+}
+
+/**
+ * Persist checkout billing/shipping on the Customer profile (Shop API) when authenticated.
+ * Skips duplicates; sets defaults only when the customer has no default for that role yet.
+ * Never throws — logs failures so checkout can continue.
+ */
+export async function syncCheckoutAddressesToCustomerProfile(
+  token: string,
+  billing: StorefrontAddressInput,
+  shipping: StorefrontAddressInput,
+): Promise<void> {
+  if (!token?.trim()) return;
+  if (!isCompleteStorefrontAddress(billing) || !isCompleteStorefrontAddress(shipping)) return;
+  try {
+    const customer = await getCurrentCustomer(token);
+    if (!customer) return;
+    const existing = customer.addresses ?? [];
+    const existingSigs = new Set(existing.map(signatureFromCustomerAddress));
+    const hasDefShip = existing.some((x) => x.isDefaultShippingAddress);
+    const hasDefBill = existing.some((x) => x.isDefaultBillingAddress);
+    const billSig = storefrontAddressSignature(billing);
+    const shipSig = storefrontAddressSignature(shipping);
+
+    if (billSig === shipSig) {
+      if (!existingSigs.has(billSig)) {
+        const r = await accountAddressCreate(token, billing, {
+          defaultShippingAddress: !hasDefShip,
+          defaultBillingAddress: !hasDefBill,
+        });
+        if (r.errors?.length) console.error("[syncCheckoutAddressesToCustomerProfile]", r.errors);
+      }
+      return;
+    }
+
+    if (!existingSigs.has(billSig)) {
+      const r = await accountAddressCreate(token, billing, {
+        defaultBillingAddress: !hasDefBill,
+      });
+      if (r.errors?.length) console.error("[syncCheckoutAddressesToCustomerProfile] billing", r.errors);
+      existingSigs.add(billSig);
+    }
+    if (!existingSigs.has(shipSig)) {
+      const r = await accountAddressCreate(token, shipping, {
+        defaultShippingAddress: !hasDefShip,
+      });
+      if (r.errors?.length) console.error("[syncCheckoutAddressesToCustomerProfile] shipping", r.errors);
+    }
+  } catch (e) {
+    console.error("[syncCheckoutAddressesToCustomerProfile]", e);
+  }
 }
 
 export async function accountAddressUpdate(

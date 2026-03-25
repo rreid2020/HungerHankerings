@@ -15,6 +15,7 @@ import {
   customerLoginWithCookies,
   setOrderCheckoutGiftSurchargeCents,
   assertActiveOrderReadyForArrangingPayment,
+  syncCheckoutAddressesToCustomerProfile,
   type StorefrontAddressInput,
   storefrontDisplayCurrency
 } from "../../../../lib/vendure"
@@ -254,6 +255,12 @@ export async function POST(request: NextRequest) {
 
     await assertActiveOrderReadyForArrangingPayment(opts)
     await checkoutTransitionToArrangingPayment(opts)
+
+    const billingInput = toStorefrontAddressInput(billing)
+    const shippingInput = toStorefrontAddressInput(shipping)
+    if (opts.authToken) {
+      await syncCheckoutAddressesToCustomerProfile(opts.authToken, billingInput, shippingInput)
+    }
 
     /** @see https://docs.vendure.io/current/core/reference/core-plugins/payments-plugin/stripe-plugin */
     if (stripePublishable) {

@@ -43,8 +43,14 @@ export async function POST(request: NextRequest) {
       )
     }
     const { setAsDefaultShipping, setAsDefaultBilling, ...input } = parsed
-    const type = setAsDefaultShipping && setAsDefaultBilling ? undefined : setAsDefaultShipping ? "SHIPPING" : setAsDefaultBilling ? "BILLING" : undefined
-    const result = await accountAddressCreate(token, input, type)
+    const createOptions =
+      setAsDefaultShipping || setAsDefaultBilling
+        ? {
+            ...(setAsDefaultShipping ? { defaultShippingAddress: true as const } : {}),
+            ...(setAsDefaultBilling ? { defaultBillingAddress: true as const } : {}),
+          }
+        : undefined
+    const result = await accountAddressCreate(token, input, createOptions)
     if (result.errors?.length) {
       return NextResponse.json(
         { error: result.errors[0].message ?? "Failed to create address" },
