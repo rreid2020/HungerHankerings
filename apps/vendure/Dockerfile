@@ -6,6 +6,9 @@ WORKDIR /app
 ENV CI=true
 ENV npm_config_progress=false
 COPY package.json ./
+# postinstall patches @vendure/payments-plugin; must exist before npm install
+COPY scripts/vendor-patch-stripe-service.cjs ./scripts/
+COPY vendor-patches/stripe.service.js ./vendor-patches/
 RUN npm install --no-audit --no-fund
 
 COPY . .
@@ -20,6 +23,8 @@ ENV CI=true
 ENV npm_config_progress=false
 
 COPY package.json ./
+COPY scripts/vendor-patch-stripe-service.cjs ./scripts/
+COPY vendor-patches/stripe.service.js ./vendor-patches/
 RUN npm install --omit=dev --no-audit --no-fund
 
 COPY --from=builder /app/dist ./dist
