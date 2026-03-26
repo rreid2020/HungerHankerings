@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@vendure/payments-plugin@2.3.3':
-    hash: 5zwacusqobtl4jxkvfkgtsd2o4
-    path: patches/@vendure__payments-plugin@2.3.3.patch
-
 importers:
 
   .:
@@ -37,7 +32,7 @@ importers:
         version: 2.3.3
       '@vendure/payments-plugin':
         specifier: ^2.1.5
-        version: 2.3.3(patch_hash=5zwacusqobtl4jxkvfkgtsd2o4)(stripe@13.11.0)
+        version: 2.3.3(stripe@13.11.0)
       dotenv:
         specifier: ^16.3.1
         version: 16.6.1
@@ -3987,7 +3982,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@vendure/payments-plugin@2.3.3(patch_hash=5zwacusqobtl4jxkvfkgtsd2o4)(stripe@13.11.0)':
+  '@vendure/payments-plugin@2.3.3(stripe@13.11.0)':
     dependencies:
       currency.js: 2.0.4
     optionalDependencies:
