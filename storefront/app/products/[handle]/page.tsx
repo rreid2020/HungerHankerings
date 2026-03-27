@@ -37,18 +37,19 @@ const ProductDetailPage = async ({
   return (
     <div className="container-page grid gap-10 py-12 lg:grid-cols-2">
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
-        <img
-          src={
-            product.thumbnail?.url ||
-            "https://placehold.co/800x600?text=Snack+Box"
-          }
-          alt={product.name}
-          className="h-full w-full rounded-lg object-cover"
-        />
+        <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
+          <img
+            src={
+              product.thumbnail?.url ||
+              "https://placehold.co/800x800?text=Snack+Box"
+            }
+            alt={product.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
       </div>
       <div className="space-y-6">
         <div>
-          <p className="section-subtitle">Snack Boxes</p>
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">
             {product.name}
           </h1>
