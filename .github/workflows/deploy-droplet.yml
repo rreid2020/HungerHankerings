@@ -69,8 +69,10 @@ jobs:
             echo "Running migrations (one-off container, same .env as stack)..."
             $comp run --rm vendure node dist/migrate.js
             # postal_code_zone table + seed: run once on droplet (see deploy/run-postal-zone-once.sh)
-            echo "Starting stack..."
+            echo "Starting stack (all services must reach running state for health checks)..."
             $comp up -d --force-recreate --remove-orphans
+            echo "Compose up finished; container list:"
+            $comp ps -a
             echo "Verify vendure container DB env (must match .env):"
             $comp exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
             echo "Waiting for Vendure to listen (up to 90s)..."

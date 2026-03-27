@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+
+/** Allow long checkout (many Shop API steps + Stripe) on hosts that honor this (e.g. Vercel). */
+export const maxDuration = 300
 import {
   checkoutEmailUpdate,
   checkoutShippingAddressUpdate,

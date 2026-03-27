@@ -20,7 +20,14 @@ type GraphQLResponse<T> = {
   errors?: { message: string }[];
 };
 
-const REQUEST_TIMEOUT_MS = 10_000;
+/** Browser and default server timeout (ms). Server API routes can raise via VENDURE_SERVER_FETCH_TIMEOUT_MS. */
+function getVendureRequestTimeoutMs(): number {
+  const raw = process.env.VENDURE_SERVER_FETCH_TIMEOUT_MS;
+  if (raw == null || raw === "") return 10_000;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 10_000;
+  return Math.min(120_000, Math.max(5_000, Math.floor(n)));
+}
 
 /** Pass when calling from server (e.g. API route) to authenticate with Vendure */
 export type VendureRequestOptions = { cookie?: string; authToken?: string };
@@ -31,7 +38,7 @@ export async function fetchVendure<T>(
   options?: { cookie?: string; authToken?: string }
 ): Promise<T> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), getVendureRequestTimeoutMs());
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   // Send Bearer when we have a token (logged-in) and still forward Cookie so the shop session
@@ -1553,7 +1560,7 @@ export async function customerLogin(
   password: string
 ): Promise<AuthTokenResponse> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), getVendureRequestTimeoutMs());
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const body = JSON.stringify({
     query: `
@@ -1618,7 +1625,7 @@ export async function customerLoginWithCookies(
     throw new Error("Checkout session missing. Enable cookies, refresh the page, and try again.");
   }
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), getVendureRequestTimeoutMs());
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Cookie: trimmed,

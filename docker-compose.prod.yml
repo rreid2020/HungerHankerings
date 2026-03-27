@@ -83,6 +83,8 @@ services:
     environment:
       # Do not set HOSTNAME=0.0.0.0 — Next.js uses it for redirect URLs and breaks logout (ERR_ADDRESS_INVALID).
       VENDURE_SHOP_API_URL: http://vendure:3000/shop-api
+      # Server-side Shop API fetches (checkout API route). Align with nginx proxy_read_timeout for /api/checkout.
+      VENDURE_SERVER_FETCH_TIMEOUT_MS: ${VENDURE_SERVER_FETCH_TIMEOUT_MS:-30000}
     depends_on:
       - vendure
     expose:
