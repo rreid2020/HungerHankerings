@@ -1,7 +1,7 @@
 import { getProductByHandle } from "../../../lib/vendure"
-import { getPlainDescription } from "../../../lib/description"
 import { buildCatalogAttributeDefinitions } from "../../../lib/build-attribute-definitions"
 import ProductPurchase from "../../../components/ProductPurchase"
+import ProductRichDescription from "../../../components/ProductRichDescription"
 
 const ProductDetailPage = async ({
   params
@@ -33,7 +33,6 @@ const ProductDetailPage = async ({
       attributes: variant.attributes
     })) ?? []
   const attributeDefinitions = buildCatalogAttributeDefinitions(product?.variants)
-  const description = getPlainDescription(product?.description)
 
   return (
     <div className="container-page grid gap-10 py-12 lg:grid-cols-2">
@@ -54,7 +53,7 @@ const ProductDetailPage = async ({
             {product.name}
           </h1>
         </div>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <ProductRichDescription description={product.description} />
         <ProductPurchase
           variants={variants}
           fallbackPrice={price}
