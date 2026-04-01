@@ -163,41 +163,41 @@ export default function CorporateProgramsLanding() {
             Three ways to bring bulk snack boxes Canada and branded experiences to your
             workplace—choose what fits your logistics and goals.
           </p>
-          <div className="mt-12 grid gap-8 lg:grid-cols-3">
-            <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition duration-300 hover:shadow-lg">
+          <div className="mt-12 grid gap-8 lg:grid-cols-3 lg:items-stretch">
+            <article className="flex h-full min-h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition duration-300 hover:shadow-lg">
               <h3 className="text-xl font-bold text-foreground">Team Snack Boxes</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 Send curated snack boxes directly to your team or clients—wherever they
                 are.
               </p>
-              <ul className="mt-6 flex flex-1 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                <li>Ideal for remote &amp; hybrid teams</li>
-                <li>Perfect for onboarding, holidays, and employee appreciation</li>
-                <li>Custom branding available</li>
+              <ul className="mt-6 flex-1 list-outside list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground marker:text-muted-foreground">
+                <li className="pl-1">Ideal for remote &amp; hybrid teams</li>
+                <li className="pl-1">Perfect for onboarding, holidays, and employee appreciation</li>
+                <li className="pl-1">Custom branding available</li>
               </ul>
-              <div className="mt-8">
+              <div className="mt-auto pt-8">
                 <Button href="/team-snacks-delivered" className="w-full sm:w-auto">
                   Explore Team Snack Boxes
                 </Button>
               </div>
             </article>
-            <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition duration-300 hover:shadow-lg">
+            <article className="flex h-full min-h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition duration-300 hover:shadow-lg">
               <h3 className="text-xl font-bold text-foreground">Office Snack Pantry Service</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 Keep your workplace stocked with snacks your team will actually love.
               </p>
-              <ul className="mt-6 flex flex-1 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                <li>Full-service pantry stocking</li>
-                <li>Trend-driven, curated snack assortments</li>
-                <li>Flexible delivery schedules and ongoing support</li>
+              <ul className="mt-6 flex-1 list-outside list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground marker:text-muted-foreground">
+                <li className="pl-1">Full-service pantry stocking</li>
+                <li className="pl-1">Trend-driven, curated snack assortments</li>
+                <li className="pl-1">Flexible delivery schedules and ongoing support</li>
               </ul>
-              <div className="mt-8">
+              <div className="mt-auto pt-8">
                 <Button href="/office-pantry-snack-service" className="w-full sm:w-auto">
                   Learn More About Pantry Service
                 </Button>
               </div>
             </article>
-            <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition duration-300 hover:shadow-lg">
+            <article className="flex h-full min-h-full flex-col rounded-2xl border border-border bg-card p-8 shadow-sm transition duration-300 hover:shadow-lg">
               <h3 className="text-xl font-bold text-foreground">
                 Bulk &amp; Pallet Snack Box Service
               </h3>
@@ -205,13 +205,13 @@ export default function CorporateProgramsLanding() {
                 Our pallet service is built for companies that need high-volume, fully
                 customized snack box orders delivered to a central location.
               </p>
-              <ul className="mt-6 flex flex-1 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                <li>Fully customized box sizes and configurations</li>
-                <li>Choose snack types (indulgent, healthy, themed)</li>
-                <li>Scalable to hundreds or thousands of boxes</li>
-                <li>Delivered in bulk to one destination</li>
+              <ul className="mt-6 flex-1 list-outside list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground marker:text-muted-foreground">
+                <li className="pl-1">Fully customized box sizes and configurations</li>
+                <li className="pl-1">Choose snack types (indulgent, healthy, themed)</li>
+                <li className="pl-1">Scalable to hundreds or thousands of boxes</li>
+                <li className="pl-1">Delivered in bulk to one destination</li>
               </ul>
-              <div className="mt-8">
+              <div className="mt-auto pt-8">
                 <Button href="/contact" className="w-full sm:w-auto">
                   Request Bulk Order Quote
                 </Button>
