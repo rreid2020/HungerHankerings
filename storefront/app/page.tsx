@@ -56,67 +56,139 @@ const HomePage = async () => {
         </div>
       </section>
 
-      <section className="container-page">
+      <section className="container-page space-y-16">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="section-subtitle">Snack Boxes Delivered to your Entire Team</p>
-          <h2 className="section-title">How it Works</h2>
+          <p className="section-subtitle">Team Snack Boxes</p>
+          <h2 className="section-title text-3xl md:text-4xl">
+            Team Snack Boxes Delivered Anywhere in Canada
+          </h2>
+          <p className="mt-4 text-base text-iron_grey md:text-lg">
+            Make team gifting effortless with curated snack boxes your employees and clients will
+            actually enjoy.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-iron_grey md:text-base">
+            Whether you&apos;re welcoming new hires, celebrating milestones, or sending appreciation
+            gifts, our snack boxes are designed to create memorable experiences—no matter where your
+            team is located.
+          </p>
         </div>
-        <div className="relative mt-12 grid gap-8 md:grid-cols-3">
-          {/* Connecting line - visible on desktop */}
-          <div className="absolute left-0 right-0 top-[52px] hidden h-0.5 bg-ash_grey-200 md:block" style={{ marginLeft: "16.67%", marginRight: "16.67%" }} aria-hidden />
-          {[
-            {
-              title: "Let us know your needs",
-              copy:
-                "We offer 3 box sizes—small, medium, and large—but we can customize to meet your needs. Select from our curated themes or have a box fully customized based on your snacking preferences."
-            },
-            {
-              title: "We build your snack boxes",
-              copy:
-                "We pack every box with fresh, trendy snacks your team will love. Each box is built exactly how you want it."
-            },
-            {
-              title: "Your team receives their boxes",
-              copy:
-                "Canada-wide delivery with reliable, on-time shipping. We deliver to each team member at home or office. For international orders, we work with partners to fulfill outside Canada."
-            }
-          ].map((step, index) => (
-            <div key={step.title} className="relative flex h-full flex-col items-center text-center">
-              <div className="flex flex-col items-center">
-                {/* Icon */}
-                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-powder_petal-100 text-iron_grey">
-                  {index === 0 ? (
-                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                  ) : index === 1 ? (
-                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  ) : (
-                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h2M8 16h8a2 2 0 002-2V6a2 2 0 00-2-2h-2M8 16v4m0-8V4m0 8l2-2 2 2 2-2 2 2" />
-                    </svg>
-                  )}
+
+        <div className="mx-auto max-w-3xl">
+          <h3 className="text-center text-xl font-semibold text-iron_grey md:text-2xl">
+            Built for Modern Teams
+          </h3>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            {[
+              "Remote & hybrid teams",
+              "Employee onboarding & welcome kits",
+              "Holiday gifts & team celebrations",
+              "Client gifting & thank-you packages"
+            ].map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3 rounded-lg border border-dust_grey-200 bg-white px-4 py-3 text-left text-sm text-iron_grey shadow-sm"
+              >
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-powder_petal-100 text-xs font-bold text-iron_grey">
+                  ✓
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="mx-auto max-w-3xl text-center text-xl font-semibold text-iron_grey md:text-2xl">
+            Why Teams Love Our Snack Boxes
+          </h3>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "Curated with Variety",
+                body: "A mix of recognizable, high-quality snacks—sweet, salty, and better-for-you options."
+              },
+              {
+                title: "Customizable to Your Needs",
+                body: "Choose box sizes, snack types, and add branded touches for a personalized experience."
+              },
+              {
+                title: "Delivered Anywhere",
+                body: "Ship to individual addresses across Canada or send in bulk to one location."
+              },
+              {
+                title: "Flexible for Any Team Size",
+                body: "From 10 boxes to 1,000+, we scale with your needs."
+              }
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="flex flex-col rounded-lg border border-dust_grey-200 bg-white p-6 text-center shadow-sm sm:text-left"
+              >
+                <h4 className="text-base font-semibold text-iron_grey">{card.title}</h4>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-iron_grey">{card.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="section-subtitle">Simple, Hassle-Free Process</p>
+            <p className="mt-3 text-sm leading-relaxed text-iron_grey md:text-base">
+              We make it easy to send snack boxes your team will love—without the logistics
+              headache.
+            </p>
+          </div>
+          <div className="relative mt-12 grid gap-8 md:grid-cols-3">
+            <div
+              className="absolute left-0 right-0 top-[52px] hidden h-0.5 bg-ash_grey-200 md:block"
+              style={{ marginLeft: "16.67%", marginRight: "16.67%" }}
+              aria-hidden
+            />
+            {[
+              "Choose your box or request customization",
+              "We curate and pack your order",
+              "We deliver across Canada"
+            ].map((title, index) => (
+              <div key={title} className="relative flex h-full flex-col items-center text-center">
+                <div className="flex flex-col items-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-powder_petal-100 text-iron_grey">
+                    {index === 0 ? (
+                      <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                      </svg>
+                    ) : index === 1 ? (
+                      <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    ) : (
+                      <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h2M8 16h8a2 2 0 002-2V6a2 2 0 00-2-2h-2M8 16v4m0-8V4m0 8l2-2 2 2 2-2 2 2" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="relative z-10 mt-3 flex h-8 w-8 items-center justify-center rounded-md bg-ash_grey-500 text-sm font-bold text-white">
+                    {index + 1}
+                  </div>
                 </div>
-                {/* Number badge */}
-                <div className="relative z-10 mt-3 flex h-8 w-8 items-center justify-center rounded-md bg-ash_grey-500 text-sm font-bold text-white">
-                  {index + 1}
+                <div className="mt-4 flex flex-1 flex-col justify-center rounded-lg border border-dust_grey-200 bg-white p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold leading-snug text-iron_grey">{title}</h3>
                 </div>
               </div>
-              <div className="mt-4 flex min-h-[180px] flex-1 flex-col rounded-lg border border-dust_grey-200 bg-white p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-iron_grey">
-                  {step.title}
-                </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-iron_grey">{step.copy}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        <div className="mt-10 flex justify-center">
-          <Button href="/team-snacks-delivered" variant="secondary" className="min-w-[280px] px-8">
-            Request a Quote
-          </Button>
+
+        <div className="rounded-lg border border-dust_grey-200 bg-powder_petal-50 p-10 text-center">
+          <h3 className="text-xl font-semibold text-iron_grey md:text-2xl">Ready to Get Started?</h3>
+          <div className="mt-6 flex flex-col flex-wrap items-center justify-center gap-3 sm:flex-row">
+            <Button href="/corporate/team-snack-boxes" variant="secondary" className="min-w-[260px] px-8">
+              Explore Team Snack Boxes
+            </Button>
+            <Button href="/team-snacks-delivered" variant="ghost" className="min-w-[260px] px-8">
+              Request a Custom Quote
+            </Button>
+          </div>
         </div>
       </section>
 
