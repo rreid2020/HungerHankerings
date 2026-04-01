@@ -17,7 +17,7 @@ const OurProgramsPage = () => {
   return (
     <div className="container-page space-y-10 py-12">
       <div>
-        <p className="section-subtitle">Our Programs</p>
+        <p className="section-subtitle">Corporate Programs</p>
         <h1 className="text-3xl font-semibold text-iron_grey">
           Snack programs for teams and communities
         </h1>

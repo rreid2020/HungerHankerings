@@ -6,7 +6,7 @@ import AccountAvatarMenu from "./AccountAvatarMenu"
 
 const navLinks = [
   { label: "Themed Snack Boxes", href: "/shop" },
-  { label: "Our Programs", href: "/our-programs" },
+  { label: "Corporate Programs", href: "/our-programs" },
   { label: "FAQs", href: "/faqs" },
   { label: "Contact", href: "/contact" }
 ]
