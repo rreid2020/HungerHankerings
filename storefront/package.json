@@ -13,6 +13,7 @@
   "dependencies": {
     "@stripe/stripe-js": "^8.0.0",
     "clsx": "^2.1.1",
+    "lucide-react": "^1.7.0",
     "next": "15.1.0",
     "postgres": "^3.4.8",
     "react": "19.0.0",
