@@ -5,7 +5,7 @@ import CartButton from "./CartButton"
 import AccountAvatarMenu from "./AccountAvatarMenu"
 
 const navLinks = [
-  { label: "Themed Snack Boxes", href: "/themed-snack-boxes" },
+  { label: "Themed Snack Boxes", href: "/shop" },
   { label: "Our Programs", href: "/our-programs" },
   { label: "FAQs", href: "/faqs" },
   { label: "Contact", href: "/contact" }
