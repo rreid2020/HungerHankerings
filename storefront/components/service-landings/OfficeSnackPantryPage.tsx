@@ -142,8 +142,8 @@ export default function OfficeSnackPantryPage() {
         eyebrow="Office pantry"
         title="Office Snack Pantry Service for Modern Workplaces"
         subtitle="We curate, restock, and manage pantry snacks so your team always has something fresh and trendy—without your ops team living in the supply closet."
-        imageSrc="https://placehold.co/800x800/b0c4b1/4A5759?text=Office+Pantry"
-        imageAlt="Office snack pantry service with curated workplace snacks"
+        imageSrc="/office-pantry.png"
+        imageAlt="Modern office pantry with coffee station, snacks, and seating"
       >
         <Button href="/office-pantry-snack-service" className="min-h-11 px-6">
           Request Pantry Service Info

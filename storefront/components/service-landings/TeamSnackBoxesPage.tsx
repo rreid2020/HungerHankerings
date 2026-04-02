@@ -116,8 +116,9 @@ export default function TeamSnackBoxesPage() {
         eyebrow="Team snack boxes"
         title="Corporate Team Snack Boxes Delivered Across Canada"
         subtitle="Reward and retain your team with curated snack boxes delivered Canada-wide. We handle sourcing, packing, and shipping so your team gets a consistent snack experience—from onboarding to appreciation."
-        imageSrc="https://placehold.co/800x800/edafb8/4A5759?text=Team+Boxes"
-        imageAlt="Curated corporate team snack boxes for delivery across Canada"
+        imageSrc="/illustration-team-snack-boxes.svg"
+        imageAlt="Stylized gift boxes and delivery routes suggesting team snack gifting"
+        imageClassName="h-full w-full object-contain object-center p-3 sm:p-4"
       >
         <Button href="/team-snacks-delivered" className="min-h-11 px-6">
           Request a Custom Quote

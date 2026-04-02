@@ -143,8 +143,9 @@ export default function BulkPalletServicePage() {
         eyebrow="Bulk & pallet"
         title="Bulk Snack Boxes & Pallet Delivery for Corporate Orders"
         subtitle="High-volume, fully customized snack box programs delivered to a central location—ideal when you need consistency at scale and your team handles downstream distribution."
-        imageSrc="https://placehold.co/800x800/DEDBD2/4A5759?text=Bulk+%26+Pallet"
-        imageAlt="Bulk pallet snack box delivery for corporate high-volume orders"
+        imageSrc="/illustration-bulk-pallet.svg"
+        imageAlt="Stylized stacked shipping cartons on a pallet for high-volume orders"
+        imageClassName="h-full w-full object-contain object-center p-3 sm:p-4"
       >
         <Button href="/contact" className="min-h-11 px-6">
           Get Bulk Pricing &amp; Custom Options

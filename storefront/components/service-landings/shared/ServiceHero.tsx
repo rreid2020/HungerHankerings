@@ -9,6 +9,8 @@ type ServiceHeroProps = {
   children?: ReactNode
   imageSrc?: string
   imageAlt?: string
+  /** Applied to the hero image (e.g. object-contain for SVG illustrations). */
+  imageClassName?: string
 }
 
 export default function ServiceHero({
@@ -18,7 +20,8 @@ export default function ServiceHero({
   subtitle,
   children,
   imageSrc = "https://placehold.co/800x800/F7E1D7/4A5759?text=Snack+Program",
-  imageAlt = "Corporate snack program"
+  imageAlt = "Corporate snack program",
+  imageClassName = "h-full w-full object-cover"
 }: ServiceHeroProps) {
   return (
     <section className={`${sectionY} bg-background`} aria-labelledby={id}>
@@ -46,7 +49,7 @@ export default function ServiceHero({
               <img
                 src={imageSrc}
                 alt={imageAlt}
-                className="h-full w-full object-cover"
+                className={imageClassName}
                 width={800}
                 height={800}
               />
