@@ -33,11 +33,14 @@ const HomePage = async () => {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button href="/themed-snack-boxes">Shop Snack Boxes</Button>
-              <Button href="/team-snacks-delivered" variant="ghost">
+              <Button href="/corporate/team-snack-boxes" variant="ghost">
                 Team Snack Boxes
               </Button>
-              <Button href="/office-pantry-snack-service" variant="ghost">
+              <Button href="/corporate/office-snack-pantry" variant="ghost">
                 Office Pantry
+              </Button>
+              <Button href="/corporate/bulk-pallet" variant="ghost">
+                Bulk and Pallet Service
               </Button>
             </div>
           </div>
@@ -109,6 +112,40 @@ const HomePage = async () => {
               src="/office-pantry.png"
               alt="Modern office pantry with coffee station, snacks, and seating"
               className="h-full w-full rounded-lg object-cover"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="container-page">
+        <div className="grid gap-10 rounded-lg border border-dust_grey-200 bg-ash_grey-100 p-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+          <div>
+            <p className="section-subtitle text-iron_grey">Bulk &amp; Pallet</p>
+            <h2 className="section-title text-iron_grey">Bulk &amp; Pallet Snack Box Service</h2>
+            <p className="mt-3 text-sm text-iron_grey">
+              Built for high-volume, fully customized snack box orders—delivered to a central
+              location on pallets or in coordinated shipments. Choose box sizes, snack profiles,
+              and branding so every unit matches your campaign or internal rollout.
+            </p>
+            <p className="mt-3 text-sm text-iron_grey">
+              We plan production and packing around your receiving windows, whether you&apos;re
+              staging a national program, stocking distribution hubs, or supporting franchise
+              rollouts across Canada.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button href="/corporate/bulk-pallet" variant="secondary">
+                Learn More
+              </Button>
+              <Button href="/contact" variant="ghost">
+                Request a Custom Quote
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-dust_grey-200 bg-white p-4 shadow-sm">
+            <img
+              src="/bulk-pallet.png"
+              alt="Bulk snack boxes stacked for pallet delivery and corporate distribution"
+              className="h-full min-h-[200px] w-full rounded-lg object-cover sm:min-h-[260px]"
             />
           </div>
         </div>
