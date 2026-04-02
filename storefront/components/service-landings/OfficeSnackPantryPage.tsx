@@ -22,6 +22,8 @@ import {
 } from "lucide-react"
 import Button from "../Button"
 import CtaBanner from "./shared/CtaBanner"
+import { officePantryFaqItems } from "../../data/serviceAndCorporateFaqs"
+import FaqSection from "./shared/FaqSection"
 import IconCardGrid from "./shared/IconCardGrid"
 import IntroSection from "./shared/IntroSection"
 import { onDarkOutlineLinkClass } from "./shared/onDarkOutline"
@@ -186,6 +188,12 @@ export default function OfficeSnackPantryPage() {
         heading="How it works"
         steps={[...howSteps]}
         className="bg-powder_petal-50/40"
+      />
+
+      <FaqSection
+        sectionId="office-faq-heading"
+        items={officePantryFaqItems}
+        className="border-t border-border bg-muted/30"
       />
 
       <CtaBanner

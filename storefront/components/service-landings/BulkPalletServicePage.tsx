@@ -23,6 +23,8 @@ import {
 } from "lucide-react"
 import Button from "../Button"
 import CtaBanner from "./shared/CtaBanner"
+import { bulkPalletFaqItems } from "../../data/serviceAndCorporateFaqs"
+import FaqSection from "./shared/FaqSection"
 import IconCardGrid from "./shared/IconCardGrid"
 import IntroSection from "./shared/IntroSection"
 import { onDarkOutlineLinkClass } from "./shared/onDarkOutline"
@@ -187,6 +189,12 @@ export default function BulkPalletServicePage() {
         heading="How it works"
         steps={[...howSteps]}
         className="bg-background"
+      />
+
+      <FaqSection
+        sectionId="bulk-faq-heading"
+        items={bulkPalletFaqItems}
+        className="border-t border-border bg-muted/30"
       />
 
       <CtaBanner

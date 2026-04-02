@@ -1,63 +1,140 @@
-import FaqAccordion from "../../components/FaqAccordion"
+import type { Metadata } from "next"
+import Link from "next/link"
+import Button from "../../components/Button"
+import FaqSection from "../../components/service-landings/shared/FaqSection"
+import {
+  bulkPalletFaqItems,
+  generalFaqItems,
+  officePantryFaqItems,
+  teamSnackFaqItems
+} from "../../data/serviceAndCorporateFaqs"
 
-const faqs = [
-  {
-    question: "What is Hunger Hankerings?",
-    answer: "We curate snack boxes and pantry programs for teams, gifts, and fundraising."
-  },
-  {
-    question: "Do you offer subscriptions?",
-    answer: "We offer one-time or recurring snack drops based on your schedule."
-  },
-  {
-    question: "Do you have dietary options?",
-    answer: "Yes. Vegan, gluten-free, nut-free, and better-for-you options are available."
-  },
-  {
-    question: "What are your shipping timelines?",
-    answer: "Most orders ship in 2-4 business days once confirmed."
-  },
-  {
-    question: "What box sizes are available?",
-    answer: "We curate boxes based on team size and budget, from small batches to bulk orders."
-  },
-  {
-    question: "Can I request substitutions?",
-    answer: "Absolutely. Let us know preferences and we will customize the assortment."
-  },
-  {
-    question: "Do you ship internationally?",
-    answer: "We currently ship within Canada only."
-  },
-  {
-    question: "Are the snacks full size?",
-    answer: "Yes, most boxes include full-size snacks unless requested otherwise."
-  },
-  {
-    question: "What are the shipping fees?",
-    answer: "Shipping is included on most team box orders. Pantry service and bulk orders are quoted."
-  },
-  {
-    question: "How can I contact you?",
-    answer: "Use the contact form or email hello@hungerhankerings.com."
-  }
-]
+export const metadata: Metadata = {
+  title: "FAQs | Hunger Hankerings",
+  description:
+    "Answers about Hunger Hankerings themed snack boxes, team programs, office pantry service, bulk and pallet orders, shipping within Canada, and how to reach us."
+}
 
-const FaqsPage = () => {
+const toc = [
+  { href: "#faq-general", label: "General" },
+  { href: "#faq-team", label: "Team snack boxes" },
+  { href: "#faq-pantry", label: "Office pantry" },
+  { href: "#faq-bulk", label: "Bulk & pallet" }
+] as const
+
+export default function FaqsPage() {
   return (
-    <div className="container-page space-y-10 py-12">
-      <div>
-        <p className="section-subtitle">FAQs</p>
-        <h1 className="text-3xl font-semibold text-iron_grey">
-          Frequently asked questions
-        </h1>
-        <p className="mt-2 text-sm text-iron_grey">
-          Everything you need to know about our snack programs.
-        </p>
-      </div>
-      <FaqAccordion items={faqs} />
+    <div className="bg-background text-foreground">
+      <section className="border-b border-border bg-powder_petal-50/60">
+        <div className="container-page py-12 md:py-16">
+          <p className="section-subtitle text-iron_grey">FAQs</p>
+          <h1 className="text-3xl font-semibold text-iron_grey md:text-4xl">
+            Frequently asked questions
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm text-iron_grey md:text-base">
+            Everything in one place—general questions plus details on team boxes, office pantry, and
+            bulk programs. Service pages include the same FAQs below the fold.
+          </p>
+          <nav
+            className="mt-8 flex flex-wrap gap-2"
+            aria-label="FAQ sections"
+          >
+            {toc.map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                className="rounded-full border border-dust_grey-200 bg-white px-4 py-2 text-sm font-medium text-iron_grey shadow-sm transition hover:border-ash_grey-500 hover:text-foreground"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </section>
+
+      <FaqSection
+        sectionId="faq-general"
+        heading="General"
+        intro="Ordering, shipping in Canada, dietary options, and how to reach us."
+        items={generalFaqItems}
+        className="bg-background"
+      />
+
+      <FaqSection
+        sectionId="faq-team"
+        heading="Team snack boxes"
+        intro={
+          <>
+            Corporate gifting and multi-address delivery.{" "}
+            <Link
+              href="/corporate/team-snack-boxes"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              View the team snack boxes page
+            </Link>
+            .
+          </>
+        }
+        items={teamSnackFaqItems}
+        className="border-t border-border bg-muted/25"
+      />
+
+      <FaqSection
+        sectionId="faq-pantry"
+        heading="Office snack pantry service"
+        intro={
+          <>
+            Workplace restocking and custom schedules.{" "}
+            <Link
+              href="/corporate/office-snack-pantry"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              View the office pantry page
+            </Link>
+            .
+          </>
+        }
+        items={officePantryFaqItems}
+        className="bg-background"
+      />
+
+      <FaqSection
+        sectionId="faq-bulk"
+        heading="Bulk & pallet snack box service"
+        intro={
+          <>
+            High-volume and centralized delivery.{" "}
+            <Link
+              href="/corporate/bulk-pallet"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              View the bulk & pallet page
+            </Link>
+            .
+          </>
+        }
+        items={bulkPalletFaqItems}
+        className="border-t border-border bg-muted/25"
+      />
+
+      <section className="border-t border-border bg-powder_petal-50/50 py-12 md:py-14">
+        <div className="container-page flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-iron_grey">Still have questions?</h2>
+            <p className="mt-1 text-sm text-iron_grey">
+              We&apos;re happy to help with a custom quote or program design.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button href="/contact" variant="secondary">
+              Contact us
+            </Button>
+            <Button href="/shop" variant="ghost">
+              Shop snack boxes
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
-
-export default FaqsPage

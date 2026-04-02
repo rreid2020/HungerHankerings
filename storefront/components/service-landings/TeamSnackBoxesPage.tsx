@@ -23,6 +23,8 @@ import {
 } from "lucide-react"
 import Button from "../Button"
 import CtaBanner from "./shared/CtaBanner"
+import { teamSnackFaqItems } from "../../data/serviceAndCorporateFaqs"
+import FaqSection from "./shared/FaqSection"
 import IconCardGrid from "./shared/IconCardGrid"
 import IntroSection from "./shared/IntroSection"
 import { onDarkOutlineLinkClass } from "./shared/onDarkOutline"
@@ -152,6 +154,12 @@ export default function TeamSnackBoxesPage() {
         heading="How it works"
         steps={[...howSteps]}
         className="border-y border-border bg-muted/30"
+      />
+
+      <FaqSection
+        sectionId="team-faq-heading"
+        items={teamSnackFaqItems}
+        className="bg-background"
       />
 
       <CtaBanner
