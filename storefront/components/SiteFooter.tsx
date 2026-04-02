@@ -6,15 +6,35 @@ const SiteFooter = () => {
       <div className="container-page grid gap-8 py-12 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <h3 className="text-lg font-semibold text-white">About us</h3>
-          <p className="mt-3 text-sm text-white/90">
-            Let us help you discover an exciting and surprising assortment of snack products that will satisfy everyone&apos;s dietary preferences. Choose to receive our snacks monthly, bi-monthly, weekly, or one time only - although we&apos;re sure you&apos;ll come back for more!
-          </p>
+          <div className="mt-3 space-y-3 text-sm text-white/90">
+            <p>We make snacking simple, enjoyable, and tailored to every craving.</p>
+            <p>
+              At Hunger Hankerings, we curate snack boxes filled with a mix of recognizable favorites
+              and better-for-you options—carefully selected to suit different tastes, dietary
+              preferences, and occasions.
+            </p>
+            <p>
+              Whether you&apos;re treating yourself, sending a gift, or fueling a team, our goal is
+              to deliver a snack experience that feels thoughtful, convenient, and worth coming back
+              to.
+            </p>
+          </div>
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Our Mission</h3>
-          <p className="mt-3 text-sm text-white/90">
-            Hunger Hankerings offers curated snack boxes that aim to make snacking moments meaningful, fueling both the mind and body. From guilt free, gluten free, vegan, sweet tooth, salty, nutty, and more, you can select from our professionally curated box themes or curate your very own box by selecting the snacks. Each box is filled with an array of high quality assortment of snack products, aimed to calm your hunger and keep you focused.
-          </p>
+          <div className="mt-3 space-y-3 text-sm text-white/90">
+            <p>To make snacking more meaningful—without sacrificing taste or convenience.</p>
+            <p>
+              We believe great snacks should do more than just satisfy hunger. That&apos;s why we
+              curate a balanced mix of indulgent and better-for-you options, giving you the freedom
+              to enjoy what you love while discovering something new.
+            </p>
+            <p>
+              From individual orders to corporate programs, we&apos;re focused on delivering
+              high-quality, curated snack experiences that bring people together, create moments, and
+              fit seamlessly into everyday life.
+            </p>
+          </div>
         </div>
         <div className="text-sm">
           <h3 className="text-lg font-semibold text-white">Site Links</h3>
