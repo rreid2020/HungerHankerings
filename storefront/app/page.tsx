@@ -62,9 +62,11 @@ const HomePage = async () => {
         <div className="grid gap-10 rounded-lg border border-dust_grey-200 bg-ash_grey-100 p-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           <div className="rounded-lg border border-dust_grey-200 bg-white p-4 shadow-sm">
             <img
-              src="/hero-snack-box.png"
-              alt="Curated corporate team snack boxes for gifting and delivery across Canada"
-              className="h-full min-h-[200px] w-full rounded-lg object-cover sm:min-h-[260px]"
+              src="/illustration-team-snack-boxes.svg"
+              alt="Stylized gift boxes and delivery routes suggesting team snack gifting"
+              className="h-full min-h-[200px] w-full rounded-lg object-contain object-center p-2 sm:min-h-[260px]"
+              width={800}
+              height={520}
             />
           </div>
           <div>
@@ -143,9 +145,11 @@ const HomePage = async () => {
           </div>
           <div className="rounded-lg border border-dust_grey-200 bg-white p-4 shadow-sm">
             <img
-              src="/bulk-pallet.jpg"
-              alt="Warehouse shelves with stacked shipping boxes for bulk distribution"
-              className="h-full min-h-[200px] w-full rounded-lg object-cover sm:min-h-[260px]"
+              src="/illustration-bulk-pallet.svg"
+              alt="Stylized stacked shipping cartons on a pallet for high-volume orders"
+              className="h-full min-h-[200px] w-full rounded-lg object-contain object-center p-2 sm:min-h-[260px]"
+              width={800}
+              height={520}
             />
           </div>
         </div>

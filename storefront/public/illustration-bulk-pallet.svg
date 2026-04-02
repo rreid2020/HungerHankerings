@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" fill="none" aria-hidden="true">
+  <circle cx="720" cy="96" r="40" fill="#D4E3D5" opacity="0.55"/>
+  <circle cx="100" cy="400" r="32" fill="#F7E1D7" opacity="0.7"/>
+
+  <!-- Pallet base -->
+  <rect x="160" y="392" width="480" height="18" rx="3" fill="#C9B896" stroke="#4A5759" stroke-width="3"/>
+  <rect x="180" y="410" width="44" height="28" fill="#BFA880" stroke="#4A5759" stroke-width="2.5"/>
+  <rect x="378" y="410" width="44" height="28" fill="#BFA880" stroke="#4A5759" stroke-width="2.5"/>
+  <rect x="576" y="410" width="44" height="28" fill="#BFA880" stroke="#4A5759" stroke-width="2.5"/>
+  <rect x="200" y="372" width="360" height="14" rx="2" fill="#DEDBD2" stroke="#4A5759" stroke-width="2.5"/>
+
+  <!-- Bottom row of cartons -->
+  <g stroke="#4A5759" stroke-width="3">
+    <rect x="210" y="312" width="92" height="60" rx="5" fill="#FFFFFF"/>
+    <rect x="316" y="312" width="92" height="60" rx="5" fill="#F5F4F2"/>
+    <rect x="422" y="312" width="92" height="60" rx="5" fill="#FFFFFF"/>
+    <rect x="528" y="312" width="92" height="60" rx="5" fill="#EDEBE8"/>
+  </g>
+  <!-- Top row -->
+  <g stroke="#4A5759" stroke-width="3">
+    <rect x="242" y="248" width="92" height="60" rx="5" fill="#E8F0E9"/>
+    <rect x="348" y="248" width="92" height="60" rx="5" fill="#FFFFFF"/>
+    <rect x="454" y="248" width="92" height="60" rx="5" fill="#F5F4F2"/>
+  </g>
+  <!-- Third tier (bulk height) -->
+  <g stroke="#4A5759" stroke-width="3">
+    <rect x="306" y="184" width="92" height="60" rx="5" fill="#FAE4E8"/>
+    <rect x="412" y="184" width="92" height="60" rx="5" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Strapping / logistics hint -->
+  <path d="M200 280 H600" stroke="#4A5759" stroke-width="2.5" stroke-dasharray="14 12" opacity="0.35"/>
+  <path d="M200 340 H600" stroke="#4A5759" stroke-width="2.5" stroke-dasharray="14 12" opacity="0.35"/>
+
+  <!-- Simple fork-truck silhouette (machine only, no operator) -->
+  <path d="M96 368 L96 320 L152 320 L168 352 L220 352 L220 368 Z" fill="#DEDBD2" stroke="#4A5759" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="108" y="352" width="28" height="36" rx="4" fill="#4A5759" opacity="0.15"/>
+  <circle cx="118" cy="392" r="14" fill="#4A5759" opacity="0.25"/>
+  <circle cx="200" cy="392" r="14" fill="#4A5759" opacity="0.25"/>
+</svg>
