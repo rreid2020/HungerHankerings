@@ -143,8 +143,8 @@ const HomePage = async () => {
           </div>
           <div className="rounded-lg border border-dust_grey-200 bg-white p-4 shadow-sm">
             <img
-              src="/bulk-pallet.png"
-              alt="Bulk snack boxes stacked for pallet delivery and corporate distribution"
+              src="/bulk-pallet.jpg"
+              alt="Warehouse shelves with stacked shipping boxes for bulk distribution"
               className="h-full min-h-[200px] w-full rounded-lg object-cover sm:min-h-[260px]"
             />
           </div>
