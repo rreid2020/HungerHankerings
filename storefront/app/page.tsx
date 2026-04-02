@@ -1,6 +1,10 @@
 import Button from "../components/Button"
 import ProductCard from "../components/ProductCard"
-import { listProducts } from "../lib/vendure"
+import {
+  getHomeFeaturedCollectionSlug,
+  listProducts,
+  listProductsInCollectionBySlug,
+} from "../lib/vendure"
 
 // Fetch uses no-store (dynamic); avoid static generation at build when API is unavailable
 export const dynamic = "force-dynamic"
@@ -11,6 +15,18 @@ const HomePage = async () => {
     products = await listProducts()
   } catch (err) {
     console.error("Products fetch failed:", err)
+  }
+
+  let snackBoxFavorites = products.slice(0, 3)
+  try {
+    const fromCollection = await listProductsInCollectionBySlug(
+      getHomeFeaturedCollectionSlug()
+    )
+    if (fromCollection.length > 0) {
+      snackBoxFavorites = fromCollection
+    }
+  } catch (err) {
+    console.error("Featured snack boxes collection fetch failed:", err)
   }
 
   return (
@@ -164,7 +180,7 @@ const HomePage = async () => {
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
-          {products.slice(0, 3).map((product) => (
+          {snackBoxFavorites.map((product) => (
             <ProductCard key={(product as { id: string }).id} product={product} />
           ))}
         </div>

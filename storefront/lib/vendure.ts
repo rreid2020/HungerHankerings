@@ -546,6 +546,68 @@ export async function listProducts(): Promise<StorefrontProduct[]> {
   return items.map(mapVendureProductToStorefront);
 }
 
+const DEFAULT_FEATURED_SNACK_BOXES_COLLECTION_SLUG = "featured-snack-boxes";
+
+/** Slug of the Vendure collection whose products appear in the homepage “Snack box favorites” block. */
+export function getHomeFeaturedCollectionSlug(): string {
+  const fromEnv =
+    process.env.NEXT_PUBLIC_FEATURED_COLLECTION_SLUG?.trim() ||
+    process.env.STOREFRONT_FEATURED_COLLECTION_SLUG?.trim();
+  return fromEnv || DEFAULT_FEATURED_SNACK_BOXES_COLLECTION_SLUG;
+}
+
+/**
+ * Products belonging to a shop collection (by slug), in collection order.
+ * Dedupes by product id when multiple variants from the same product appear in the list.
+ */
+export async function listProductsInCollectionBySlug(
+  slug: string
+): Promise<StorefrontProduct[]> {
+  const trimmed = slug.trim();
+  if (!trimmed) return [];
+
+  type ProductRow = Parameters<typeof mapVendureProductToStorefront>[0];
+
+  const data = await fetchVendure<{
+    collection: {
+      productVariants: {
+        items: Array<{ product: ProductRow | null }>;
+      };
+    } | null;
+  }>(
+    `
+    query CollectionProductsBySlug($slug: String!) {
+      collection(slug: $slug) {
+        productVariants(options: { take: 100 }) {
+          items {
+            product {
+              ${productFields}
+            }
+          }
+        }
+      }
+    }
+  `,
+    { slug: trimmed }
+  );
+
+  if (!data.collection) return [];
+
+  const rows = data.collection.productVariants?.items ?? [];
+  const seen = new Set<string>();
+  const out: StorefrontProduct[] = [];
+
+  for (const row of rows) {
+    const p = row.product;
+    if (!p || seen.has(p.id)) continue;
+    if (!isCatalogProduct(p)) continue;
+    seen.add(p.id);
+    out.push(mapVendureProductToStorefront(p));
+  }
+
+  return out;
+}
+
 export async function getProductByHandle(
   slug: string
 ): Promise<StorefrontProduct | null> {
