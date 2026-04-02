@@ -56,6 +56,10 @@ jobs:
               echo "Removing name-matched project containers (${proj}-*): $name_leftovers"
               docker rm -f $name_leftovers || true
             fi
+            # Explicit names: ps --filter name= can miss edge cases; these exact names must be free for compose run/up
+            for svc in redis mailpit vendure vendure-worker storefront nginx; do
+              docker rm -f "${proj}-${svc}-1" 2>/dev/null || true
+            done
             # Stale default network prevents compose run/up from creating a fresh stack
             docker network rm "${proj}_default" 2>/dev/null || true
             echo "Pruning build cache (optional disk recovery)..."
