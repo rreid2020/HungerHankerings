@@ -39,6 +39,8 @@ const emptyAddress: AddressFields = {
 const inputClass =
   "rounded-md border border-gray-300 bg-white px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
+const CHECKOUT_STEPS = ["Contact & billing", "Shipping", "Payment"] as const
+
 const CheckoutPage = () => {
   const { cart, loading, updating, completeCart, clearCart, updateItem, removeItem, refreshCart, resetCartSession } =
     useCart()
@@ -74,6 +76,9 @@ const CheckoutPage = () => {
   /** Bump to remount the card container after a failed Stripe.js load (retry). */
   const [stripeMountKey, setStripeMountKey] = useState(0)
   const [stripeLoadError, setStripeLoadError] = useState<string | null>(null)
+  /** 0 = contact & billing, 1 = shipping, 2 = payment */
+  const [checkoutStep, setCheckoutStep] = useState(0)
+  const [stepHint, setStepHint] = useState<string | null>(null)
 
   /**
    * Mount Stripe Card Element only after the DOM node exists (ref callback).
@@ -264,6 +269,11 @@ const CheckoutPage = () => {
       /* ignore */
     }
   }, [billing, shipping, nameOnCard, giftByLineUnit, customAddresses, assignment])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [checkoutStep])
 
   // Sync main shipping address to Vendure so tax/shipping are calculated by province; then refetch cart
   const syncAddressToVendureRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -893,8 +903,8 @@ const CheckoutPage = () => {
     !!(a.first_name?.trim() && a.last_name?.trim() && a.address_1?.trim() &&
       a.city?.trim() && a.province?.trim() && a.postal_code?.trim() && a.country?.trim())
 
-  const isValid = () => {
-    const hasBilling =
+  const isBillingComplete = () =>
+    !!(
       billing.first_name?.trim() &&
       billing.last_name?.trim() &&
       billing.email?.trim() &&
@@ -903,9 +913,10 @@ const CheckoutPage = () => {
       billing.province?.trim() &&
       billing.postal_code?.trim() &&
       billing.country?.trim()
-    if (!hasBilling) return false
-    const hasShipping = isAddressComplete(shipping)
-    if (!hasShipping) return false
+    )
+
+  const isShippingStepComplete = () => {
+    if (!isAddressComplete(shipping)) return false
     for (let i = 0; i < customAddresses.length; i++) {
       const q = assignment.custom[i]
       const hasBoxes = q && Object.values(q).some((n) => n > 0)
@@ -920,6 +931,43 @@ const CheckoutPage = () => {
       if (enabled && !message.trim()) return false
     }
     return true
+  }
+
+  const isValid = () => isBillingComplete() && isShippingStepComplete()
+
+  const goToNextStep = () => {
+    setStepHint(null)
+    if (checkoutStep === 0) {
+      if (!isBillingComplete()) {
+        setStepHint("Please complete all contact and billing fields.")
+        return
+      }
+      setCheckoutStep(1)
+      return
+    }
+    if (checkoutStep === 1) {
+      if (!isShippingStepComplete()) {
+        setStepHint(
+          "Complete shipping addresses, assign every box to a destination, and add gift messages where gift box is selected."
+        )
+        return
+      }
+      setCheckoutStep(2)
+    }
+  }
+
+  const goToPrevStep = () => {
+    setStepHint(null)
+    setCheckoutStep((s) => Math.max(0, s - 1))
+  }
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    if (checkoutStep < 2) {
+      e.preventDefault()
+      goToNextStep()
+      return
+    }
+    void handleSubmit(e)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1052,9 +1100,77 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="container-page grid gap-10 py-12 lg:grid-cols-[1.2fr_0.8fr]">
+    <div className="container-page py-12">
+      <nav
+        className="mb-10"
+        aria-label="Checkout steps"
+      >
+        <ol className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+          {CHECKOUT_STEPS.map((label, index) => {
+            const done = index < checkoutStep
+            const current = index === checkoutStep
+            return (
+              <li key={label} className="flex min-w-0 flex-1 items-center gap-2 sm:flex-initial">
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                    current
+                      ? "bg-brand-600 text-white ring-2 ring-brand-600 ring-offset-2"
+                      : done
+                        ? "bg-brand-100 text-brand-800"
+                        : "border border-gray-300 bg-white text-muted-foreground"
+                  }`}
+                  aria-current={current ? "step" : undefined}
+                >
+                  {done ? "✓" : index + 1}
+                </span>
+                <span
+                  className={`text-sm font-medium ${
+                    current ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </span>
+                {index < CHECKOUT_STEPS.length - 1 ? (
+                  <span
+                    className="mx-2 hidden h-px min-w-[1.5rem] flex-1 bg-gray-200 sm:block"
+                    aria-hidden
+                  />
+                ) : null}
+              </li>
+            )
+          })}
+        </ol>
+      </nav>
+
+      <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-10">
-        <form id="checkout-form" className="space-y-10" onSubmit={handleSubmit}>
+        <form id="checkout-form" className="space-y-10" onSubmit={handleFormSubmit}>
+          {checkoutError && (
+            <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+              {checkoutError}
+            </div>
+          )}
+          {stepHint && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="status">
+              {stepHint}
+            </div>
+          )}
+
+          {checkoutStep > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={goToPrevStep}
+                disabled={processing}
+                className="text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
+              >
+                ← Back
+              </button>
+            </div>
+          )}
+
+          {checkoutStep === 0 && (
+          <>
           <section>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-base font-semibold text-foreground">Contact information</h2>
@@ -1198,12 +1314,6 @@ const CheckoutPage = () => {
             </div>
           </section>
 
-          {checkoutError && (
-            <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800">
-              {checkoutError}
-            </div>
-          )}
-
           <section>
             <h2 className="text-base font-semibold text-foreground">Billing address</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -1321,7 +1431,10 @@ const CheckoutPage = () => {
               </div>
             </div>
           </section>
+          </>
+          )}
 
+          {checkoutStep === 1 && (
           <section className="rounded-lg border border-white/20 bg-footer p-4 text-white">
             <h2 className="text-base font-semibold text-white">Shipping information</h2>
             <p className="mt-1 text-sm text-white/90">
@@ -1557,7 +1670,9 @@ const CheckoutPage = () => {
               </button>
             </div>
           </section>
+          )}
 
+          {checkoutStep === 2 && (
           <section>
             <h2 className="text-base font-semibold text-foreground">Payment</h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -1624,6 +1739,7 @@ const CheckoutPage = () => {
               </p>
             )}
           </section>
+          )}
 
         </form>
       </div>
@@ -1843,16 +1959,29 @@ const CheckoutPage = () => {
           >
             Continue Shopping
           </Link>
-          <Button
-            type="submit"
-            form="checkout-form"
-            variant="secondary"
-            disabled={processing}
-            className="w-full"
-          >
-            {processing ? "Placing order..." : "Confirm order"}
-          </Button>
+          {checkoutStep < 2 ? (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={processing}
+              className="w-full"
+              onClick={goToNextStep}
+            >
+              {checkoutStep === 0 ? "Continue to shipping" : "Continue to payment"}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              form="checkout-form"
+              variant="secondary"
+              disabled={processing}
+              className="w-full"
+            >
+              {processing ? "Placing order..." : "Confirm order"}
+            </Button>
+          )}
         </div>
+      </div>
       </div>
     </div>
   )
