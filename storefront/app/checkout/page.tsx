@@ -324,22 +324,19 @@ const CheckoutPage = () => {
     refreshCart
   ])
 
+  /** Uses billing state — billing inputs are not in the DOM on the shipping step (multi-step checkout). */
   const copyBillingToShipping = useCallback(() => {
-    const get = (id: string) => {
-      const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null
-      return el?.value ?? ""
-    }
     setShipping({
-      first_name: get("checkout-billing-first"),
-      last_name: get("checkout-billing-last"),
-      email: get("checkout-email"),
-      address_1: get("checkout-billing-address"),
-      city: get("checkout-billing-city"),
-      province: get("checkout-billing-province"),
-      postal_code: get("checkout-billing-postal"),
-      country: get("checkout-billing-country") || "CA"
+      first_name: billing.first_name,
+      last_name: billing.last_name,
+      email: billing.email,
+      address_1: billing.address_1,
+      city: billing.city,
+      province: billing.province,
+      postal_code: billing.postal_code,
+      country: billing.country?.trim() ? billing.country : "CA"
     })
-  }, [])
+  }, [billing])
 
   const handleStartFreshCheckout = useCallback(async () => {
     if (
