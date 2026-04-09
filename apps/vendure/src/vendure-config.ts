@@ -55,6 +55,16 @@ function buildEmailTransport(): {
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_PASS?.trim();
   const auth = user && pass ? { user, pass } : undefined;
+  const hostLower = host.toLowerCase();
+  const likelyNeedsAuth =
+    hostLower.includes("resend") ||
+    hostLower.includes("sendgrid") ||
+    hostLower.includes("amazonaws.com");
+  if (!auth && likelyNeedsAuth) {
+    console.warn(
+      "[vendure] EmailPlugin: SMTP_HOST points at a provider that requires auth, but SMTP_USER or SMTP_PASS is missing — mail will not reach Resend/etc. Set SMTP_USER (e.g. resend) and SMTP_PASS (API key).",
+    );
+  }
   console.info(
     `[vendure] EmailPlugin: SMTP enabled (${host}:${port}${auth ? `, user=${user}` : ", no auth — e.g. Mailpit"})`,
   );

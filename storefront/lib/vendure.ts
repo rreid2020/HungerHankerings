@@ -1824,7 +1824,7 @@ export async function getCurrentCustomer(
         streetLine2?: string;
         city?: string;
         postalCode?: string;
-        country?: { code?: string; name?: string } | null;
+        country?: string | null;
         province?: string;
         phoneNumber?: string;
         defaultShippingAddress?: boolean;
@@ -1846,7 +1846,7 @@ export async function getCurrentCustomer(
           streetLine2
           city
           postalCode
-          country { code name }
+          country
           province
           phoneNumber
           defaultShippingAddress
@@ -2146,7 +2146,7 @@ function parseGiftFromPaymentMetadata(payments: unknown): { unitKey: string; mes
   return out;
 }
 
-/** Vendure Shop API uses `Country` object on Address, not a string. */
+/** Shop API `Address.country` is a string (ISO code); older schemas may return `{ code, name }`. */
 function vendureGraphqlCountryToStorefront(country: unknown): { code: string; label: string } {
   if (country == null) return { code: "", label: "" };
   if (typeof country === "string") {
@@ -2239,7 +2239,7 @@ const shopOrderFieldsForStorefront = `
     streetLine2
     city
     postalCode
-    country { code name }
+    country
     province
     phoneNumber
   }
@@ -2249,7 +2249,7 @@ const shopOrderFieldsForStorefront = `
     streetLine2
     city
     postalCode
-    country { code name }
+    country
     province
     phoneNumber
   }

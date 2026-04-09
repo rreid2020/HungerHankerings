@@ -279,7 +279,8 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
               </h1>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                 Order <span className="font-mono font-semibold text-foreground">#{order.number}</span> is
-                confirmed. We’ve sent a receipt to your email when outgoing mail is configured on the server.
+                confirmed. You should receive a confirmation email at the address you used at checkout. If
+                nothing arrives within a few minutes, check your spam folder.
               </p>
 
               <div className="mt-8 rounded-xl border border-border bg-muted/30 p-6">
@@ -424,8 +425,10 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
                 <span className="font-mono font-semibold text-foreground">
                   #{fallback.orderNumber ?? orderCode}
                 </span>{" "}
-                was placed. We’ll email <span className="font-medium text-foreground">{s.email}</span> when
-                outgoing mail is configured.
+                was placed. You should receive a confirmation email at{" "}
+                <span className="font-medium text-foreground">{s.email}</span>. If it doesn&apos;t arrive within a
+                few minutes, check your spam folder. This summary was saved in your browser — refresh or sign in
+                to load full order details if they don&apos;t appear.
               </p>
 
               <div className="mt-8 rounded-xl border border-border bg-muted/30 p-6">
