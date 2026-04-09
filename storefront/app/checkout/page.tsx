@@ -365,6 +365,12 @@ const CheckoutPage = () => {
     setCreateAccountPassword("")
   }, [resetCartSession])
 
+  /** Total boxes in cart (sum of line quantities). Extra destinations only apply when there is more than one. */
+  const totalCartBoxCount = useMemo(
+    () => (cart?.items ?? []).reduce((sum, item) => sum + item.quantity, 0),
+    [cart?.items]
+  )
+
   /** Only keys for units that still exist on the current cart (stale draft keys must not affect fees). */
   const validGiftUnitKeys = useMemo(() => {
     const s = new Set<string>()
@@ -1658,13 +1664,15 @@ const CheckoutPage = () => {
                 </div>
               ))}
 
-              <button
-                type="button"
-                onClick={addCustomAddress}
-                className="w-full rounded-md border border-dashed border-powder_petal-200 bg-powder_petal-50 py-2.5 text-sm font-semibold text-foreground transition hover:bg-powder_petal-100 hover:border-powder_petal-200"
-              >
-                + Add another destination
-              </button>
+              {totalCartBoxCount > 1 && (
+                <button
+                  type="button"
+                  onClick={addCustomAddress}
+                  className="w-full rounded-md border border-dashed border-powder_petal-200 bg-powder_petal-50 py-2.5 text-sm font-semibold text-foreground transition hover:bg-powder_petal-100 hover:border-powder_petal-200"
+                >
+                  + Add another destination
+                </button>
+              )}
             </div>
           </section>
           )}
