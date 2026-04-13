@@ -1,0 +1,36 @@
+# Hunger Hankerings
+
+> Canadian snack commerce: curated themed snack boxes, corporate team delivery to multiple addresses, office pantry restocking, bulk and pallet programs, and snack box fundraising. Contact: hello@hungerhankerings.com.
+
+Use the site’s public origin from `NEXT_PUBLIC_SITE_URL` when resolving links in non-production environments.
+
+## Primary entry points
+
+- `/` — Homepage (programs overview, featured boxes)
+- `/shop` — Shop all themed snack boxes (catalog)
+- `/themed-snack-boxes` — Themed snack boxes landing
+- `/gift-a-box` — Gift-oriented snack box flow
+- `/fundraising` — Fundraising programs (commission model)
+- `/our-programs` — Corporate programs hub
+- `/faqs` — Full FAQ index (general, team, pantry, bulk)
+- `/contact` — Contact / lead form
+
+## Corporate service pages
+
+- `/corporate/team-snack-boxes` — Multi-address team gifting, onboarding, appreciation
+- `/corporate/office-snack-pantry` — Workplace pantry stocking and schedules
+- `/corporate/bulk-pallet` — High-volume and pallet delivery to a central site
+
+## Lead / program landing paths
+
+- `/team-snacks-delivered` — Team snack delivery lead capture
+- `/office-pantry-snack-service` — Office pantry lead capture
+
+## Machine-readable extras
+
+- `/sitemap.xml` — URL list including product detail pages when the catalog API is available
+- Schema.org `Organization` and `WebSite` in the root layout; `FAQPage` on `/faqs`; `Product` + `BreadcrumbList` on `/products/[handle]`.
+
+## Crawl policy
+
+Transactional and account areas (`/cart`, `/checkout`, `/login`, `/register`, `/account`, `/order`, `/api`) are set to `noindex` in metadata and disallowed in `robots.txt` where applicable.

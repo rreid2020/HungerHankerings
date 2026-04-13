@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import Button from "../../components/Button"
+import JsonLd from "../../components/JsonLd"
 import FaqSection from "../../components/service-landings/shared/FaqSection"
 import {
   bulkPalletFaqItems,
@@ -8,11 +9,29 @@ import {
   officePantryFaqItems,
   teamSnackFaqItems
 } from "../../data/serviceAndCorporateFaqs"
+import { faqPageJsonLd } from "../../lib/schema-org"
+import { absoluteUrl } from "../../lib/site"
+
+const faqLd = faqPageJsonLd(
+  [
+    ...generalFaqItems,
+    ...teamSnackFaqItems,
+    ...officePantryFaqItems,
+    ...bulkPalletFaqItems
+  ].map((item) => ({ question: item.question, answer: item.schemaAnswer }))
+)
 
 export const metadata: Metadata = {
-  title: "FAQs | Hunger Hankerings",
+  title: "FAQs",
   description:
-    "Answers about Hunger Hankerings themed snack boxes, team programs, office pantry service, bulk and pallet orders, shipping within Canada, and how to reach us."
+    "Answers about Hunger Hankerings themed snack boxes, team programs, office pantry service, bulk and pallet orders, shipping within Canada, and how to reach us.",
+  alternates: { canonical: "/faqs" },
+  openGraph: {
+    title: "FAQs | Hunger Hankerings",
+    description:
+      "Answers about themed snack boxes, team programs, office pantry, bulk orders, Canada shipping, and contact options.",
+    url: absoluteUrl("/faqs")
+  }
 }
 
 const toc = [
@@ -24,7 +43,9 @@ const toc = [
 
 export default function FaqsPage() {
   return (
-    <div className="bg-background text-foreground">
+    <>
+      <JsonLd data={faqLd} id="ld-faq-page" />
+      <div className="bg-background text-foreground">
       <section className="border-b border-border bg-powder_petal-50/60">
         <div className="container-page py-12 md:py-16">
           <p className="section-subtitle text-iron_grey">FAQs</p>
@@ -136,5 +157,6 @@ export default function FaqsPage() {
         </div>
       </section>
     </div>
+    </>
   )
 }

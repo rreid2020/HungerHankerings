@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Button from "../components/Button"
 import ProductCard from "../components/ProductCard"
 import {
@@ -5,9 +6,23 @@ import {
   listProducts,
   listProductsInCollectionBySlug,
 } from "../lib/vendure"
+import { SITE_NAME, absoluteUrl } from "../lib/site"
 
 // Fetch uses no-store (dynamic); avoid static generation at build when API is unavailable
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Snack boxes & corporate programs",
+  description:
+    "Curated themed snack boxes, corporate team delivery across Canada, office pantry restocking, bulk and pallet orders, and fundraising—full-size snacks, dietary options, and gifting.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: `${SITE_NAME} — Themed snack boxes & corporate programs`,
+    description:
+      "Shop themed snack boxes, send team gifts Canada-wide, stock the office pantry, or run a snack fundraiser.",
+    url: absoluteUrl("/")
+  }
+}
 
 const HomePage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []

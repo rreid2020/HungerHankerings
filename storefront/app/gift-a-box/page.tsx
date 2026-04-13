@@ -1,8 +1,22 @@
+import type { Metadata } from "next"
 import ProductCard from "../../components/ProductCard"
 import { listProducts } from "../../lib/vendure"
 import Button from "../../components/Button"
+import { absoluteUrl, SITE_NAME } from "../../lib/site"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Gift a snack box",
+  description:
+    "Send a curated Hunger Hankerings snack box—great for teams, clients, and loved ones with Canada-wide delivery.",
+  alternates: { canonical: "/gift-a-box" },
+  openGraph: {
+    title: `Gift a snack box | ${SITE_NAME}`,
+    description: "Celebrate with a curated snack box surprise.",
+    url: absoluteUrl("/gift-a-box")
+  }
+}
 
 const GiftABoxPage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []

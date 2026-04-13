@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { getAuthUser } from "../../lib/auth"
 import AccountNav from "./account-nav"
@@ -11,6 +12,11 @@ const accountNav = [
 ]
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Account",
+  robots: { index: false, follow: false }
+}
 
 export default async function AccountLayout({
   children

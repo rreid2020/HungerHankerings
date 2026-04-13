@@ -1,4 +1,18 @@
+import type { Metadata } from "next"
 import Button from "../../components/Button"
+import { absoluteUrl, SITE_NAME } from "../../lib/site"
+
+export const metadata: Metadata = {
+  title: "Fundraising with snack boxes",
+  description:
+    "Fundraise with Hunger Hankerings snack boxes—earn up to 25%, Canada-wide delivery, and fast program setup for schools and causes.",
+  alternates: { canonical: "/fundraising" },
+  openGraph: {
+    title: `Fundraising snack boxes | ${SITE_NAME}`,
+    description: "Earn up to 25% with curated snack box fundraising and Canada-wide delivery.",
+    url: absoluteUrl("/fundraising")
+  }
+}
 
 const FundraisingPage = () => {
   return (

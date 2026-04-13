@@ -1,4 +1,18 @@
+import type { Metadata } from "next"
 import LeadForm from "../../components/LeadForm"
+import { absoluteUrl, SITE_NAME } from "../../lib/site"
+
+export const metadata: Metadata = {
+  title: "Office pantry snack service",
+  description:
+    "Office pantry snack restocking across Canada—curated mixes, custom schedules, and scalable programs for workplaces.",
+  alternates: { canonical: "/office-pantry-snack-service" },
+  openGraph: {
+    title: `Office pantry snack service | ${SITE_NAME}`,
+    description: "Keep the office pantry stocked with curated snacks.",
+    url: absoluteUrl("/office-pantry-snack-service")
+  }
+}
 
 const OfficePantryPage = () => {
   return (

@@ -5,6 +5,8 @@ import { sectionShell, sectionY } from "./sectionShell"
 export type FaqItem = {
   question: string
   answer: ReactNode
+  /** Plain text for FAQPage JSON-LD and AI-friendly excerpts (keep in sync with `answer`). */
+  schemaAnswer: string
 }
 
 type FaqSectionProps = {

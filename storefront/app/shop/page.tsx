@@ -1,8 +1,22 @@
+import type { Metadata } from "next"
 import ProductCard from "../../components/ProductCard"
 import CheckoutButton from "../../components/CheckoutButton"
+import { absoluteUrl, SITE_NAME } from "../../lib/site"
 import { listProducts } from "../../lib/vendure"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Shop themed snack boxes",
+  description:
+    "Browse Hunger Hankerings themed snack boxes—dietary tags, gifting, and Canada-wide delivery. Add to cart and checkout securely.",
+  alternates: { canonical: "/shop" },
+  openGraph: {
+    title: `Shop themed snack boxes | ${SITE_NAME}`,
+    description: "Curated snack boxes for every craving with Canada-wide delivery.",
+    url: absoluteUrl("/shop")
+  }
+}
 
 const ShopPage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []

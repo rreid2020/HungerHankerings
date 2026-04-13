@@ -1,4 +1,18 @@
+import type { Metadata } from "next"
 import LeadForm from "../../components/LeadForm"
+import { absoluteUrl, SITE_NAME } from "../../lib/site"
+
+export const metadata: Metadata = {
+  title: "Team snacks delivered (Canada)",
+  description:
+    "Corporate snack boxes delivered Canada-wide—sourcing, packing, and shipping handled for remote and hybrid teams.",
+  alternates: { canonical: "/team-snacks-delivered" },
+  openGraph: {
+    title: `Team snacks delivered | ${SITE_NAME}`,
+    description: "Corporate snack boxes made easy with Canada-wide delivery.",
+    url: absoluteUrl("/team-snacks-delivered")
+  }
+}
 
 const TeamSnacksDeliveredPage = () => {
   return (
