@@ -9,6 +9,56 @@ const shopApiUrl =
   process.env.NEXT_PUBLIC_VENDURE_SHOP_API_URL ||
   "http://localhost:3000/shop-api";
 
+const trimTrailingSlash = (s: string) => s.replace(/\/+$/, "");
+
+/**
+ * Vendure builds asset `preview` URLs from the Shop API request URL. In Docker the storefront
+ * server often calls `VENDURE_SHOP_API_URL` (e.g. http://vendure:3000/shop-api), so GraphQL returns
+ * `http://vendure:3000/assets/...` — the browser cannot load that hostname. Rewrite to the public origin.
+ */
+function rewriteVendureAssetUrlForBrowser(url: string): string {
+  const publicBase =
+    trimTrailingSlash(
+      (process.env.NEXT_PUBLIC_VENDURE_SHOP_API_URL || "")
+        .trim()
+        .replace(/\/shop-api\/?$/i, "")
+    ) ||
+    trimTrailingSlash((process.env.NEXT_PUBLIC_SITE_URL || "").trim());
+  if (!publicBase) return url;
+
+  const internalOriginFromEnv = (): string | null => {
+    const raw = process.env.VENDURE_SHOP_API_URL?.trim();
+    if (!raw) return null;
+    try {
+      const normalized = /\/shop-api\/?$/i.test(raw) ? raw : `${raw.replace(/\/$/, "")}/shop-api`;
+      const u = new URL(normalized);
+      return `${u.protocol}//${u.host}`;
+    } catch {
+      return null;
+    }
+  };
+
+  const internalOrigin = internalOriginFromEnv();
+  if (internalOrigin && url.startsWith(internalOrigin)) {
+    return `${publicBase}${url.slice(internalOrigin.length)}`;
+  }
+
+  try {
+    const u = new URL(url);
+    if (u.hostname === "vendure") {
+      return `${publicBase}${u.pathname}${u.search}`;
+    }
+  } catch {
+    /* not absolute */
+  }
+
+  if (url.startsWith("/assets/")) {
+    return `${publicBase}${url}`;
+  }
+
+  return url;
+}
+
 /** In dev, Vendure EmailPlugin serves captured emails here. Use this to get verification/reset links. */
 export function getVendureMailboxUrl(): string {
   const base = shopApiUrl.replace(/\/shop-api\/?$/, "");
@@ -488,7 +538,7 @@ function mapVendureProductToStorefront(p: {
     slug: p.slug,
     description: p.description ?? null,
     thumbnail: p.featuredAsset?.preview
-      ? { url: p.featuredAsset.preview }
+      ? { url: rewriteVendureAssetUrlForBrowser(p.featuredAsset.preview) }
       : null,
     pricing: {
       priceRange: {
@@ -769,7 +819,9 @@ function mapVendureOrderToCheckout(order: {
             name: line.productVariant.product.name,
             thumbnail: (() => {
               const asset = line.productVariant.product.featuredAsset ?? line.productVariant.featuredAsset;
-              return asset?.preview != null ? { url: asset.preview } : null;
+              return asset?.preview != null
+                ? { url: rewriteVendureAssetUrlForBrowser(asset.preview) }
+                : null;
             })(),
           },
           pricing: {
@@ -785,7 +837,7 @@ function mapVendureOrderToCheckout(order: {
             },
           },
           media: line.productVariant.featuredAsset?.preview
-            ? [{ url: line.productVariant.featuredAsset.preview }]
+            ? [{ url: rewriteVendureAssetUrlForBrowser(line.productVariant.featuredAsset.preview) }]
             : undefined,
         },
       })) ?? [],
