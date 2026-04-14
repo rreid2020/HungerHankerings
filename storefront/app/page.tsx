@@ -92,115 +92,32 @@ const HomePage = async () => {
                   </li>
                 ))}
               </ul>
-              <p className="text-iron_grey/95">
-                We&apos;ve got the perfect box for you — no commitments, no subscriptions.
-              </p>
-              <p className="font-medium text-iron_grey">At Hunger Hankerings, we offer:</p>
-              <ul className="grid gap-x-3 gap-y-2 border-t border-dust_grey-200/60 pt-3 sm:grid-cols-3 sm:gap-y-1.5">
-                <li className="flex gap-2">
-                  <span className="text-base leading-none sm:text-lg" aria-hidden>
-                    🥗
-                  </span>
-                  <span className="leading-snug">Healthy snack boxes</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-base leading-none sm:text-lg" aria-hidden>
-                    🏢
-                  </span>
-                  <span className="leading-snug">Office snack boxes</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-base leading-none sm:text-lg" aria-hidden>
-                    🎁
-                  </span>
-                  <span className="leading-snug">Themed gift boxes</span>
-                </li>
-              </ul>
-              <p className="border-t border-dust_grey-200/60 pt-3 text-sm text-iron_grey/95">
-                Order anytime and enjoy premium, curated snacks delivered across Canada.
-              </p>
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-col gap-4">
+            <div className="min-h-0 min-w-0">
               <div className="rounded-2xl border border-dust_grey-200/80 bg-white/90 p-4 shadow-md ring-1 ring-black/[0.04] sm:p-5">
                 <h2 className="text-sm font-semibold tracking-tight text-iron_grey sm:text-base md:text-lg">
                   Why Hunger Hankerings is Canada&apos;s #1 Snack Box
                 </h2>
                 <ul className="mt-3 grid grid-cols-1 gap-x-5 gap-y-2 text-xs text-iron_grey sm:grid-cols-2 sm:text-sm">
-                {[
-                  "No subscription — order anytime, hassle-free",
-                  "Curated snack boxes for individuals & businesses",
-                  "Fast delivery anywhere in Canada 🇨🇦",
-                  "High-quality, handpicked snacks",
-                  "Perfect for gifting, offices, or personal cravings"
-                ].map((line) => (
-                  <li key={line} className="flex gap-2">
-                    <span
-                      className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cherry_blossom/15 text-[10px] font-bold text-cherry_blossom sm:h-5 sm:w-5 sm:text-xs"
-                      aria-hidden
-                    >
-                      ✓
-                    </span>
-                    <span className="leading-snug">{line}</span>
-                  </li>
-                ))}
+                  {[
+                    "No subscription — order anytime, hassle-free",
+                    "Curated snack boxes for individuals & businesses",
+                    "Fast delivery anywhere in Canada 🇨🇦",
+                    "High-quality, handpicked snacks",
+                    "Perfect for gifting, offices, or personal cravings"
+                  ].map((line) => (
+                    <li key={line} className="flex gap-2">
+                      <span
+                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cherry_blossom/15 text-[10px] font-bold text-cherry_blossom sm:h-5 sm:w-5 sm:text-xs"
+                        aria-hidden
+                      >
+                        ✓
+                      </span>
+                      <span className="leading-snug">{line}</span>
+                    </li>
+                  ))}
                 </ul>
-              </div>
-
-              <div className="flex flex-col rounded-2xl border border-dust_grey-200/80 bg-white p-4 shadow-md ring-1 ring-black/[0.04] sm:p-5">
-                <div className="flex flex-col gap-4">
-                <div>
-                  <Button
-                    href="/themed-snack-boxes"
-                    className="min-h-12 w-full justify-center rounded-xl px-6 text-sm font-semibold shadow-md transition hover:shadow-lg sm:min-h-[3.25rem] sm:text-base"
-                  >
-                    Shop snack boxes
-                  </Button>
-                </div>
-
-                <div className="border-t border-dust_grey-200/80 pt-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-iron_grey/55 sm:text-[11px]">
-                    For teams &amp; workplaces
-                  </p>
-                  <nav
-                    aria-label="Corporate programs"
-                    className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5"
-                  >
-                    <Button
-                      href="/corporate/team-snack-boxes"
-                      variant="ghost"
-                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
-                    >
-                      Team snack boxes
-                    </Button>
-                    <Button
-                      href="/corporate/office-snack-pantry"
-                      variant="ghost"
-                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
-                    >
-                      Office pantry
-                    </Button>
-                    <Button
-                      href="/corporate/bulk-pallet"
-                      variant="ghost"
-                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
-                    >
-                      Bulk &amp; pallet
-                    </Button>
-                    <Button
-                      href="/our-programs"
-                      variant="ghost"
-                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
-                    >
-                      All programs
-                    </Button>
-                  </nav>
-                </div>
-
-                <p className="border-t border-dust_grey-100 pt-3 text-center text-xs font-medium leading-relaxed text-iron_grey/75 sm:text-left sm:text-sm">
-                  No subscription. No commitment. Just amazing snacks.
-                </p>
-                </div>
               </div>
             </div>
 
@@ -219,6 +136,47 @@ const HomePage = async () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6 border-t border-dust_grey-200/60 pt-6 lg:mt-8 lg:pt-8">
+            <p className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-iron_grey/55 sm:text-[11px]">
+              Shop &amp; corporate programs
+            </p>
+            <nav
+              aria-label="Shop and workplace programs"
+              className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3"
+            >
+              <Button
+                href="/shop"
+                className="min-h-11 w-full shrink-0 justify-center rounded-xl px-6 text-sm font-semibold shadow-md transition hover:shadow-lg sm:w-auto sm:min-h-12 sm:px-8 sm:text-base"
+              >
+                Shop snack boxes
+              </Button>
+              <Button
+                href="/corporate/team-snack-boxes"
+                variant="ghost"
+                className="min-h-11 flex-1 justify-center rounded-lg border border-dust_grey-200 bg-white px-3 text-center text-xs font-semibold text-iron_grey shadow-none hover:border-primary/40 hover:bg-powder_petal-50/80 sm:flex-initial sm:min-h-12 sm:px-5 sm:text-sm"
+              >
+                Team snack boxes
+              </Button>
+              <Button
+                href="/corporate/office-snack-pantry"
+                variant="ghost"
+                className="min-h-11 flex-1 justify-center rounded-lg border border-dust_grey-200 bg-white px-3 text-center text-xs font-semibold text-iron_grey shadow-none hover:border-primary/40 hover:bg-powder_petal-50/80 sm:flex-initial sm:min-h-12 sm:px-5 sm:text-sm"
+              >
+                Office pantry
+              </Button>
+              <Button
+                href="/corporate/bulk-pallet"
+                variant="ghost"
+                className="min-h-11 flex-1 justify-center rounded-lg border border-dust_grey-200 bg-white px-3 text-center text-xs font-semibold text-iron_grey shadow-none hover:border-primary/40 hover:bg-powder_petal-50/80 sm:flex-initial sm:min-h-12 sm:px-5 sm:text-sm"
+              >
+                Bulk &amp; pallet
+              </Button>
+            </nav>
+            <p className="mt-4 text-center text-xs font-medium leading-relaxed text-iron_grey/75 sm:text-sm">
+              No subscription. No commitment. Just amazing snacks.
+            </p>
           </div>
         </div>
       </section>
