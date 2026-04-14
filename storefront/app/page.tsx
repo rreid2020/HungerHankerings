@@ -68,8 +68,9 @@ const HomePage = async () => {
             </p>
           </header>
 
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)_minmax(0,1.12fr)] lg:items-start lg:gap-6 xl:gap-8">
-            <div className="min-w-0 space-y-3 rounded-2xl border border-dust_grey-200/70 bg-white/60 px-4 py-4 text-sm leading-snug text-iron_grey shadow-sm backdrop-blur-sm sm:px-5 sm:py-5 md:text-[0.9375rem] md:leading-relaxed">
+          <div className="grid gap-5 lg:grid-cols-3 lg:items-stretch lg:gap-6 xl:gap-8">
+            <div className="flex min-h-0 min-w-0 flex-col lg:h-full">
+              <div className="flex min-h-0 flex-1 flex-col space-y-3 rounded-2xl border border-dust_grey-200/70 bg-white/90 px-4 py-4 text-sm leading-snug text-iron_grey shadow-md ring-1 ring-black/[0.04] backdrop-blur-sm sm:px-5 sm:py-5 md:text-[0.9375rem] md:leading-relaxed">
               <p>
                 <span className="font-semibold text-iron_grey">Hey fellow snacker</span> 👋
                 <br />
@@ -92,14 +93,16 @@ const HomePage = async () => {
                   </li>
                 ))}
               </ul>
+              <div className="hidden min-h-0 flex-1 lg:flex" aria-hidden />
+              </div>
             </div>
 
-            <div className="min-h-0 min-w-0">
-              <div className="rounded-2xl border border-dust_grey-200/80 bg-white/90 p-4 shadow-md ring-1 ring-black/[0.04] sm:p-5">
-                <h2 className="text-sm font-semibold tracking-tight text-iron_grey sm:text-base md:text-lg">
+            <div className="flex min-h-0 min-w-0 flex-col lg:h-full">
+              <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-dust_grey-200/80 bg-white/90 p-4 shadow-md ring-1 ring-black/[0.04] sm:p-5">
+                <h2 className="shrink-0 text-sm font-semibold tracking-tight text-iron_grey sm:text-base md:text-lg">
                   Why Hunger Hankerings is Canada&apos;s #1 Snack Box
                 </h2>
-                <ul className="mt-3 grid grid-cols-1 gap-x-5 gap-y-2 text-xs text-iron_grey sm:grid-cols-2 sm:text-sm">
+                <ul className="mt-3 grid min-h-0 flex-1 grid-cols-1 content-start gap-x-5 gap-y-2 text-xs text-iron_grey sm:grid-cols-2 sm:text-sm">
                   {[
                     "No subscription — order anytime, hassle-free",
                     "Curated snack boxes for individuals & businesses",
@@ -121,18 +124,20 @@ const HomePage = async () => {
               </div>
             </div>
 
-            <div className="relative min-w-0 lg:self-start">
-              <div className="overflow-hidden rounded-2xl border border-dust_grey-200/80 bg-gradient-to-b from-powder_petal-100/80 to-white p-1.5 shadow-lg ring-1 ring-black/[0.06] sm:p-2">
-                <div className="overflow-hidden rounded-xl bg-white/90">
-                  <img
-                    src="/hero-snack-box.png"
-                    alt="Curated snack boxes filled with chips, crackers, fruit, and treats"
-                    className="h-auto w-full max-h-[220px] object-contain object-center sm:max-h-[260px] md:max-h-[300px] lg:max-h-[min(52vw,420px)] xl:max-h-[440px]"
-                    style={{
-                      filter: "saturate(0.95) contrast(1.03)",
-                      transform: "scale(1.18)"
-                    }}
-                  />
+            <div className="flex min-h-0 min-w-0 flex-col lg:h-full">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-dust_grey-200/80 bg-gradient-to-b from-powder_petal-100/80 to-white p-1.5 shadow-md ring-1 ring-black/[0.04] sm:p-2">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-white/90">
+                  <div className="flex min-h-0 flex-1 items-center justify-center p-2 sm:p-3">
+                    <img
+                      src="/hero-snack-box.png"
+                      alt="Curated snack boxes filled with chips, crackers, fruit, and treats"
+                      className="max-h-[220px] w-full max-w-full object-contain object-center sm:max-h-[260px] md:max-h-[300px] lg:max-h-full lg:max-w-full"
+                      style={{
+                        filter: "saturate(0.95) contrast(1.03)",
+                        transform: "scale(1.1)"
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
