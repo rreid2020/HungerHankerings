@@ -56,27 +56,27 @@ const HomePage = async () => {
   return (
     <div className="space-y-24 pb-24">
       <section className="bg-gradient-to-b from-powder_petal-50 via-powder_petal-50 to-powder_petal-50/30">
-        <div className="container-page grid gap-12 py-20 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-x-16 lg:gap-y-12">
-          <div className="flex min-w-0 flex-col gap-6 lg:gap-7">
-            <header className="space-y-4">
-              <p className="section-subtitle">Hunger Hankerings</p>
-              <h1 className="text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-iron_grey sm:text-4xl md:text-[2.35rem] lg:text-5xl">
-                Canada&apos;s #1 Snack Box | Healthy, Fun &amp; Office Snack Delivery
-              </h1>
-              <p className="text-pretty max-w-2xl text-lg font-medium leading-snug text-iron_grey md:text-xl">
-                Discover Canada&apos;s top-rated snack boxes — no subscription required, just great
-                snacks delivered when you want them.
-              </p>
-            </header>
+        <div className="container-page py-20">
+          <header className="mx-auto mb-10 max-w-4xl space-y-4 lg:mb-12">
+            <p className="section-subtitle">Hunger Hankerings</p>
+            <h1 className="text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-iron_grey sm:text-4xl md:text-[2.35rem] lg:text-5xl">
+              Canada&apos;s #1 Snack Box | Healthy, Fun &amp; Office Snack Delivery
+            </h1>
+            <p className="text-pretty text-lg font-medium leading-snug text-iron_grey md:text-xl">
+              Discover Canada&apos;s top-rated snack boxes — no subscription required, just great
+              snacks delivered when you want them.
+            </p>
+          </header>
 
-            <div className="max-w-2xl space-y-4 rounded-2xl border border-dust_grey-200/70 bg-white/60 px-5 py-5 text-sm leading-relaxed text-iron_grey shadow-sm backdrop-blur-sm sm:px-6 sm:py-6 md:text-base">
+          <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch lg:gap-8">
+            <div className="min-w-0 space-y-4 rounded-2xl border border-dust_grey-200/70 bg-white/60 px-5 py-5 text-sm leading-relaxed text-iron_grey shadow-sm backdrop-blur-sm sm:px-6 sm:py-6 md:text-base lg:flex lg:flex-col lg:justify-between">
               <p>
                 <span className="font-semibold text-iron_grey">Hey fellow snacker</span> 👋
                 <br />
                 <span className="text-iron_grey/95">Welcome to Canada&apos;s #1 snack box experience.</span>
               </p>
               <p className="font-medium text-iron_grey">Whether you&apos;re a:</p>
-              <ul className="grid gap-2 sm:grid-cols-2 sm:gap-x-6">
+              <ul className="grid gap-2 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-1 xl:grid-cols-2">
                 {[
                   "Mindless muncher",
                   "On-the-go grazer",
@@ -121,11 +121,12 @@ const HomePage = async () => {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-dust_grey-200/80 bg-white/90 p-5 shadow-md ring-1 ring-black/[0.04] sm:p-6 md:p-7">
-              <h2 className="text-base font-semibold tracking-tight text-iron_grey md:text-lg">
-                Why Hunger Hankerings is Canada&apos;s #1 Snack Box
-              </h2>
-              <ul className="mt-4 grid gap-x-8 gap-y-3 text-sm text-iron_grey sm:grid-cols-2 md:text-[0.9375rem]">
+            <div className="flex min-h-0 min-w-0 flex-col gap-6">
+              <div className="rounded-2xl border border-dust_grey-200/80 bg-white/90 p-5 shadow-md ring-1 ring-black/[0.04] sm:p-6 md:p-7">
+                <h2 className="text-base font-semibold tracking-tight text-iron_grey md:text-lg">
+                  Why Hunger Hankerings is Canada&apos;s #1 Snack Box
+                </h2>
+                <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-iron_grey sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 md:text-[0.9375rem]">
                 {[
                   "No subscription — order anytime, hassle-free",
                   "Curated snack boxes for individuals & businesses",
@@ -143,11 +144,11 @@ const HomePage = async () => {
                     <span className="leading-snug">{line}</span>
                   </li>
                 ))}
-              </ul>
-            </div>
+                </ul>
+              </div>
 
-            <div className="rounded-2xl border border-dust_grey-200/80 bg-white p-5 shadow-md ring-1 ring-black/[0.04] sm:p-6 md:p-7">
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-1 flex-col rounded-2xl border border-dust_grey-200/80 bg-white p-5 shadow-md ring-1 ring-black/[0.04] sm:p-6 md:p-7">
+                <div className="flex flex-col gap-6">
                 <div>
                   <Button
                     href="/themed-snack-boxes"
@@ -163,7 +164,7 @@ const HomePage = async () => {
                   </p>
                   <nav
                     aria-label="Corporate programs"
-                    className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4"
+                    className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-2"
                   >
                     <Button
                       href="/corporate/team-snack-boxes"
@@ -199,21 +200,22 @@ const HomePage = async () => {
                 <p className="border-t border-dust_grey-100 pt-5 text-center text-sm font-medium leading-relaxed text-iron_grey/75 sm:text-left">
                   No subscription. No commitment. Just amazing snacks.
                 </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="relative mx-auto w-full max-w-lg lg:mx-0 lg:max-w-none">
-            <div className="overflow-hidden rounded-2xl border border-dust_grey-200/80 bg-white p-3 shadow-lg ring-1 ring-black/[0.06] sm:p-4">
-              <img
-                src="/hero-snack-box.png"
-                alt="Curated snack boxes filled with chips, crackers, fruit, and treats"
-                className="aspect-square w-full rounded-xl object-contain object-center"
-                style={{
-                  filter: "saturate(0.92) contrast(1.02)",
-                  transform: "scale(1.12)"
-                }}
-              />
+            <div className="relative flex min-h-0 min-w-0 flex-col lg:min-h-[320px]">
+              <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-dust_grey-200/80 bg-white p-3 shadow-lg ring-1 ring-black/[0.06] sm:p-4">
+                <img
+                  src="/hero-snack-box.png"
+                  alt="Curated snack boxes filled with chips, crackers, fruit, and treats"
+                  className="aspect-square w-full flex-1 rounded-xl object-contain object-center lg:min-h-0 lg:flex-1"
+                  style={{
+                    filter: "saturate(0.92) contrast(1.02)",
+                    transform: "scale(1.12)"
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
