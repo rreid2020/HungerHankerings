@@ -476,6 +476,9 @@ const productFields = `
   slug
   description
   featuredAsset { preview }
+  assets {
+    preview
+  }
   variants {
     id
     name
@@ -529,16 +532,21 @@ function mapVendureProductToStorefront(p: {
       group?: { name?: string; code?: string } | null;
     }>;
   }>;
+  assets?: Array<{ preview?: string | null } | null> | null;
 }): StorefrontProduct {
   const amount = p.variants?.[0]?.price ?? 0;
   const currency = "CAD";
+  const previewRaw =
+    (p.featuredAsset?.preview && p.featuredAsset.preview.trim()) ||
+    (p.assets ?? []).map((a) => a?.preview?.trim()).find(Boolean) ||
+    "";
   return {
     id: p.id,
     name: p.name,
     slug: p.slug,
     description: p.description ?? null,
-    thumbnail: p.featuredAsset?.preview
-      ? { url: rewriteVendureAssetUrlForBrowser(p.featuredAsset.preview) }
+    thumbnail: previewRaw
+      ? { url: rewriteVendureAssetUrlForBrowser(previewRaw) }
       : null,
     pricing: {
       priceRange: {
@@ -569,6 +577,7 @@ export async function listProducts(): Promise<StorefrontProduct[]> {
         slug: string;
         description?: string | null;
         featuredAsset?: { preview?: string } | null;
+        assets?: Array<{ preview?: string | null } | null> | null;
         variants?: Array<{
           id: string;
           name: string;
@@ -669,6 +678,7 @@ export async function getProductByHandle(
       slug: string;
       description?: string | null;
       featuredAsset?: { preview?: string } | null;
+      assets?: Array<{ preview?: string | null } | null> | null;
       variants?: Array<{
         id: string;
         name: string;

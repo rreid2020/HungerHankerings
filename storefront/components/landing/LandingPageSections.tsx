@@ -21,6 +21,21 @@ const LANDING_FEATURED_SLUG_ORDER = [
   "vegan-gluten-free-snack-box"
 ] as const
 
+/**
+ * When Admin slug differs from the landing slot key, list alternates here so the
+ * grid still resolves the product (image + PDP link use the real slug).
+ */
+const LANDING_SLOT_ALT_SLUGS: Partial<
+  Record<(typeof LANDING_FEATURED_SLUG_ORDER)[number], readonly string[]>
+> = {
+  "guilt-free-movie-night-box": [
+    "guilt-free-movie-night-snack-box",
+    "guilt-free-movie-night",
+    "guilt-free-movie-night-snackbox"
+  ],
+  "munchies-snack-box": ["munchies-box"]
+}
+
 const LANDING_FEATURED_FALLBACK: Record<
   (typeof LANDING_FEATURED_SLUG_ORDER)[number],
   { name: string; description: string; imageUrl: string }
@@ -64,13 +79,32 @@ export type LandingFeaturedBox = {
   imageUrl: string
 }
 
+function findProductForLandingSlot(
+  bySlug: Map<string, StorefrontProduct>,
+  slotSlug: (typeof LANDING_FEATURED_SLUG_ORDER)[number]
+): StorefrontProduct | undefined {
+  const direct = bySlug.get(slotSlug)
+  if (direct) return direct
+  const alts = LANDING_SLOT_ALT_SLUGS[slotSlug]
+  if (!alts?.length) return undefined
+  for (const s of alts) {
+    const hit = bySlug.get(s)
+    if (hit) return hit
+  }
+  const lowerAlts = new Set(alts.map((s) => s.toLowerCase()))
+  for (const [key, prod] of bySlug) {
+    if (lowerAlts.has(key.toLowerCase())) return prod
+  }
+  return undefined
+}
+
 /** Merge Vendure catalog (thumbnails + copy) with fixed landing order and placeholders when missing. */
 export function buildLandingFeaturedBoxes(products: StorefrontProduct[]): LandingFeaturedBox[] {
   const bySlug = new Map(products.map((p) => [p.slug, p]))
   return LANDING_FEATURED_SLUG_ORDER.map((slug) => {
     const fb = LANDING_FEATURED_FALLBACK[slug]
-    const href = `/products/${slug}`
-    const p = bySlug.get(slug)
+    const p = findProductForLandingSlot(bySlug, slug)
+    const href = p ? `/products/${encodeURIComponent(p.slug)}` : `/products/${encodeURIComponent(slug)}`
     if (p) {
       const fromDesc = stripHtml(p.description ?? "").trim()
       return {
