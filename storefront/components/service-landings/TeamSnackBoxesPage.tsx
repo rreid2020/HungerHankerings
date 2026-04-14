@@ -7,7 +7,6 @@ Suggested metadata (use in route export const metadata):
 }
 */
 
-import Link from "next/link"
 import {
   Briefcase,
   Gift,
@@ -27,8 +26,8 @@ import { teamSnackFaqItems } from "../../data/serviceAndCorporateFaqs"
 import FaqSection from "./shared/FaqSection"
 import IconCardGrid from "./shared/IconCardGrid"
 import IntroSection from "./shared/IntroSection"
-import { onDarkOutlineLinkClass } from "./shared/onDarkOutline"
 import ServiceHero from "./shared/ServiceHero"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import StepsSection from "./shared/StepsSection"
 
 const perfectForItems = [
@@ -169,14 +168,11 @@ export default function TeamSnackBoxesPage() {
         description="Request a quote for team snack boxes with custom branding and Canada-wide delivery."
       >
         <Button
-          href="/team-snacks-delivered"
+          href={contactQuoteHref("team-snack-boxes")}
           className="min-h-11 bg-primary px-8 text-primary-foreground hover:bg-primary-hover"
         >
           Request a Custom Quote
         </Button>
-        <Link href="/shop" className={onDarkOutlineLinkClass}>
-          Explore Snack Box Options
-        </Link>
       </CtaBanner>
     </div>
   )

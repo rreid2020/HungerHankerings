@@ -1,6 +1,6 @@
 # Lead / Inquiry Forms Setup
 
-Contact, quote request, and office pantry forms submit to `/api/leads`, which:
+The unified contact form on `/contact` (and site CTAs with `?reason=`) posts to `/api/leads` with **`type: "inquiry"`** and a **`reason`** field (see `lib/contact-inquiry.ts`). The handler:
 
 1. **Saves** each submission to a PostgreSQL database
 2. **Sends** an email notification via Resend to Hunger Hankerings
@@ -30,17 +30,17 @@ Contact, quote request, and office pantry forms submit to `/api/leads`, which:
 
    ```
    RESEND_API_KEY=re_xxxx
-   LEAD_EMAIL_TO=hello@hungerhankerings.com
+   LEAD_EMAIL_TO=info@hungerhankerings.com
    LEAD_EMAIL_FROM=Hunger Hankerings <hello@hungerhankerings.com>
    ```
 
-- `LEAD_EMAIL_TO` – Comma-separated list of recipients for lead notifications
+- `LEAD_EMAIL_TO` – Comma-separated list of recipients for lead notifications (optional: defaults to **info@hungerhankerings.com** when unset)
 - `LEAD_EMAIL_FROM` – Sender address (must use a verified domain in Resend)
 
 ## Fallback behavior
 
-- If `DATABASE_URL` is not set, leads are not saved to the database
-- If `RESEND_API_KEY` or `LEAD_EMAIL_TO` is not set, emails are not sent
+- If `DATABASE_URL` is not set, leads are not saved to the database (email still sends when Resend is configured)
+- If `RESEND_API_KEY` is not set, emails are not sent
 - The form still returns success to the user; missing config is logged server-side
 
 ## CRM integration (future)

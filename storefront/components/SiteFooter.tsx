@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { contactQuoteHref } from "../lib/contact-inquiry"
 
 const SiteFooter = () => {
   return (
@@ -43,12 +44,12 @@ const SiteFooter = () => {
               <Link href="/office-pantry-snack-service" className="transition hover:text-white">Office Pantry Snack Service</Link>
               <ul className="ml-4 mt-1 space-y-1">
                 <li>
-                  <Link href="/contact" className="transition hover:text-white">Pantry Snacks Enquiry Form</Link>
+                  <Link href={contactQuoteHref("office-pantry-plan")} className="transition hover:text-white">Pantry Snacks Enquiry Form</Link>
                 </li>
               </ul>
             </li>
             <li>
-              <Link href="/team-snacks-delivered" className="transition hover:text-white">Team Snacks</Link>
+              <Link href={contactQuoteHref("team-snack-delivery")} className="transition hover:text-white">Team Snacks</Link>
             </li>
           </ul>
         </div>

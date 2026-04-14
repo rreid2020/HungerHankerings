@@ -13,7 +13,7 @@ Use the site’s public origin from `NEXT_PUBLIC_SITE_URL` when resolving links 
 - `/fundraising` — Fundraising programs (commission model)
 - `/our-programs` — Corporate programs hub
 - `/faqs` — Full FAQ index (general, team, pantry, bulk)
-- `/contact` — Contact / lead form
+- `/contact` — Unified contact / quote form (optional `?reason=` preset: general, team-snack-boxes, bulk-pallet, etc.)
 
 ## Corporate service pages
 
@@ -23,8 +23,8 @@ Use the site’s public origin from `NEXT_PUBLIC_SITE_URL` when resolving links 
 
 ## Lead / program landing paths
 
-- `/team-snacks-delivered` — Team snack delivery lead capture
-- `/office-pantry-snack-service` — Office pantry lead capture
+- `/team-snacks-delivered` — Team snack delivery overview; quote requests go to `/contact?reason=team-snack-delivery`
+- `/office-pantry-snack-service` — Office pantry overview; quote requests go to `/contact?reason=office-pantry-plan`
 
 ## Machine-readable extras
 

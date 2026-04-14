@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Button from "../../components/Button"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import { absoluteUrl, SITE_NAME } from "../../lib/site"
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ const FundraisingPage = () => {
           Earn up to 25% while delivering curated snack boxes across Canada.
         </p>
         <div className="mt-6">
-          <Button href="/contact" variant="primary">
+          <Button href={contactQuoteHref("fundraising")} variant="primary">
             Get in touch
           </Button>
         </div>

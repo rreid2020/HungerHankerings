@@ -10,6 +10,7 @@ import {
   teamSnackFaqItems
 } from "../../data/serviceAndCorporateFaqs"
 import { faqPageJsonLd } from "../../lib/schema-org"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import { absoluteUrl } from "../../lib/site"
 
 const faqLd = faqPageJsonLd(
@@ -147,7 +148,7 @@ export default function FaqsPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button href="/contact" variant="secondary">
+            <Button href={contactQuoteHref("general")} variant="secondary">
               Contact us
             </Button>
             <Button href="/shop" variant="ghost">

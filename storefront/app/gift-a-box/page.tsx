@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import ProductCard from "../../components/ProductCard"
 import { listProducts } from "../../lib/vendure"
 import Button from "../../components/Button"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import { absoluteUrl, SITE_NAME } from "../../lib/site"
 
 export const dynamic = "force-dynamic"
@@ -37,7 +38,7 @@ const GiftABoxPage = async () => {
           Celebrate teams, clients, or loved ones with a curated snack box.
         </p>
         <div className="mt-6">
-          <Button href="/contact" variant="secondary">
+          <Button href={contactQuoteHref("gift-a-box")} variant="secondary">
             Build a custom gift
           </Button>
         </div>

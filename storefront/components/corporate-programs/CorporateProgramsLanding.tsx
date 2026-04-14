@@ -16,11 +16,8 @@ import {
   Truck,
   Users
 } from "lucide-react"
-import Link from "next/link"
 import Button from "../Button"
-
-const outlineLightCta =
-  "inline-flex min-h-11 items-center justify-center rounded-md border border-white/80 bg-transparent px-8 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-iron_grey"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 
 const sectionShell = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
 
@@ -100,11 +97,8 @@ export default function CorporateProgramsLanding() {
                 corporate gift snack boxes and bulk orders.
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
-                <Button href="/team-snacks-delivered" className="min-h-11 px-6">
-                  Get a Custom Quote
-                </Button>
-                <Button href="/contact" variant="ghost" className="min-h-11 px-6">
-                  Contact Us
+                <Button href={contactQuoteHref("corporate-programs")} className="min-h-11 px-6">
+                  Request a Custom Quote
                 </Button>
               </div>
             </header>
@@ -176,7 +170,7 @@ export default function CorporateProgramsLanding() {
                 <li className="pl-1">Custom branding available</li>
               </ul>
               <div className="mt-auto pt-8">
-                <Button href="/team-snacks-delivered" className="w-full sm:w-auto">
+                <Button href="/corporate/team-snack-boxes" className="w-full sm:w-auto">
                   Explore Team Snack Boxes
                 </Button>
               </div>
@@ -192,7 +186,7 @@ export default function CorporateProgramsLanding() {
                 <li className="pl-1">Flexible delivery schedules and ongoing support</li>
               </ul>
               <div className="mt-auto pt-8">
-                <Button href="/office-pantry-snack-service" className="w-full sm:w-auto">
+                <Button href="/corporate/office-snack-pantry" className="w-full sm:w-auto">
                   Learn More About Pantry Service
                 </Button>
               </div>
@@ -212,7 +206,7 @@ export default function CorporateProgramsLanding() {
                 <li className="pl-1">Delivered in bulk to one destination</li>
               </ul>
               <div className="mt-auto pt-8">
-                <Button href="/contact" className="w-full sm:w-auto">
+                <Button href={contactQuoteHref("bulk-pallet")} className="w-full sm:w-auto">
                   Request Bulk Order Quote
                 </Button>
               </div>
@@ -273,14 +267,11 @@ export default function CorporateProgramsLanding() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button
-              href="/team-snacks-delivered"
+              href={contactQuoteHref("corporate-programs")}
               className="min-h-11 bg-primary px-8 text-primary-foreground hover:bg-primary-hover"
             >
-              Get a Custom Quote
+              Request a Custom Quote
             </Button>
-            <Link href="/contact" className={outlineLightCta}>
-              Contact Us
-            </Link>
           </div>
         </div>
       </section>

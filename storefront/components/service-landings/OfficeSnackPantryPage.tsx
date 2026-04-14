@@ -7,7 +7,6 @@ Suggested metadata (use in route export const metadata):
 }
 */
 
-import Link from "next/link"
 import {
   Building2,
   Coffee,
@@ -26,8 +25,8 @@ import { officePantryFaqItems } from "../../data/serviceAndCorporateFaqs"
 import FaqSection from "./shared/FaqSection"
 import IconCardGrid from "./shared/IconCardGrid"
 import IntroSection from "./shared/IntroSection"
-import { onDarkOutlineLinkClass } from "./shared/onDarkOutline"
 import ServiceHero from "./shared/ServiceHero"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import StepsSection from "./shared/StepsSection"
 
 const perfectForItems = [
@@ -145,11 +144,8 @@ export default function OfficeSnackPantryPage() {
         imageSrc="/office-pantry.png"
         imageAlt="Modern office pantry with coffee station, snacks, and seating"
       >
-        <Button href="/office-pantry-snack-service" className="min-h-11 px-6">
-          Request Pantry Service Info
-        </Button>
-        <Button href="/team-snacks-delivered" variant="ghost" className="min-h-11 border border-border px-6">
-          Get a Custom Quote
+        <Button href={contactQuoteHref("office-snack-pantry")} className="min-h-11 px-6">
+          Request a Custom Quote
         </Button>
       </ServiceHero>
 
@@ -202,14 +198,11 @@ export default function OfficeSnackPantryPage() {
         description="Tell us about your space and team—we’ll recommend a plan and restock cadence."
       >
         <Button
-          href="/office-pantry-snack-service"
+          href={contactQuoteHref("office-snack-pantry")}
           className="min-h-11 bg-primary px-8 text-primary-foreground hover:bg-primary-hover"
         >
-          Request Pantry Service Info
+          Request a Custom Quote
         </Button>
-        <Link href="/team-snacks-delivered" className={onDarkOutlineLinkClass}>
-          Get a Custom Quote
-        </Link>
       </CtaBanner>
     </div>
   )

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import LeadForm from "../../components/LeadForm"
+import Button from "../../components/Button"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import { absoluteUrl, SITE_NAME } from "../../lib/site"
 
 export const metadata: Metadata = {
@@ -63,28 +64,18 @@ const TeamSnacksDeliveredPage = () => {
             </div>
           </div>
         </div>
-        <div className="rounded-lg border border-dust_grey-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col justify-center rounded-lg border border-dust_grey-200 bg-white p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-iron_grey">
             Build your team snack plan
           </h2>
-          <p className="mt-2 text-sm text-iron_grey">
-            Tell us about your team and delivery preferences.
+          <p className="mt-3 text-sm text-iron_grey">
+            Tell us about your team, delivery preferences, dietary needs, and timeline on our
+            contact form—we will follow up with a tailored quote.
           </p>
-          <div className="mt-6">
-            <LeadForm
-              type="team-snacks-delivered"
-              fields={[
-                { name: "company", label: "Company" },
-                { name: "name", label: "Contact name" },
-                { name: "email", label: "Email", type: "email" },
-                { name: "phone", label: "Phone", type: "tel" },
-                { name: "recipients", label: "# recipients" },
-                { name: "deliveryType", label: "Delivery type" },
-                { name: "date", label: "Date", type: "date" },
-                { name: "dietaryNeeds", label: "Dietary needs" }
-              ]}
-              submitLabel="Request a quote"
-            />
+          <div className="mt-8">
+            <Button href={contactQuoteHref("team-snack-delivery")} className="min-h-11 px-8">
+              Request a Custom Quote
+            </Button>
           </div>
         </div>
       </div>

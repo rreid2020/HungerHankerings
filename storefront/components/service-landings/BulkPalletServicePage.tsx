@@ -7,7 +7,6 @@ Suggested metadata (use in route export const metadata):
 }
 */
 
-import Link from "next/link"
 import {
   Boxes,
   Factory,
@@ -27,8 +26,8 @@ import { bulkPalletFaqItems } from "../../data/serviceAndCorporateFaqs"
 import FaqSection from "./shared/FaqSection"
 import IconCardGrid from "./shared/IconCardGrid"
 import IntroSection from "./shared/IntroSection"
-import { onDarkOutlineLinkClass } from "./shared/onDarkOutline"
 import ServiceHero from "./shared/ServiceHero"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import StepsSection from "./shared/StepsSection"
 
 const perfectForItems = [
@@ -147,11 +146,8 @@ export default function BulkPalletServicePage() {
         imageAlt="Stylized stacked shipping cartons on a pallet for high-volume orders"
         imageClassName="h-full w-full object-contain object-center p-3 sm:p-4"
       >
-        <Button href="/contact" className="min-h-11 px-6">
-          Get Bulk Pricing &amp; Custom Options
-        </Button>
-        <Button href="/contact" variant="ghost" className="min-h-11 border border-border px-6">
-          Speak With Our Team
+        <Button href={contactQuoteHref("bulk-pallet")} className="min-h-11 px-6">
+          Request a Custom Quote
         </Button>
       </ServiceHero>
 
@@ -204,14 +200,11 @@ export default function BulkPalletServicePage() {
         description="Share volumes, timing, and customization goals—we’ll follow up with options and pricing."
       >
         <Button
-          href="/contact"
+          href={contactQuoteHref("bulk-pallet")}
           className="min-h-11 bg-primary px-8 text-primary-foreground hover:bg-primary-hover"
         >
-          Get Bulk Pricing &amp; Custom Options
+          Request a Custom Quote
         </Button>
-        <Link href="/contact" className={onDarkOutlineLinkClass}>
-          Speak With Our Team
-        </Link>
       </CtaBanner>
     </div>
   )

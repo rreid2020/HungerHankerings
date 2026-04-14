@@ -93,7 +93,10 @@ export const generalFaqItems: FaqItem[] = [
     answer: (
       <p>
         Use our{" "}
-        <a href="/contact" className="font-medium text-primary underline-offset-2 hover:underline">
+        <a
+          href="/contact?reason=general"
+          className="font-medium text-primary underline-offset-2 hover:underline"
+        >
           contact form
         </a>{" "}
         or email{" "}
@@ -107,7 +110,7 @@ export const generalFaqItems: FaqItem[] = [
       </p>
     ),
     schemaAnswer:
-      "Use the contact form on hungerhankerings.com/contact or email hello@hungerhankerings.com."
+      "Use the contact form on hungerhankerings.com/contact (select a reason for your inquiry) or email hello@hungerhankerings.com."
   }
 ]
 

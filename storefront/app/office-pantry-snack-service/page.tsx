@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import LeadForm from "../../components/LeadForm"
+import Button from "../../components/Button"
+import { contactQuoteHref } from "../../lib/contact-inquiry"
 import { absoluteUrl, SITE_NAME } from "../../lib/site"
 
 export const metadata: Metadata = {
@@ -55,28 +56,18 @@ const OfficePantryPage = () => {
             </div>
           </div>
         </div>
-        <div className="rounded-lg border border-dust_grey-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col justify-center rounded-lg border border-dust_grey-200 bg-white p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-iron_grey">
             Request a pantry plan
           </h2>
-          <p className="mt-2 text-sm text-iron_grey">
-            Tell us about your office and budget.
+          <p className="mt-3 text-sm text-iron_grey">
+            Share your office location, headcount, restock frequency, and budget on our unified
+            contact form—we will recommend a plan and follow up.
           </p>
-          <div className="mt-6">
-            <LeadForm
-              type="office-pantry-snack-service"
-              fields={[
-                { name: "company", label: "Company" },
-                { name: "name", label: "Contact" },
-                { name: "email", label: "Email", type: "email" },
-                { name: "phone", label: "Phone", type: "tel" },
-                { name: "officeLocation", label: "Office location" },
-                { name: "headcount", label: "Headcount" },
-                { name: "frequency", label: "Frequency" },
-                { name: "budget", label: "Budget" }
-              ]}
-              submitLabel="Request a plan"
-            />
+          <div className="mt-8">
+            <Button href={contactQuoteHref("office-pantry-plan")} className="min-h-11 px-8">
+              Request a Custom Quote
+            </Button>
           </div>
         </div>
       </div>

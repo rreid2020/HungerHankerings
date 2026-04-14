@@ -60,9 +60,10 @@ Storefront: http://localhost:3000
 
 ## Lead Submissions
 
-Lead forms now post to `POST /api/leads` inside the Next.js app. The current
-handler logs submissions to the server console and should be replaced with
-an email provider or CRM integration for production.
+The storefront `/contact` form and related CTAs post to `POST /api/leads` with
+`type: "inquiry"` (reason, name, email, etc.). Submissions are stored in Postgres
+when `DATABASE_URL` is set and emailed via Resend when `RESEND_API_KEY` is set.
+See `storefront/docs/LEADS-SETUP.md`.
 
 ## Docker
 

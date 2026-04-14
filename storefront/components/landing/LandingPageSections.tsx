@@ -1,3 +1,4 @@
+import Link from "next/link"
 import {
   Gift,
   Leaf,
@@ -179,12 +180,12 @@ export default function LandingPageSections({ featuredBoxes }: LandingPageSectio
                 From cozy movie nights to thoughtful gifts and little moments of
                 indulgence—discover snack boxes made to match the mood.
               </p>
-              <a
-                href="#featured-snack-boxes"
+              <Link
+                href="/shop"
                 className={`inline-flex items-center justify-center rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-md transition duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] ${linkFocus}`}
               >
                 Shop Snack Boxes
-              </a>
+              </Link>
             </div>
             <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
               <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">

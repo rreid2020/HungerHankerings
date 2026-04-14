@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import Button from "../components/Button"
 import ProductCard from "../components/ProductCard"
 import {
@@ -6,20 +7,29 @@ import {
   listProducts,
   listProductsInCollectionBySlug,
 } from "../lib/vendure"
+import { contactQuoteHref } from "../lib/contact-inquiry"
 import { SITE_NAME, absoluteUrl } from "../lib/site"
 
 // Fetch uses no-store (dynamic); avoid static generation at build when API is unavailable
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Snack boxes & corporate programs",
+  title: "Canada’s #1 Snack Box | Healthy, Fun & Office Snack Delivery",
   description:
-    "Curated themed snack boxes, corporate team delivery across Canada, office pantry restocking, bulk and pallet orders, and fundraising—full-size snacks, dietary options, and gifting.",
+    "Discover Canada’s top-rated snack boxes—no subscription. Healthy snack boxes, office snack delivery, and gift boxes shipped across Canada. Order curated snacks anytime.",
+  keywords: [
+    "snack box Canada",
+    "buy snack boxes online Canada",
+    "healthy snack boxes Canada",
+    "office snack delivery Canada",
+    "snack gift boxes Canada",
+    "bulk snack boxes Canada"
+  ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: `${SITE_NAME} — Themed snack boxes & corporate programs`,
+    title: `${SITE_NAME} — Canada’s #1 snack box (healthy, office & gifts)`,
     description:
-      "Shop themed snack boxes, send team gifts Canada-wide, stock the office pantry, or run a snack fundraiser.",
+      "Curated snack boxes across Canada—no subscription. Healthy options, office programs, themed gifts, and bulk orders.",
     url: absoluteUrl("/")
   }
 }
@@ -48,31 +58,132 @@ const HomePage = async () => {
     <div className="space-y-24 pb-24">
       <section className="bg-powder_petal-50">
         <div className="container-page grid gap-12 py-16 lg:grid-cols-[1.2fr_1fr] lg:items-center">
-          <div className="space-y-6">
+          <div className="space-y-5">
             <p className="section-subtitle">Hunger Hankerings</p>
-            <h1 className="text-3xl font-semibold text-iron_grey sm:text-4xl md:text-5xl">
-              Hey fellow snacker! Welcome to Hunger Hankerings
+            <h1 className="text-balance text-3xl font-semibold leading-tight text-iron_grey sm:text-4xl md:text-[2.35rem] lg:text-5xl">
+              Canada&apos;s #1 Snack Box | Healthy, Fun &amp; Office Snack Delivery
             </h1>
-            <p className="text-lg text-iron_grey">
-              What type of snacker are you?
+            <p className="text-pretty text-lg font-medium text-iron_grey md:text-xl">
+              Discover Canada&apos;s top-rated snack boxes — no subscription required, just great
+              snacks delivered when you want them.
             </p>
-            <p className="text-sm text-iron_grey">
-              The Mindless Muncher? The On-the-Go Grazer? The Health Nut? The
-              Late Night Looter? Whichever one you are, we've got you covered!
-              We have a wide range of themed snack boxes that are sure to
-              satisfy!
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button href="/themed-snack-boxes">Shop Snack Boxes</Button>
-              <Button href="/corporate/team-snack-boxes" variant="ghost">
-                Team Snack Boxes
-              </Button>
-              <Button href="/corporate/office-snack-pantry" variant="ghost">
-                Office Pantry
-              </Button>
-              <Button href="/corporate/bulk-pallet" variant="ghost">
-                Bulk and Pallet Service
-              </Button>
+            <div className="space-y-4 text-sm leading-relaxed text-iron_grey md:text-base">
+              <p>
+                <span className="font-semibold">Hey fellow snacker</span> 👋
+                <br />
+                Welcome to Canada&apos;s #1 snack box experience.
+              </p>
+              <p className="font-medium text-iron_grey">Whether you&apos;re a:</p>
+              <ul className="list-disc space-y-1 pl-5 marker:text-cherry_blossom">
+                <li>Mindless muncher</li>
+                <li>On-the-go grazer</li>
+                <li>Health-conscious snacker</li>
+                <li>Late-night foodie</li>
+              </ul>
+              <p>
+                We&apos;ve got the perfect box for you — no commitments, no subscriptions.
+              </p>
+              <p className="font-medium text-iron_grey">At Hunger Hankerings, we offer:</p>
+              <ul className="list-none space-y-2 pl-0">
+                <li>🥗 Healthy snack boxes for guilt-free enjoyment</li>
+                <li>🏢 Office snack boxes to keep your team energized</li>
+                <li>🎁 Themed snack gift boxes for every occasion</li>
+              </ul>
+              <p>
+                Order anytime and enjoy premium, curated snacks delivered across Canada.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-dust_grey-200 bg-white/80 p-5 shadow-sm backdrop-blur-sm md:p-6">
+              <h2 className="text-base font-semibold text-iron_grey md:text-lg">
+                Why Hunger Hankerings is Canada&apos;s #1 Snack Box
+              </h2>
+              <ul className="mt-3 space-y-2.5 text-sm text-iron_grey md:text-[0.9375rem]">
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 text-cherry_blossom" aria-hidden>
+                    ✔
+                  </span>
+                  <span>No subscription — order anytime, hassle-free</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 text-cherry_blossom" aria-hidden>
+                    ✔
+                  </span>
+                  <span>Curated snack boxes for individuals &amp; businesses</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 text-cherry_blossom" aria-hidden>
+                    ✔
+                  </span>
+                  <span>Fast delivery anywhere in Canada 🇨🇦</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 text-cherry_blossom" aria-hidden>
+                    ✔
+                  </span>
+                  <span>High-quality, handpicked snacks</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="shrink-0 text-cherry_blossom" aria-hidden>
+                    ✔
+                  </span>
+                  <span>Perfect for gifting, offices, or personal cravings</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-4 pt-1">
+              <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
+                <Button href="/themed-snack-boxes" className="min-h-12 w-full justify-center px-8 text-base md:w-auto">
+                  Shop snack boxes
+                </Button>
+                <div className="flex min-h-[3rem] flex-col justify-center gap-1 border-t border-dust_grey-200 pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-iron_grey/70">
+                    For teams &amp; workplaces
+                  </p>
+                  <nav
+                    aria-label="Corporate programs"
+                    className="flex flex-col gap-2 text-sm md:flex-row md:flex-wrap md:gap-x-1 md:gap-y-1"
+                  >
+                    <Link
+                      href="/corporate/team-snack-boxes"
+                      className="font-medium text-primary underline-offset-4 transition hover:text-primary-hover hover:underline"
+                    >
+                      Team snack boxes
+                    </Link>
+                    <span className="hidden text-iron_grey/40 md:inline" aria-hidden>
+                      ·
+                    </span>
+                    <Link
+                      href="/corporate/office-snack-pantry"
+                      className="font-medium text-primary underline-offset-4 transition hover:text-primary-hover hover:underline"
+                    >
+                      Office pantry
+                    </Link>
+                    <span className="hidden text-iron_grey/40 md:inline" aria-hidden>
+                      ·
+                    </span>
+                    <Link
+                      href="/corporate/bulk-pallet"
+                      className="font-medium text-primary underline-offset-4 transition hover:text-primary-hover hover:underline"
+                    >
+                      Bulk &amp; pallet
+                    </Link>
+                    <span className="hidden text-iron_grey/40 md:inline" aria-hidden>
+                      ·
+                    </span>
+                    <Link
+                      href="/our-programs"
+                      className="font-medium text-iron_grey underline decoration-dust_grey-200 underline-offset-4 transition hover:text-iron_grey hover:decoration-iron_grey"
+                    >
+                      All programs
+                    </Link>
+                  </nav>
+                </div>
+              </div>
+              <p className="text-center text-sm font-medium text-iron_grey/85 sm:text-left">
+                No subscription. No commitment. Just amazing snacks.
+              </p>
             </div>
           </div>
           <div className="overflow-hidden rounded-lg border border-ash_grey-100 bg-white p-2 shadow-sm">
@@ -115,7 +226,7 @@ const HomePage = async () => {
               <Button href="/corporate/team-snack-boxes" variant="secondary">
                 Learn More
               </Button>
-              <Button href="/team-snacks-delivered" variant="ghost">
+              <Button href={contactQuoteHref("team-snack-boxes")} variant="ghost">
                 Request a Custom Quote
               </Button>
             </div>
@@ -169,7 +280,7 @@ const HomePage = async () => {
               <Button href="/corporate/bulk-pallet" variant="secondary">
                 Learn More
               </Button>
-              <Button href="/contact" variant="ghost">
+              <Button href={contactQuoteHref("bulk-pallet")} variant="ghost">
                 Request a Custom Quote
               </Button>
             </div>
@@ -260,7 +371,7 @@ const HomePage = async () => {
                 Tell us about your team and we will build a custom snack plan.
               </p>
             </div>
-            <Button href="/contact" variant="primary">
+            <Button href={contactQuoteHref("general")} variant="primary">
               Contact Us
             </Button>
           </div>
