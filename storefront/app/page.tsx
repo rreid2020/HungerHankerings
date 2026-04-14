@@ -56,27 +56,27 @@ const HomePage = async () => {
   return (
     <div className="space-y-24 pb-24">
       <section className="bg-gradient-to-b from-powder_petal-50 via-powder_petal-50 to-powder_petal-50/30">
-        <div className="container-page py-20">
-          <header className="mx-auto mb-10 max-w-4xl space-y-4 lg:mb-12">
+        <div className="mx-auto w-full max-w-7xl min-w-0 px-4 py-12 sm:px-6 lg:max-w-[90rem] lg:px-8 lg:py-14 xl:px-10">
+          <header className="mb-6 max-w-5xl space-y-3 lg:mb-8">
             <p className="section-subtitle">Hunger Hankerings</p>
-            <h1 className="text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-iron_grey sm:text-4xl md:text-[2.35rem] lg:text-5xl">
+            <h1 className="text-balance text-3xl font-semibold leading-[1.1] tracking-tight text-iron_grey sm:text-4xl md:text-[2.25rem] lg:text-[2.65rem] xl:text-5xl">
               Canada&apos;s #1 Snack Box | Healthy, Fun &amp; Office Snack Delivery
             </h1>
-            <p className="text-pretty text-lg font-medium leading-snug text-iron_grey md:text-xl">
+            <p className="text-pretty max-w-3xl text-base font-medium leading-snug text-iron_grey md:text-lg">
               Discover Canada&apos;s top-rated snack boxes — no subscription required, just great
               snacks delivered when you want them.
             </p>
           </header>
 
-          <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch lg:gap-8">
-            <div className="min-w-0 space-y-4 rounded-2xl border border-dust_grey-200/70 bg-white/60 px-5 py-5 text-sm leading-relaxed text-iron_grey shadow-sm backdrop-blur-sm sm:px-6 sm:py-6 md:text-base lg:flex lg:flex-col lg:justify-between">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)_minmax(0,1.12fr)] lg:items-start lg:gap-6 xl:gap-8">
+            <div className="min-w-0 space-y-3 rounded-2xl border border-dust_grey-200/70 bg-white/60 px-4 py-4 text-sm leading-snug text-iron_grey shadow-sm backdrop-blur-sm sm:px-5 sm:py-5 md:text-[0.9375rem] md:leading-relaxed">
               <p>
                 <span className="font-semibold text-iron_grey">Hey fellow snacker</span> 👋
                 <br />
                 <span className="text-iron_grey/95">Welcome to Canada&apos;s #1 snack box experience.</span>
               </p>
               <p className="font-medium text-iron_grey">Whether you&apos;re a:</p>
-              <ul className="grid gap-2 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-1 xl:grid-cols-2">
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-1 sm:gap-x-6">
                 {[
                   "Mindless muncher",
                   "On-the-go grazer",
@@ -96,37 +96,37 @@ const HomePage = async () => {
                 We&apos;ve got the perfect box for you — no commitments, no subscriptions.
               </p>
               <p className="font-medium text-iron_grey">At Hunger Hankerings, we offer:</p>
-              <ul className="space-y-2.5 border-t border-dust_grey-200/60 pt-4">
-                <li className="flex gap-2.5">
-                  <span className="text-lg leading-none" aria-hidden>
+              <ul className="grid gap-x-3 gap-y-2 border-t border-dust_grey-200/60 pt-3 sm:grid-cols-3 sm:gap-y-1.5">
+                <li className="flex gap-2">
+                  <span className="text-base leading-none sm:text-lg" aria-hidden>
                     🥗
                   </span>
-                  <span>Healthy snack boxes for guilt-free enjoyment</span>
+                  <span className="leading-snug">Healthy snack boxes</span>
                 </li>
-                <li className="flex gap-2.5">
-                  <span className="text-lg leading-none" aria-hidden>
+                <li className="flex gap-2">
+                  <span className="text-base leading-none sm:text-lg" aria-hidden>
                     🏢
                   </span>
-                  <span>Office snack boxes to keep your team energized</span>
+                  <span className="leading-snug">Office snack boxes</span>
                 </li>
-                <li className="flex gap-2.5">
-                  <span className="text-lg leading-none" aria-hidden>
+                <li className="flex gap-2">
+                  <span className="text-base leading-none sm:text-lg" aria-hidden>
                     🎁
                   </span>
-                  <span>Themed snack gift boxes for every occasion</span>
+                  <span className="leading-snug">Themed gift boxes</span>
                 </li>
               </ul>
-              <p className="border-t border-dust_grey-200/60 pt-4 text-iron_grey/95">
+              <p className="border-t border-dust_grey-200/60 pt-3 text-sm text-iron_grey/95">
                 Order anytime and enjoy premium, curated snacks delivered across Canada.
               </p>
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-col gap-6">
-              <div className="rounded-2xl border border-dust_grey-200/80 bg-white/90 p-5 shadow-md ring-1 ring-black/[0.04] sm:p-6 md:p-7">
-                <h2 className="text-base font-semibold tracking-tight text-iron_grey md:text-lg">
+            <div className="flex min-h-0 min-w-0 flex-col gap-4">
+              <div className="rounded-2xl border border-dust_grey-200/80 bg-white/90 p-4 shadow-md ring-1 ring-black/[0.04] sm:p-5">
+                <h2 className="text-sm font-semibold tracking-tight text-iron_grey sm:text-base md:text-lg">
                   Why Hunger Hankerings is Canada&apos;s #1 Snack Box
                 </h2>
-                <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-iron_grey sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 md:text-[0.9375rem]">
+                <ul className="mt-3 grid grid-cols-1 gap-x-5 gap-y-2 text-xs text-iron_grey sm:grid-cols-2 sm:text-sm">
                 {[
                   "No subscription — order anytime, hassle-free",
                   "Curated snack boxes for individuals & businesses",
@@ -134,9 +134,9 @@ const HomePage = async () => {
                   "High-quality, handpicked snacks",
                   "Perfect for gifting, offices, or personal cravings"
                 ].map((line) => (
-                  <li key={line} className="flex gap-2.5">
+                  <li key={line} className="flex gap-2">
                     <span
-                      className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cherry_blossom/15 text-xs font-bold text-cherry_blossom"
+                      className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-cherry_blossom/15 text-[10px] font-bold text-cherry_blossom sm:h-5 sm:w-5 sm:text-xs"
                       aria-hidden
                     >
                       ✓
@@ -147,74 +147,76 @@ const HomePage = async () => {
                 </ul>
               </div>
 
-              <div className="flex flex-1 flex-col rounded-2xl border border-dust_grey-200/80 bg-white p-5 shadow-md ring-1 ring-black/[0.04] sm:p-6 md:p-7">
-                <div className="flex flex-col gap-6">
+              <div className="flex flex-col rounded-2xl border border-dust_grey-200/80 bg-white p-4 shadow-md ring-1 ring-black/[0.04] sm:p-5">
+                <div className="flex flex-col gap-4">
                 <div>
                   <Button
                     href="/themed-snack-boxes"
-                    className="min-h-[3.25rem] w-full justify-center rounded-xl px-8 text-base font-semibold shadow-md transition hover:shadow-lg sm:min-h-14"
+                    className="min-h-12 w-full justify-center rounded-xl px-6 text-sm font-semibold shadow-md transition hover:shadow-lg sm:min-h-[3.25rem] sm:text-base"
                   >
                     Shop snack boxes
                   </Button>
                 </div>
 
-                <div className="border-t border-dust_grey-200/80 pt-6">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-iron_grey/55">
+                <div className="border-t border-dust_grey-200/80 pt-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-iron_grey/55 sm:text-[11px]">
                     For teams &amp; workplaces
                   </p>
                   <nav
                     aria-label="Corporate programs"
-                    className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-2"
+                    className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-2.5"
                   >
                     <Button
                       href="/corporate/team-snack-boxes"
                       variant="ghost"
-                      className="min-h-[2.85rem] justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-2 text-center text-xs font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:text-sm"
+                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
                     >
                       Team snack boxes
                     </Button>
                     <Button
                       href="/corporate/office-snack-pantry"
                       variant="ghost"
-                      className="min-h-[2.85rem] justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-2 text-center text-xs font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:text-sm"
+                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
                     >
                       Office pantry
                     </Button>
                     <Button
                       href="/corporate/bulk-pallet"
                       variant="ghost"
-                      className="min-h-[2.85rem] justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-2 text-center text-xs font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:text-sm"
+                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
                     >
                       Bulk &amp; pallet
                     </Button>
                     <Button
                       href="/our-programs"
                       variant="ghost"
-                      className="min-h-[2.85rem] justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-2 text-center text-xs font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:text-sm"
+                      className="min-h-11 justify-center rounded-lg border-dust_grey-200 bg-powder_petal-50/50 px-1.5 text-center text-[11px] font-semibold leading-tight text-iron_grey shadow-none hover:border-primary/35 hover:bg-white hover:text-iron_grey sm:min-h-[2.65rem] sm:px-2 sm:text-xs"
                     >
                       All programs
                     </Button>
                   </nav>
                 </div>
 
-                <p className="border-t border-dust_grey-100 pt-5 text-center text-sm font-medium leading-relaxed text-iron_grey/75 sm:text-left">
+                <p className="border-t border-dust_grey-100 pt-3 text-center text-xs font-medium leading-relaxed text-iron_grey/75 sm:text-left sm:text-sm">
                   No subscription. No commitment. Just amazing snacks.
                 </p>
                 </div>
               </div>
             </div>
 
-            <div className="relative flex min-h-0 min-w-0 flex-col lg:min-h-[320px]">
-              <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-dust_grey-200/80 bg-white p-3 shadow-lg ring-1 ring-black/[0.06] sm:p-4">
-                <img
-                  src="/hero-snack-box.png"
-                  alt="Curated snack boxes filled with chips, crackers, fruit, and treats"
-                  className="aspect-square w-full flex-1 rounded-xl object-contain object-center lg:min-h-0 lg:flex-1"
-                  style={{
-                    filter: "saturate(0.92) contrast(1.02)",
-                    transform: "scale(1.12)"
-                  }}
-                />
+            <div className="relative min-w-0 lg:self-start">
+              <div className="overflow-hidden rounded-2xl border border-dust_grey-200/80 bg-gradient-to-b from-powder_petal-100/80 to-white p-1.5 shadow-lg ring-1 ring-black/[0.06] sm:p-2">
+                <div className="overflow-hidden rounded-xl bg-white/90">
+                  <img
+                    src="/hero-snack-box.png"
+                    alt="Curated snack boxes filled with chips, crackers, fruit, and treats"
+                    className="h-auto w-full max-h-[220px] object-contain object-center sm:max-h-[260px] md:max-h-[300px] lg:max-h-[min(52vw,420px)] xl:max-h-[440px]"
+                    style={{
+                      filter: "saturate(0.95) contrast(1.03)",
+                      transform: "scale(1.18)"
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
