@@ -8,45 +8,81 @@ import {
   Sparkles,
   Truck
 } from "lucide-react"
+import { stripHtml } from "../../lib/html"
+import type { StorefrontProduct } from "../../lib/vendure"
 
-const featuredProducts = [
-  {
-    name: "Movie Night Snack Box",
-    href: "/products/movie-night-snack-box",
-    description: "The ultimate mix of sweet and savory for movie nights",
-    image: "https://placehold.co/600x600/e8dfd7/4A5759?text=Movie+Night"
-  },
-  {
-    name: "Classic Guilt-Free Box",
-    href: "/products/classic-guilt-free-box",
-    description: "Better-for-you snacks without sacrificing flavor",
-    image: "https://placehold.co/600x600/d4e3d5/4A5759?text=Guilt-Free"
-  },
-  {
-    name: "Guilt-Free Movie Night Box",
-    href: "/products/guilt-free-movie-night-box",
-    description: "Enjoy movie night with healthier snack options",
-    image: "https://placehold.co/600x600/edafb8/4A5759?text=GF+Movie"
-  },
-  {
-    name: "All Canadian Snack Box",
-    href: "/products/all-canadian-snack-box",
-    description: "A curated selection of iconic Canadian treats",
-    image: "https://placehold.co/600x600/DEDBD2/4A5759?text=Canadian"
-  },
-  {
-    name: "Munchies Snack Box",
-    href: "/products/munchies-snack-box",
-    description: "Loaded with bold, crave-worthy snacks",
-    image: "https://placehold.co/600x600/f7e1d7/4A5759?text=Munchies"
-  },
-  {
-    name: "Vegan & Gluten-Free Snack Box",
-    href: "/products/vegan-gluten-free-snack-box",
-    description: "Delicious snacks tailored for dietary needs",
-    image: "https://placehold.co/600x600/b0c4b1/4A5759?text=Vegan+GF"
-  }
+/** Curated grid order on /themed-snack-boxes; must match Vendure product slugs. */
+const LANDING_FEATURED_SLUG_ORDER = [
+  "movie-night-snack-box",
+  "classic-guilt-free-box",
+  "guilt-free-movie-night-box",
+  "all-canadian-snack-box",
+  "munchies-snack-box",
+  "vegan-gluten-free-snack-box"
 ] as const
+
+const LANDING_FEATURED_FALLBACK: Record<
+  (typeof LANDING_FEATURED_SLUG_ORDER)[number],
+  { name: string; description: string; imageUrl: string }
+> = {
+  "movie-night-snack-box": {
+    name: "Movie Night Snack Box",
+    description: "The ultimate mix of sweet and savory for movie nights",
+    imageUrl: "https://placehold.co/600x600/e8dfd7/4A5759?text=Movie+Night"
+  },
+  "classic-guilt-free-box": {
+    name: "Classic Guilt-Free Box",
+    description: "Better-for-you snacks without sacrificing flavor",
+    imageUrl: "https://placehold.co/600x600/d4e3d5/4A5759?text=Guilt-Free"
+  },
+  "guilt-free-movie-night-box": {
+    name: "Guilt-Free Movie Night Box",
+    description: "Enjoy movie night with healthier snack options",
+    imageUrl: "https://placehold.co/600x600/edafb8/4A5759?text=GF+Movie"
+  },
+  "all-canadian-snack-box": {
+    name: "All Canadian Snack Box",
+    description: "A curated selection of iconic Canadian treats",
+    imageUrl: "https://placehold.co/600x600/DEDBD2/4A5759?text=Canadian"
+  },
+  "munchies-snack-box": {
+    name: "Munchies Snack Box",
+    description: "Loaded with bold, crave-worthy snacks",
+    imageUrl: "https://placehold.co/600x600/f7e1d7/4A5759?text=Munchies"
+  },
+  "vegan-gluten-free-snack-box": {
+    name: "Vegan & Gluten-Free Snack Box",
+    description: "Delicious snacks tailored for dietary needs",
+    imageUrl: "https://placehold.co/600x600/b0c4b1/4A5759?text=Vegan+GF"
+  }
+}
+
+export type LandingFeaturedBox = {
+  name: string
+  href: string
+  description: string
+  imageUrl: string
+}
+
+/** Merge Vendure catalog (thumbnails + copy) with fixed landing order and placeholders when missing. */
+export function buildLandingFeaturedBoxes(products: StorefrontProduct[]): LandingFeaturedBox[] {
+  const bySlug = new Map(products.map((p) => [p.slug, p]))
+  return LANDING_FEATURED_SLUG_ORDER.map((slug) => {
+    const fb = LANDING_FEATURED_FALLBACK[slug]
+    const href = `/products/${slug}`
+    const p = bySlug.get(slug)
+    if (p) {
+      const fromDesc = stripHtml(p.description ?? "").trim()
+      return {
+        name: p.name,
+        href,
+        description: fromDesc || fb.description,
+        imageUrl: (p.thumbnail?.url && p.thumbnail.url.length > 0 ? p.thumbnail.url : null) || fb.imageUrl
+      }
+    }
+    return { name: fb.name, href, description: fb.description, imageUrl: fb.imageUrl }
+  })
+}
 
 const valueProps = [
   {
@@ -83,7 +119,16 @@ const linkFocus =
 
 const sectionInner = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
 
-export default function LandingPageSections() {
+const DEFAULT_HERO_IMAGE =
+  "https://placehold.co/800x800/F7E1D7/4A5759?text=Themed+Snack+Box"
+
+type LandingPageSectionsProps = {
+  featuredBoxes: LandingFeaturedBox[]
+}
+
+export default function LandingPageSections({ featuredBoxes }: LandingPageSectionsProps) {
+  const heroImageUrl = featuredBoxes[0]?.imageUrl ?? DEFAULT_HERO_IMAGE
+
   return (
     <div className="bg-background text-foreground">
       <section className="py-16 md:py-20" aria-labelledby="landing-hero-heading">
@@ -110,8 +155,12 @@ export default function LandingPageSections() {
             <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
               <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
                 <img
-                  src="https://placehold.co/800x800/F7E1D7/4A5759?text=Themed+Snack+Box"
-                  alt="Assorted themed snack box with colorful packaging"
+                  src={heroImageUrl}
+                  alt={
+                    featuredBoxes[0]?.name
+                      ? `${featuredBoxes[0].name} — themed snack box`
+                      : "Assorted themed snack box with colorful packaging"
+                  }
                   className="h-full w-full object-cover"
                   width={800}
                   height={800}
@@ -159,15 +208,15 @@ export default function LandingPageSections() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {featuredProducts.map((p) => (
+            {featuredBoxes.map((p) => (
               <article
                 key={p.href}
                 className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition duration-300 hover:scale-[1.02] hover:shadow-xl"
               >
                 <div className="aspect-square w-full shrink-0 overflow-hidden bg-muted">
                   <img
-                    src={p.image}
-                    alt=""
+                    src={p.imageUrl}
+                    alt={p.name}
                     className="h-full w-full object-cover"
                     width={600}
                     height={600}

@@ -1,7 +1,10 @@
 import type { Metadata } from "next"
 import CheckoutButton from "../../components/CheckoutButton"
-import LandingPageSections from "../../components/landing/LandingPageSections"
+import LandingPageSections, {
+  buildLandingFeaturedBoxes
+} from "../../components/landing/LandingPageSections"
 import { absoluteUrl, SITE_NAME } from "../../lib/site"
+import { listProducts } from "../../lib/vendure"
 
 export const dynamic = "force-dynamic"
 
@@ -17,7 +20,15 @@ export const metadata: Metadata = {
   }
 }
 
-const ThemedSnackBoxesPage = () => {
+const ThemedSnackBoxesPage = async () => {
+  let products: Awaited<ReturnType<typeof listProducts>> = []
+  try {
+    products = await listProducts()
+  } catch (err) {
+    console.error("Products fetch failed (themed landing):", err)
+  }
+  const featuredBoxes = buildLandingFeaturedBoxes(products)
+
   return (
     <div>
       <div className="border-b border-border bg-background">
@@ -25,7 +36,7 @@ const ThemedSnackBoxesPage = () => {
           <CheckoutButton />
         </div>
       </div>
-      <LandingPageSections />
+      <LandingPageSections featuredBoxes={featuredBoxes} />
     </div>
   )
 }
