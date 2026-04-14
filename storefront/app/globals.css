@@ -4,12 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  @apply bg-background text-foreground antialiased;
+  @apply min-w-0 bg-background text-foreground antialiased;
 }
 
 .container-page {
-  @apply mx-auto w-full max-w-6xl px-4;
+  @apply mx-auto w-full max-w-6xl min-w-0 px-4 sm:px-6;
 }
 
 .section-title {

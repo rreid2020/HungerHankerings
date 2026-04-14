@@ -30,16 +30,16 @@ export default async function AccountLayout({
   }
 
   return (
-    <div className="container-page py-12">
-      <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+    <div className="container-page py-8 sm:py-12">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
         {/* Sidebar - uses site header from root layout */}
-        <aside className="space-y-1">
+        <aside className="min-w-0 space-y-1">
           <h2 className="mb-4 text-lg font-semibold text-foreground">My Account</h2>
           <AccountNav navItems={accountNav} />
         </aside>
 
         {/* Main content */}
-        <div className="min-h-[400px]">{children}</div>
+        <div className="min-h-[400px] min-w-0">{children}</div>
       </div>
     </div>
   )

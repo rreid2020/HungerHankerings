@@ -5,11 +5,16 @@ import ThemeInit from "../components/ThemeInit"
 import { CartProvider } from "../components/CartContext"
 import { AuthProvider } from "../components/AuthContext"
 import JsonLd from "../components/JsonLd"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { SITE_DEFAULT_DESCRIPTION, SITE_NAME, getSiteOrigin } from "../lib/site"
 import { organizationJsonLd, webSiteJsonLd } from "../lib/schema-org"
 
 const siteOrigin = getSiteOrigin()
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),
@@ -75,7 +80,7 @@ export default function RootLayout({
           <AuthProvider>
             <CartProvider>
               <SiteHeader />
-              <main>{children}</main>
+              <main className="min-w-0">{children}</main>
               <SiteFooter />
             </CartProvider>
           </AuthProvider>

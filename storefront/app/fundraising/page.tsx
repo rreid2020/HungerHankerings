@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 
 const FundraisingPage = () => {
   return (
-    <div className="container-page space-y-10 py-12">
-      <div className="rounded-lg border border-ash_grey-500 bg-ash_grey-500 px-10 py-12 text-white">
+    <div className="container-page space-y-10 py-8 sm:py-12">
+      <div className="rounded-lg border border-ash_grey-500 bg-ash_grey-500 px-4 py-8 text-white sm:px-8 sm:py-10 md:px-10 md:py-12">
         <p className="section-subtitle text-ash_grey-100">Fundraising</p>
-        <h1 className="text-3xl font-semibold">
+        <h1 className="text-2xl font-semibold sm:text-3xl">
           Fundraise with snack boxes
         </h1>
         <p className="mt-3 text-sm text-ash_grey-100">

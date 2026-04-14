@@ -50,7 +50,7 @@ const HomePage = async () => {
         <div className="container-page grid gap-12 py-16 lg:grid-cols-[1.2fr_1fr] lg:items-center">
           <div className="space-y-6">
             <p className="section-subtitle">Hunger Hankerings</p>
-            <h1 className="text-4xl font-semibold text-iron_grey md:text-5xl">
+            <h1 className="text-3xl font-semibold text-iron_grey sm:text-4xl md:text-5xl">
               Hey fellow snacker! Welcome to Hunger Hankerings
             </h1>
             <p className="text-lg text-iron_grey">

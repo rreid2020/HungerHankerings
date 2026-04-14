@@ -27,11 +27,11 @@ const ShopPage = async () => {
   }
 
   return (
-    <div className="container-page space-y-10 py-12">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+    <div className="container-page space-y-10 py-8 sm:py-12">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
           <p className="section-subtitle">Themed Snack Boxes</p>
-          <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
             Snack boxes for every craving
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">

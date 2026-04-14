@@ -196,7 +196,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
                 Out of stock
               </p>
             )}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
               {showVariantUi ? (
                 <label className="sr-only">Quantity</label>
               ) : null}
@@ -218,7 +218,7 @@ const ProductCard = ({ product }: { product: StorefrontProduct }) => {
                 disabled={
                   !effectiveVariantId || loading || updating || adding || outOfStock
                 }
-                className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="min-w-0 flex-1 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:px-4"
               >
                 {adding || updating ? "Adding…" : outOfStock ? "Out of stock" : "Add to Cart"}
               </button>

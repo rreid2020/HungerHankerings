@@ -890,7 +890,7 @@ const CheckoutPage = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="container-page py-12">
+      <div className="container-page py-8 sm:py-12">
         <h1 className="text-2xl font-semibold text-foreground">Checkout</h1>
         <p className="mt-2 text-sm text-foreground">
           Your cart is empty. Add a snack box to continue.
@@ -1103,7 +1103,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="container-page py-12">
+    <div className="container-page py-8 sm:py-12">
       <nav
         className="mb-10"
         aria-label="Checkout steps"
@@ -1145,8 +1145,8 @@ const CheckoutPage = () => {
         </ol>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-      <div className="space-y-10">
+      <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.85fr)] lg:gap-10">
+      <div className="min-w-0 space-y-10">
         <form id="checkout-form" className="space-y-10" onSubmit={handleFormSubmit}>
           {checkoutError && (
             <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-800">
@@ -1749,29 +1749,34 @@ const CheckoutPage = () => {
         </form>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+      <div className="min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6 lg:sticky lg:top-4 lg:self-start">
         <h2 className="text-base font-semibold text-foreground">Order summary</h2>
         {cart?.items?.length ? (
-          <ul className="mt-4 space-y-4 border-b border-gray-200 pb-4">
+          <ul className="mt-4 space-y-4 border-b border-gray-200 pb-4 sm:space-y-3">
             {cart.items.map((item) => {
               const [name, variant] = item.title.includes(" - ")
                 ? item.title.split(/ - (.+)/).filter(Boolean)
                 : [item.title, ""]
               return (
-                <li key={item.lineId} className="flex items-center gap-3">
-                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
-                    <img
-                      src={item.image ?? "https://placehold.co/64x64?text=Snack+Box"}
-                      alt={item.title}
-                      className="h-full w-full object-cover"
-                    />
+                <li
+                  key={item.lineId}
+                  className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3"
+                >
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+                      <img
+                        src={item.image ?? "https://placehold.co/64x64?text=Snack+Box"}
+                        alt={item.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground">{name}</p>
+                      {variant ? <p className="text-xs text-muted-foreground">{variant}</p> : null}
+                      <p className="text-sm text-foreground">${item.unitPrice.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground">{name}</p>
-                    {variant ? <p className="text-xs text-muted-foreground">{variant}</p> : null}
-                    <p className="text-sm text-foreground">${item.unitPrice.toFixed(2)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center justify-end gap-2 sm:justify-start">
                     <div className="flex items-center rounded border border-gray-300 bg-white">
                       <button
                         type="button"
@@ -1828,63 +1833,72 @@ const CheckoutPage = () => {
                   <p className="font-medium text-foreground">{addr.label}</p>
                   <div className="space-y-1 pl-0">
                     {addr.lineItems.map((li, idx) => (
-                      <div key={`${addr.label}-${idx}-${li.lineId}`} className="flex justify-between text-muted-foreground">
-                        <span>
+                      <div
+                        key={`${addr.label}-${idx}-${li.lineId}`}
+                        className="flex flex-col gap-0.5 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2"
+                      >
+                        <span className="min-w-0 break-words">
                           {li.title}
                           <span className="ml-1 text-muted-foreground">
                             {li.quantity} × ${li.unitPrice.toFixed(2)}
                           </span>
                         </span>
-                        <span>${li.lineTotal.toFixed(2)}</span>
+                        <span className="shrink-0 tabular-nums sm:text-right">${li.lineTotal.toFixed(2)}</span>
                       </div>
                     ))}
-                    <div className="flex justify-between font-medium text-foreground">
+                    <div className="flex flex-col gap-0.5 font-medium text-foreground sm:flex-row sm:justify-between sm:gap-2">
                       <span>Boxes total</span>
-                      <span>${addr.subtotal.toFixed(2)}</span>
+                      <span className="tabular-nums sm:text-right">${addr.subtotal.toFixed(2)}</span>
                     </div>
                   </div>
                   {addr.giftCount > 0 && (
-                    <div className="flex justify-between pl-0 text-muted-foreground">
-                      <span>Gift box ({addr.giftCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
-                      <span>${addr.giftFee.toFixed(2)}</span>
+                    <div className="flex flex-col gap-0.5 pl-0 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+                      <span className="min-w-0 break-words">
+                        Gift box ({addr.giftCount} × ${GIFT_BOX_FEE.toFixed(2)})
+                      </span>
+                      <span className="shrink-0 tabular-nums sm:text-right">${addr.giftFee.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between pl-0 text-muted-foreground">
+                  <div className="flex flex-col gap-0.5 pl-0 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                     <span>Shipping</span>
-                    <span>${rowShipping.toFixed(2)}</span>
+                    <span className="shrink-0 tabular-nums sm:text-right">${rowShipping.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between pl-0 font-medium text-foreground">
+                  <div className="flex flex-col gap-0.5 pl-0 font-medium text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                     <span>Subtotal (before tax)</span>
-                    <span>${(addr.subtotal + addr.giftFee + rowShipping).toFixed(2)}</span>
+                    <span className="shrink-0 tabular-nums sm:text-right">
+                      ${(addr.subtotal + addr.giftFee + rowShipping).toFixed(2)}
+                    </span>
                   </div>
                   {rowTax > 0 && (
-                    <div className="flex justify-between pl-0 text-muted-foreground">
+                    <div className="flex flex-col gap-0.5 pl-0 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                       <span>Tax ({taxRateDisplay}%)</span>
-                      <span>${rowTax.toFixed(2)}</span>
+                      <span className="shrink-0 tabular-nums sm:text-right">${rowTax.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between border-t border-gray-200 pt-2 font-medium text-foreground">
+                  <div className="flex flex-col gap-0.5 border-t border-gray-200 pt-2 font-medium text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                     <span>Total for this address</span>
-                    <span>${rowTotal.toFixed(2)}</span>
+                    <span className="shrink-0 tabular-nums sm:text-right">${rowTotal.toFixed(2)}</span>
                   </div>
                 </div>
               )
             })
           ) : (
             <>
-              <div className="flex justify-between font-medium text-foreground">
+              <div className="flex flex-col gap-0.5 font-medium text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                 <span>Boxes total</span>
-                <span>${(cart?.subtotal ?? 0).toFixed(2)}</span>
+                <span className="shrink-0 tabular-nums sm:text-right">${(cart?.subtotal ?? 0).toFixed(2)}</span>
               </div>
               {giftEnabledCount > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Gift box ({giftEnabledCount} × ${GIFT_BOX_FEE.toFixed(2)})</span>
-                  <span>${giftFee.toFixed(2)}</span>
+                <div className="flex flex-col gap-0.5 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+                  <span className="min-w-0 break-words">
+                    Gift box ({giftEnabledCount} × ${GIFT_BOX_FEE.toFixed(2)})
+                  </span>
+                  <span className="shrink-0 tabular-nums sm:text-right">${giftFee.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-muted-foreground">
+              <div className="flex flex-col gap-0.5 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                 <span>Shipping</span>
-                <span>
+                <span className="shrink-0 sm:text-right">
                   {shipping.country && shipping.province ? (
                     `$${displayShipping.toFixed(2)}`
                   ) : (
@@ -1893,15 +1907,17 @@ const CheckoutPage = () => {
                 </span>
               </div>
               {shipping.country && shipping.province && (
-                <div className="flex justify-between font-medium text-foreground">
+                <div className="flex flex-col gap-0.5 font-medium text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                   <span>Subtotal (before tax)</span>
-                  <span>${((cart?.subtotal ?? 0) + giftFee + displayShipping).toFixed(2)}</span>
+                  <span className="shrink-0 tabular-nums sm:text-right">
+                    ${((cart?.subtotal ?? 0) + giftFee + displayShipping).toFixed(2)}
+                  </span>
                 </div>
               )}
               {shipping.country && shipping.province && displayTax > 0 && (
-                <div className="flex justify-between text-muted-foreground">
+                <div className="flex flex-col gap-0.5 text-muted-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                   <span>Tax</span>
-                  <span>${displayTax.toFixed(2)}</span>
+                  <span className="shrink-0 tabular-nums sm:text-right">${displayTax.toFixed(2)}</span>
                 </div>
               )}
             </>
@@ -1911,19 +1927,19 @@ const CheckoutPage = () => {
               Grand total
             </h3>
             <div className="mt-3 space-y-2 text-sm text-white/90">
-              <div className="flex justify-between">
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                 <span>Total for all boxes</span>
-                <span>${(cart?.subtotal ?? 0).toFixed(2)}</span>
+                <span className="shrink-0 tabular-nums sm:text-right">${(cart?.subtotal ?? 0).toFixed(2)}</span>
               </div>
               {giftFee > 0 && (
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                   <span>Total gift box charge</span>
-                  <span>${giftFee.toFixed(2)}</span>
+                  <span className="shrink-0 tabular-nums sm:text-right">${giftFee.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                 <span>Total shipping costs</span>
-                <span>${displayShipping.toFixed(2)}</span>
+                <span className="shrink-0 tabular-nums sm:text-right">${displayShipping.toFixed(2)}</span>
               </div>
               {addressBreakdown.length > 0 ? (
                 (() => {
@@ -1936,23 +1952,26 @@ const CheckoutPage = () => {
                     {} as Record<string, number>
                   )
                   return Object.entries(taxByProvince).map(([prov, amount]) => (
-                    <div key={prov} className="flex justify-between">
-                      <span>Total tax ({prov})</span>
-                      <span>${amount.toFixed(2)}</span>
+                    <div
+                      key={prov}
+                      className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2"
+                    >
+                      <span className="min-w-0 break-words">Total tax ({prov})</span>
+                      <span className="shrink-0 tabular-nums sm:text-right">${amount.toFixed(2)}</span>
                     </div>
                   ))
                 })()
               ) : (
                 displayTax > 0 && (
-                  <div className="flex justify-between">
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                     <span>Total tax</span>
-                    <span>${displayTax.toFixed(2)}</span>
+                    <span className="shrink-0 tabular-nums sm:text-right">${displayTax.toFixed(2)}</span>
                   </div>
                 )
               )}
-              <div className="flex justify-between border-t border-white/20 pt-2 text-base font-semibold text-white">
+              <div className="flex flex-col gap-1 border-t border-white/20 pt-2 text-base font-semibold text-white sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
                 <span>Grand total</span>
-                <span>${displayOrderTotal.toFixed(2)}</span>
+                <span className="shrink-0 tabular-nums sm:text-right">${displayOrderTotal.toFixed(2)}</span>
               </div>
             </div>
           </section>

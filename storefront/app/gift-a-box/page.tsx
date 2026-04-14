@@ -27,10 +27,10 @@ const GiftABoxPage = async () => {
   }
 
   return (
-    <div className="container-page space-y-10 py-12">
-      <div className="rounded-lg border border-dust_grey-200 bg-ash_grey-100 p-10">
+    <div className="container-page space-y-10 py-8 sm:py-12">
+      <div className="rounded-lg border border-dust_grey-200 bg-ash_grey-100 p-4 sm:p-8 md:p-10">
         <p className="section-subtitle">Gift A Box</p>
-        <h1 className="text-3xl font-semibold text-iron_grey">
+        <h1 className="text-2xl font-semibold text-iron_grey sm:text-3xl">
           Send a snack box surprise
         </h1>
         <p className="mt-3 text-sm text-iron_grey">

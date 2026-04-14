@@ -39,9 +39,9 @@ const CartPage = () => {
   }
 
   return (
-    <div className="container-page grid gap-10 py-12 lg:grid-cols-[1.3fr_0.7fr]">
-      <div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="container-page grid min-w-0 gap-8 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.75fr)]">
+      <div className="min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-foreground">Shopping Cart</h1>
           <button
             type="button"
@@ -66,30 +66,35 @@ const CartPage = () => {
           {cart.items.map((item) => {
             const { name, variant } = parseTitle(item.title)
             return (
-              <li key={item.lineId} className="flex items-start gap-4 py-6">
-                <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
-                  <img
-                    src={item.image ?? "https://placehold.co/96x96?text=Snack+Box"}
-                    alt={item.title}
-                    className="h-full w-full object-cover"
-                  />
+              <li
+                key={item.lineId}
+                className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start"
+              >
+                <div className="flex min-w-0 flex-1 gap-4">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50 sm:h-24 sm:w-24">
+                    <img
+                      src={item.image ?? "https://placehold.co/96x96?text=Snack+Box"}
+                      alt={item.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">{name}</p>
+                    {variant ? (
+                      <p className="mt-0.5 text-sm text-muted-foreground">{variant}</p>
+                    ) : null}
+                    <p className="mt-1 text-sm font-medium text-foreground">
+                      {formatPrice(item.unitPrice)}
+                    </p>
+                    <p className="mt-2 flex items-center gap-1.5 text-sm text-iron_grey">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
+                        <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                      </svg>
+                      In stock
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground">{name}</p>
-                  {variant ? (
-                    <p className="mt-0.5 text-sm text-muted-foreground">{variant}</p>
-                  ) : null}
-                  <p className="mt-1 text-sm font-medium text-foreground">
-                    {formatPrice(item.unitPrice)}
-                  </p>
-                  <p className="mt-2 flex items-center gap-1.5 text-sm text-iron_grey">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
-                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                    </svg>
-                    In stock
-                  </p>
-                </div>
-                <div className="flex flex-shrink-0 items-center gap-3">
+                <div className="flex shrink-0 items-center justify-end gap-3 sm:justify-start">
                   <label htmlFor={`qty-${item.lineId}`} className="sr-only">Quantity</label>
                   <input
                     id={`qty-${item.lineId}`}
@@ -119,15 +124,15 @@ const CartPage = () => {
         </ul>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+      <div className="min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6 lg:sticky lg:top-4 lg:self-start">
         <h2 className="text-lg font-medium text-foreground">Order summary</h2>
         <dl className="mt-4 space-y-3 text-sm">
-          <div className="flex justify-between text-foreground">
+          <div className="flex flex-col gap-0.5 text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
             <dt>Subtotal</dt>
-            <dd>{formatPrice(cart.subtotal)}</dd>
+            <dd className="tabular-nums sm:text-right">{formatPrice(cart.subtotal)}</dd>
           </div>
-          <div className="flex justify-between text-foreground">
-            <dt className="flex items-center gap-1">
+          <div className="flex flex-col gap-0.5 text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+            <dt className="flex min-w-0 flex-wrap items-center gap-1">
               Shipping estimate
               <span className="text-muted-foreground" title="Shipping calculated at checkout">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
@@ -139,11 +144,11 @@ const CartPage = () => {
                 </svg>
               </span>
             </dt>
-            <dd>{formatPrice(cart.shippingTotal)}</dd>
+            <dd className="tabular-nums sm:text-right">{formatPrice(cart.shippingTotal)}</dd>
           </div>
-          <div className="flex justify-between border-t border-gray-200 pt-3 font-medium text-foreground">
+          <div className="flex flex-col gap-0.5 border-t border-gray-200 pt-3 font-medium text-foreground sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
             <dt>Order total</dt>
-            <dd>{formatPrice(cart.total)}</dd>
+            <dd className="tabular-nums sm:text-right">{formatPrice(cart.total)}</dd>
           </div>
         </dl>
         <div className="mt-6 flex flex-col gap-4">

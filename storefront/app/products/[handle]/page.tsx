@@ -120,8 +120,8 @@ export default async function ProductDetailPage({
     <>
       <JsonLd data={productLd} id="ld-product" />
       <JsonLd data={breadcrumbLd} id="ld-breadcrumb-product" />
-      <div className="container-page grid gap-10 py-12 lg:grid-cols-2">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+      <div className="container-page grid min-w-0 gap-8 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
             <img
               src={
@@ -133,7 +133,7 @@ export default async function ProductDetailPage({
             />
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground md:text-3xl">
               {product.name}

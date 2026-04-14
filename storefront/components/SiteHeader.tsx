@@ -63,12 +63,15 @@ function CorporateFlyoutLinks({ className }: { className?: string }) {
 const SiteHeader = () => {
   return (
     <header className="border-b border-border">
-      <div className="container-page flex h-20 items-center justify-between">
-        <Link href="/" className="flex items-center transition opacity-90 hover:opacity-100">
+      <div className="container-page flex h-16 min-w-0 items-center justify-between gap-2 sm:h-20 sm:gap-4">
+        <Link
+          href="/"
+          className="flex min-w-0 shrink-0 items-center transition opacity-90 hover:opacity-100"
+        >
           <img
             src="/logo.png"
             alt="Hunger Hankerings"
-            className="h-14 w-auto object-contain sm:h-16"
+            className="h-10 max-h-12 w-auto max-w-[min(100%,11rem)] object-contain object-left sm:h-14 sm:max-h-none sm:max-w-none md:h-16"
           />
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-foreground lg:flex" aria-label="Main">
@@ -103,7 +106,7 @@ const SiteHeader = () => {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <AccountAvatarMenu />
           <CartButton />
         </div>
