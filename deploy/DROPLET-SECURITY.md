@@ -131,6 +131,18 @@ sudo fail2ban-client status sshd
 - Don’t run random images or one-off `docker run` from the internet; use only your own Dockerfile and known base images (e.g. official Node, Postgres).
 - Keep images updated: re-pull and rebuild after `git pull` (your deploy workflow already does a build).
 
+### Docker MTU on DigitalOcean (registry pull timeouts)
+
+If `docker pull` or `docker compose build` fails with **`i/o timeout`** or hangs talking to **`registry-1.docker.io:443`**, the Cloud Firewall / `ufw` outbound path is often **not** the cause (outbound is allowed by default). A common fix is a **lower MTU** for Docker traffic on DO’s network path:
+
+```bash
+sudo mkdir -p /etc/docker
+echo '{"mtu": 1450}' | sudo tee /etc/docker/daemon.json
+sudo systemctl restart docker
+```
+
+Then retry `docker pull node:20-alpine` or your GitHub deploy. Apply the same on **every new** droplet you use for builds.
+
 ---
 
 ## 8. What not to do
