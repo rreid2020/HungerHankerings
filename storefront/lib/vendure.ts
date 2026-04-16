@@ -48,6 +48,18 @@ function rewriteVendureAssetUrlForBrowser(url: string): string {
     if (u.hostname === "vendure") {
       return `${publicBase}${u.pathname}${u.search}`;
     }
+    // Direct DigitalOcean Spaces URLs (S3 virtual-host style). Objects are often private; the browser
+    // must load via Nginx → Vendure /assets/… so the server can use Spaces credentials.
+    const host = u.hostname.toLowerCase();
+    if (host.endsWith(".digitaloceanspaces.com") || host.includes(".cdn.digitaloceanspaces.com")) {
+      const p = u.pathname || "";
+      if (p.startsWith("/assets/")) {
+        return `${publicBase}${p}${u.search}`;
+      }
+      if (p.length > 1) {
+        return `${publicBase}/assets${p}${u.search}`;
+      }
+    }
     // Previews often carry whatever host Vendure/Channel used (localhost, old domain, etc.).
     // Same-origin assets always live under /assets/ — force the browser-visible host from NEXT_PUBLIC_*.
     if (u.pathname.startsWith("/assets/")) {
