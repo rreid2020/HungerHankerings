@@ -10,7 +10,7 @@ import {
 } from "@vendure/core";
 import { getAmountInStripeMinorUnits } from "@vendure/payments-plugin/package/stripe/stripe-utils";
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
-import { AssetServerPlugin } from "@vendure/asset-server-plugin";
+import { AssetServerPlugin, configureS3AssetStorage } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
 import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
 import { FallbackEmailTemplateLoader } from "./fallback-email-template-loader";
@@ -94,6 +94,78 @@ if (process.env.NODE_ENV === "production") {
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path.join(__dirname, "../assets");
 const isProduction = process.env.NODE_ENV === "production";
+
+/**
+ * Pre-built Admin UI defaults to apiHost localhost:3000. In production the browser must call the
+ * public origin (same host Nginx exposes for /admin-api). See https://docs.vendure.io/guides/deployment/deploying-admin-ui/
+ */
+function buildAdminUiConfigFromAppUrl():
+  | { apiHost: string; apiPort: number }
+  | undefined {
+  const appUrl = process.env.APP_URL?.trim();
+  if (!appUrl) {
+    if (isProduction) {
+      console.warn(
+        "[vendure] APP_URL is unset — Admin UI will try localhost:3000 for the Admin API from your browser. Set APP_URL to the storefront origin (e.g. https://yourdomain.com or http://YOUR_DROPLET_IP).",
+      );
+    }
+    return undefined;
+  }
+  try {
+    const u = new URL(appUrl);
+    const defaultPort = u.protocol === "https:" ? 443 : 80;
+    const apiPort = u.port ? parseInt(u.port, 10) : defaultPort;
+    const apiHost = `${u.protocol}//${u.hostname}`;
+    return { apiHost, apiPort };
+  } catch {
+    console.warn(`[vendure] APP_URL is not a valid URL for Admin UI: ${appUrl}`);
+    return undefined;
+  }
+}
+
+const adminUiPublicApi = buildAdminUiConfigFromAppUrl();
+
+/**
+ * DigitalOcean Spaces (S3-compatible). When all vars are set, binaries live in Spaces and survive droplet rebuilds.
+ * @see https://docs.digitalocean.com/products/spaces/how-to/use-aws-sdks/
+ * Region slug must match the Space (e.g. tor1, nyc3) — same as in the control panel URL.
+ */
+function buildAssetServerPlugin() {
+  const bucket = process.env.DO_SPACES_BUCKET?.trim();
+  const accessKeyId = process.env.DO_SPACES_KEY?.trim();
+  const secretAccessKey = process.env.DO_SPACES_SECRET?.trim();
+  const regionSlug = process.env.DO_SPACES_REGION?.trim();
+
+  const base = { route: "assets" as const, assetUploadDir: assetDir };
+
+  if (bucket && accessKeyId && secretAccessKey && regionSlug) {
+    const endpoint = `https://${regionSlug}.digitaloceanspaces.com`;
+    console.info(
+      `[vendure] AssetServerPlugin: storing uploads in DigitalOcean Spaces bucket "${bucket}" (${endpoint}).`,
+    );
+    return AssetServerPlugin.init({
+      ...base,
+      storageStrategyFactory: configureS3AssetStorage({
+        bucket,
+        credentials: { accessKeyId, secretAccessKey },
+        nativeS3Configuration: {
+          endpoint,
+          // DO requires this literal for bucket creation / SDK compatibility (datacenter comes from endpoint).
+          region: "us-east-1",
+          forcePathStyle: false,
+        },
+      }),
+    });
+  }
+
+  if (isProduction && (bucket || accessKeyId || secretAccessKey || regionSlug)) {
+    console.warn(
+      "[vendure] Partial DO Spaces config (set all of DO_SPACES_BUCKET, DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_REGION) — using local disk for assets.",
+    );
+  }
+  return AssetServerPlugin.init(base);
+}
+
 /** Set VENDURE_REQUIRE_EMAIL_VERIFICATION=false to skip customer email verification (dev/testing only). */
 const requireCustomerEmailVerification =
   process.env.VENDURE_REQUIRE_EMAIL_VERIFICATION !== "false";
@@ -230,13 +302,11 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
         return { amount: base + extra } as Record<string, unknown>;
       },
     }),
-    AssetServerPlugin.init({
-      route: "assets",
-      assetUploadDir: assetDir,
-    }),
+    buildAssetServerPlugin(),
     AdminUiPlugin.init({
       route: "admin",
       port: 3002,
+      ...(adminUiPublicApi ? { adminUiConfig: adminUiPublicApi } : {}),
     }),
     EmailPlugin.init(
       useEmailDevMode

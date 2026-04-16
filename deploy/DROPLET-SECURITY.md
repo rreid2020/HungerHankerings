@@ -2,6 +2,8 @@
 
 Use this on a **new** Droplet so it stays secure. The droplet that was hacked was likely left with weak or default access (e.g. password auth, too many ports open, no rate limiting). This checklist prevents that.
 
+**If DigitalOcean emailed you about outbound DDoS (traffic from your Droplet toward a victim IP):** that almost always means the **server was compromised** (malware or a bot) and is **not** “your app legitimately doing that.” Changing passwords alone does not remove malware. Safe paths: **destroy the Droplet and rebuild** (Path 1 in DO’s email), or recover data from a [recovery ISO](https://docs.digitalocean.com/products/droplets/how-to/use-recovery-iso/) then destroy. On the **replacement** Droplet, use **new** secrets (`.env`, DB passwords, `jwt_key.pem`, Stripe/Resend keys if they ever lived on the old box), a **new** deploy SSH key if the old machine was rooted, and follow this doc **before** exposing the stack to the internet. See also [Droplets and DDoS incidents](https://docs.digitalocean.com/products/droplets/resources/ddos/).
+
 **Critical:** Do the security steps **in order** and **right after** you create the droplet. Don’t clone the repo, start Docker, and leave the box running for days before locking it down—that’s when it gets found and compromised.
 
 ---
@@ -91,7 +93,7 @@ Put Nginx in front of the app so all HTTP traffic is rate-limited by client IP. 
   `docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.jwt.yml -f docker-compose.nginx.yml up -d`
 - Then **only ports 22 and 80** need to be open; no need to expose 3000, 8000, 9000.
 
-Limits (per IP): GraphQL 10 req/s (burst 20), storefront/dashboard 30 req/s (burst 50), and a connection cap. See `nginx/README.md` for details and required `.env` values (e.g. `PUBLIC_URL`, `NEXT_PUBLIC_SALEOR_API_URL` pointing at the same host and `/graphql/` path).
+Limits (per IP): GraphQL 10 req/s (burst 20), storefront 30 req/s (burst 50), and a connection cap. See `nginx/README.md` for details and required `.env` values (e.g. `APP_URL` / `NEXT_PUBLIC_VENDURE_SHOP_API_URL` on the same host).
 
 ---
 
@@ -126,7 +128,7 @@ sudo fail2ban-client status sshd
 ## 7. Docker and containers
 
 - The app runs in containers; the host only needs Docker and Compose.
-- Don’t run random images or one-off `docker run` from the internet; use only your own Dockerfile and known base images (e.g. Saleor, Next.js).
+- Don’t run random images or one-off `docker run` from the internet; use only your own Dockerfile and known base images (e.g. official Node, Postgres).
 - Keep images updated: re-pull and rebuild after `git pull` (your deploy workflow already does a build).
 
 ---
@@ -149,3 +151,20 @@ sudo fail2ban-client status sshd
 5. Test storefront and API; then destroy the old compromised droplet.
 
 Keeping SSH key-only, a tight firewall, rate limiting (Nginx), automatic updates, and fail2ban gives you a much stronger baseline than an unhardened box.
+
+---
+
+## 10. Optional: DigitalOcean Cloud Firewall
+
+In the DO control panel you can attach a **Cloud Firewall** to the Droplet (inbound: 22, 80, 443 only; outbound: default allow is normal). This does not replace **host** `ufw` or fixing a compromise, but adds a second layer and makes “only these ports from the internet” obvious in one place.
+
+---
+
+## 11. Deploy checklist on a brand-new IP
+
+1. Create Droplet → **immediately** sections 1–5 (SSH, `ufw`, updates, Nginx compose, fail2ban).  
+2. Add the **new** Droplet IP to managed Postgres **Trusted Sources** and any other allowlists.  
+3. Clone repo to `/root/HungerHankerings`, create **fresh** `.env` and `jwt_key.pem` (do not reuse from a compromised host unless you are certain they were never exposed).  
+4. Bring the stack up with **`docker-compose.nginx.yml`** so rate limiting applies (see [DEPLOY-VIA-GITHUB.md](./DEPLOY-VIA-GITHUB.md)).  
+5. Point **DNS** (A/AAAA) at the new IP; update GitHub Actions secrets **`DROPLET_IP`** if you use auto-deploy.  
+6. Revoke or rotate any API keys you suspect could have been read from the old server.

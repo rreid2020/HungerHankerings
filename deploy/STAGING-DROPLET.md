@@ -90,6 +90,11 @@ That means nothing successfully talked to Resend’s SMTP (or traffic never left
 
 ## Related docs
 
+- **[`DROPLET-SECURITY.md`](./DROPLET-SECURITY.md)** — **read this on every new Droplet** (SSH, firewall, fail2ban, Nginx rate limits) especially after a compromise or abuse report  
+- [`MIGRATE-TO-NEW-DROPLET-NO-VPC.md`](./MIGRATE-TO-NEW-DROPLET-NO-VPC.md) — new server, clone, `.env`, DB trusted sources  
+- [`DEPLOY-VIA-GITHUB.md`](./DEPLOY-VIA-GITHUB.md) — compose command with Nginx; GitHub Actions `DROPLET_IP`  
 - [`env.production.example`](./env.production.example) — full variable list  
 - [`../storefront/docs/RESEND-SMTP.md`](../storefront/docs/RESEND-SMTP.md) — Resend + worker troubleshooting  
 - [`../storefront/docs/DEV-EMAIL-VERIFICATION.md`](../storefront/docs/DEV-EMAIL-VERIFICATION.md) — why `/mailbox` is not used on the droplet  
+
+After a **new public IP**, update `APP_URL`, `NEXT_PUBLIC_*` URLs, DNS, and any secrets you rotated.  

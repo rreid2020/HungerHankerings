@@ -48,6 +48,11 @@ function rewriteVendureAssetUrlForBrowser(url: string): string {
     if (u.hostname === "vendure") {
       return `${publicBase}${u.pathname}${u.search}`;
     }
+    // Previews often carry whatever host Vendure/Channel used (localhost, old domain, etc.).
+    // Same-origin assets always live under /assets/ — force the browser-visible host from NEXT_PUBLIC_*.
+    if (u.pathname.startsWith("/assets/")) {
+      return `${publicBase}${u.pathname}${u.search}`;
+    }
   } catch {
     /* not absolute */
   }
