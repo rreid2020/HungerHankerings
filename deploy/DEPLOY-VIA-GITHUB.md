@@ -38,12 +38,15 @@ The workflow in `.github/workflows/deploy-droplet.yml` deploys to your droplet w
 
 2. In GitHub: repo **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
 
-3. Add two secrets:
+3. Add these repository secrets:
 
-   | Name             | Value |
-   |------------------|--------|
-   | `DROPLET_IP`     | Your droplet’s public IP (e.g. `68.183.199.85`) |
-   | `DROPLET_SSH_KEY`| Full contents of the **private** deploy key (entire file, including `-----BEGIN ... KEY-----` / `-----END ... KEY-----`). Use a key **without a passphrase** for reliable CI. If you use a passphrase-protected key, add secret `DROPLET_SSH_KEY_PASSPHRASE` with the exact passphrase. |
+   | Name | Value |
+   |------|--------|
+   | `DROPLET_IP` | Your droplet’s public IP (e.g. `68.183.199.85`) |
+   | `DROPLET_SSH_KEY` | Full contents of the **private** deploy key (entire file, including `-----BEGIN ... KEY-----` / `-----END ... KEY-----`). |
+   | `DROPLET_SSH_KEY_PASSPHRASE` | **Only if** the private key has a passphrase: the exact passphrase (same string you type locally). Omit if the key has no passphrase. |
+
+   For CI, a dedicated **deploy key with no passphrase** is simplest; passphrase-protected keys work as long as `DROPLET_SSH_KEY_PASSPHRASE` is set.
 
 4. On the **droplet**, the app must already be under `/root/HungerHankerings` and that directory must be a git clone of the repo (so `git fetch` / `git reset` work). If you used “clone from GitHub” when setting up the droplet, you’re set. If you used SCP, either reclone there or run `git init` and `git remote add origin https://github.com/rreid2020/HungerHankerings.git` so the workflow can pull.
 
@@ -57,9 +60,13 @@ Usually one of these:
 
 1. **Wrong material in `DROPLET_SSH_KEY`** — It must be the **private** key (OpenSSH format: begins with `-----BEGIN OPENSSH PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----`), not the `.pub` file. PuTTY `.ppk` files do not work until exported as OpenSSH from PuTTYgen.
 2. **Broken newlines** — The secret must include the full key with line breaks. Re-paste the entire private key in **Settings → Secrets → Actions →** edit `DROPLET_SSH_KEY`.
-3. **Passphrase** — If the key is passphrase-protected, add repository secret `DROPLET_SSH_KEY_PASSPHRASE` and in `.github/workflows/deploy-droplet.yml` add under `with:`: `passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}` (or use a key with an empty passphrase for CI).
+3. **Passphrase** — If you see `this private key is passphrase protected`, add repository secret `DROPLET_SSH_KEY_PASSPHRASE` with the key’s passphrase (the workflow passes it to the SSH action).
 
 The workflow passes `secrets.DROPLET_SSH_KEY` straight into the SSH action so multiline keys are not mangled.
+
+### Deploy failed: `ssh: this private key is passphrase protected`
+
+Add secret **`DROPLET_SSH_KEY_PASSPHRASE`** with the exact passphrase for that private key. Redeploy. Or use a CI-only deploy key with **no** passphrase and update `DROPLET_SSH_KEY` + droplet `authorized_keys`.
 
 ### Deploy failed: `container name "...hungerhankerings-redis-1" is already in use`
 

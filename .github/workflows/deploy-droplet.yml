@@ -1,6 +1,6 @@
 # Deploy to DigitalOcean Droplet on push to main.
 #
-# Secrets: DROPLET_IP, DROPLET_SSH_KEY (private key for SSH to droplet). If your key has a passphrase, add DROPLET_SSH_KEY_PASSPHRASE and passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }} to the with: block.
+# Secrets: DROPLET_IP, DROPLET_SSH_KEY (private key). If the key has a passphrase, add DROPLET_SSH_KEY_PASSPHRASE (see `with:` below).
 #
 # Run DB migrations from your machine before deploying (see apps/vendure/README.md).
 # This workflow only builds and starts the stack; the DB must already be migrated.
@@ -21,6 +21,8 @@ jobs:
           username: root
           # Pass the private key directly. Routing multiline keys through job env can strip newlines → "ssh: no key found".
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          # Required if the private key is passphrase-protected ("this private key is passphrase protected").
+          passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}
           # Full --no-cache build: each service has two ~28m npm install steps; allow 2h so all images can finish
           command_timeout: 120m
           script: |
