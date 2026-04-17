@@ -51,6 +51,16 @@ After that, every push to `main` will run the workflow. Check **Actions** in the
 
 **Note:** The workflow does not change `.env` or `jwt_key.pem` on the server. Those stay as you configured them. Only code from the repo is updated.
 
+### Deploy failed: `ssh.ParsePrivateKey: ssh: no key found` / `no supported methods remain`
+
+Usually one of these:
+
+1. **Wrong material in `DROPLET_SSH_KEY`** — It must be the **private** key (OpenSSH format: begins with `-----BEGIN OPENSSH PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----`), not the `.pub` file. PuTTY `.ppk` files do not work until exported as OpenSSH from PuTTYgen.
+2. **Broken newlines** — The secret must include the full key with line breaks. Re-paste the entire private key in **Settings → Secrets → Actions →** edit `DROPLET_SSH_KEY`.
+3. **Passphrase** — If the key is passphrase-protected, add repository secret `DROPLET_SSH_KEY_PASSPHRASE` and in `.github/workflows/deploy-droplet.yml` add under `with:`: `passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}` (or use a key with an empty passphrase for CI).
+
+The workflow passes `secrets.DROPLET_SSH_KEY` straight into the SSH action so multiline keys are not mangled.
+
 ### Deploy failed: `container name "...hungerhankerings-redis-1" is already in use`
 
 Usually `docker compose down` did not remove old containers (e.g. a previous partial deploy). On the droplet:

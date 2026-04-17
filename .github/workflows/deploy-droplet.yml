@@ -13,15 +13,14 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
     steps:
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          key: ${{ env.SSH_KEY }}
+          # Pass the private key directly. Routing multiline keys through job env can strip newlines → "ssh: no key found".
+          key: ${{ secrets.DROPLET_SSH_KEY }}
           # Full --no-cache build: each service has two ~28m npm install steps; allow 2h so all images can finish
           command_timeout: 120m
           script: |
