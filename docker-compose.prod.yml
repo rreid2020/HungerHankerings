@@ -2,8 +2,16 @@
 # Base compose sets DB_HOST=postgres; we must override with .env values (environment overrides env_file in Compose).
 # Before any compose command on the droplet, run: set -a && [ -f .env ] && . ./.env && set +a
 # Run: docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml up -d
-
+#
+# Base docker-compose.yml publishes dev ports (3000, 3001, 6379, mailpit). Merge would keep them unless reset.
+# In production only Nginx should bind host ports (see docker-compose.nginx.yml).
 services:
+  redis:
+    ports: !reset []
+
+  mailpit:
+    ports: !reset []
+
   vendure:
     restart: unless-stopped
     build:
@@ -36,6 +44,7 @@ services:
       - redis
     expose:
       - "3000"
+    ports: !reset []
     volumes:
       - vendure_assets:/app/assets
 
@@ -89,6 +98,7 @@ services:
       - vendure
     expose:
       - "3000"
+    ports: !reset []
 
 volumes:
   vendure_assets:

@@ -75,8 +75,57 @@ function buildEmailTransport(): {
       port,
       secure: process.env.SMTP_SECURE === "true",
       ...(auth ? { auth } : {}),
-      logging: true,
+      // Verbose SMTP transcript logging can leak credentials / message content; keep for local dev only.
+      logging: process.env.NODE_ENV !== "production",
     },
+  };
+}
+
+/**
+ * Production browser CORS: fail closed if APP_URL is missing (never fall back to `origin: true`).
+ * Includes apex + www variants when applicable. Optional comma-separated APP_CORS_EXTRA_ORIGINS.
+ */
+function buildProductionCors():
+  | boolean
+  | { origin: string[] | false; credentials: boolean } {
+  const appUrl = process.env.APP_URL?.trim();
+  if (!appUrl) {
+    console.error(
+      "[vendure] APP_URL must be set in production — CORS disabled until fixed (browsers cannot call the Shop API cross-origin).",
+    );
+    return { origin: false, credentials: true };
+  }
+  const origins = new Set<string>();
+  const normalized = appUrl.replace(/\/$/, "");
+  origins.add(normalized);
+  try {
+    const u = new URL(appUrl);
+    const host = u.hostname;
+    const isLocal =
+      host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+    // Pair apex <-> www only for real hostnames, not raw IPv4/IPv6 literals.
+    const isIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+    const isIpv6 = host.includes(":");
+    if (!isLocal && !isIpv4 && !isIpv6 && host.includes(".")) {
+      if (host.startsWith("www.")) {
+        const bare = host.slice(4);
+        origins.add(`${u.protocol}//${bare}${u.port ? `:${u.port}` : ""}`.replace(/\/$/, ""));
+      } else {
+        origins.add(`${u.protocol}//www.${host}${u.port ? `:${u.port}` : ""}`.replace(/\/$/, ""));
+      }
+    }
+  } catch {
+    console.warn(`[vendure] APP_URL could not be parsed for CORS extras: ${appUrl}`);
+  }
+  for (const raw of (process.env.APP_CORS_EXTRA_ORIGINS ?? "").split(",")) {
+    const o = raw.trim().replace(/\/$/, "");
+    if (o) {
+      origins.add(o);
+    }
+  }
+  return {
+    origin: [...origins],
+    credentials: true,
   };
 }
 
@@ -174,9 +223,8 @@ if (isProduction && !requireCustomerEmailVerification) {
     "[vendure] VENDURE_REQUIRE_EMAIL_VERIFICATION=false — customers can sign in without confirming email. Turn this off before real launch."
   );
 }
-// In production restrict CORS to APP_URL; in dev allow all (localhost)
-const corsOptions =
-  isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
+// In production restrict CORS to APP_URL (plus www / APP_CORS_EXTRA_ORIGINS); in dev allow all (localhost)
+const corsOptions = isProduction ? buildProductionCors() : true;
 
 const smtpHostConfigured = Boolean(process.env.SMTP_HOST?.trim());
 /** Dev file mailbox at /mailbox only when not sending via SMTP (e.g. use Mailpit with SMTP_HOST=mailpit). */
@@ -225,6 +273,12 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
     cors: corsOptions,
+    // Default Vendure introspection is true — disable in production to reduce schema exposure.
+    introspection: !isProduction,
+    adminApiPlayground: false,
+    shopApiPlayground: false,
+    adminApiDebug: false,
+    shopApiDebug: false,
   },
   dbConnectionOptions: {
     type: "postgres",
