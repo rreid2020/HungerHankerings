@@ -29,6 +29,9 @@ jobs:
           else
             echo "Passphrase set; skipping local ssh-keygen verify."
           fi
+          # appleboy/ssh-action runs in Docker with a different UID than `runner`. Bind-mounted 600 files are not
+          # readable → getKeyFile: permission denied. Ephemeral runner only; relax so the container can open the key.
+          chmod 644 "$GITHUB_WORKSPACE/.ssh_deploy_key"
 
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3

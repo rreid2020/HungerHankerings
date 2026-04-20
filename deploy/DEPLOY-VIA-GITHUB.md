@@ -62,7 +62,7 @@ Usually one of these:
 2. **Broken newlines** — The secret must include the full key with line breaks. Re-paste the entire private key in **Settings → Secrets → Actions →** edit `DROPLET_SSH_KEY`.
 3. **Passphrase** — If you see `this private key is passphrase protected`, add repository secret `DROPLET_SSH_KEY_PASSPHRASE` with the key’s passphrase (the workflow passes it to the SSH action).
 
-The workflow first writes `DROPLET_SSH_KEY` to a short-lived file on the runner and passes **`key_path`** into `appleboy/ssh-action`, so multiline PEM newlines are preserved (passing the key inline into the action’s Docker step can still cause **publickey** failures even when the same key works locally).
+The workflow first writes `DROPLET_SSH_KEY` to a short-lived file on the runner and passes **`key_path`** into `appleboy/ssh-action`, so multiline PEM newlines are preserved. The file is then **`chmod 644`** so the action’s Docker process (different UID than `runner`) can read the bind-mounted key; **`600` alone causes `getKeyFile: permission denied`**.
 
 ### Deploy failed: `ssh: this private key is passphrase protected`
 
