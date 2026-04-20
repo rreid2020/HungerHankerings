@@ -27,7 +27,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/ci_deploy_key
+          # Strip CR — secrets pasted from Windows often contain CRLF and break OpenSSH ("Permission denied").
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/ci_deploy_key
           chmod 600 ~/.ssh/ci_deploy_key
           if [ -z "$KEY_PASSPHRASE" ]; then
             ssh-keygen -y -f ~/.ssh/ci_deploy_key >/dev/null
@@ -35,8 +36,10 @@ jobs:
           else
             echo "Passphrase secret set; skipping ssh-keygen verify (use a passphraseless key for CI if deploy fails)."
           fi
+          echo "Deploy key fingerprint (must match the public key in /root/.ssh/authorized_keys on the droplet):"
+          ssh-keygen -lf ~/.ssh/ci_deploy_key
           ssh-keyscan -T 10 -H "$DROPLET_IP" >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh -i ~/.ssh/ci_deploy_key -o IdentitiesOnly=yes \
+          ssh -i ~/.ssh/ci_deploy_key -o IdentitiesOnly=yes -o BatchMode=yes \
             -o StrictHostKeyChecking=accept-new \
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=400 \

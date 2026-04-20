@@ -54,6 +54,17 @@ After that, every push to `main` will run the workflow. Check **Actions** in the
 
 **Note:** The workflow does not change `.env` or `jwt_key.pem` on the server. Those stay as you configured them. Only code from the repo is updated.
 
+### Deploy failed: `Permission denied (publickey)` (native `ssh` step)
+
+The private key in **`DROPLET_SSH_KEY`** must be the **exact pair** for a line in **`/root/.ssh/authorized_keys`** on the droplet you reach with **`DROPLET_IP`**.
+
+1. On the **next workflow run**, open the log line **“Deploy key fingerprint”** — it shows `SHA256:...`.
+2. On your PC: `ssh-keygen -lf C:\Users\Roger\.ssh\github_deploy_hh.pub` — **same SHA256** must appear.
+3. On the **droplet**: open `/root/.ssh/authorized_keys` and confirm the **same** `ssh-ed25519 AAAA... github-actions-deploy` line from your **`github_deploy_hh.pub`** is there (append it if missing).
+4. **`DROPLET_IP`** must be the droplet you actually use (e.g. reserved IP **129.212.139.197**), not an old droplet’s address.
+
+If you pasted the secret from Windows, **CRLF** in the PEM can break SSH; the workflow strips `\r` from the secret before connecting.
+
 ### Deploy failed: `ssh.ParsePrivateKey: ssh: no key found` / `no supported methods remain`
 
 Usually one of these:
