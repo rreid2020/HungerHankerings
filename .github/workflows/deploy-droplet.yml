@@ -14,14 +14,29 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Write key to a file so multiline PEM is preserved (passing `key:` into the action’s Docker can break auth).
+      - name: Write SSH deploy key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          KEY_PASSPHRASE: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > "$GITHUB_WORKSPACE/.ssh_deploy_key"
+          chmod 600 "$GITHUB_WORKSPACE/.ssh_deploy_key"
+          # Non-interactive sanity check only when no passphrase (otherwise ssh-keygen would hang/fail).
+          if [ -z "$KEY_PASSPHRASE" ]; then
+            ssh-keygen -y -f "$GITHUB_WORKSPACE/.ssh_deploy_key" > /dev/null
+            echo "SSH private key parses OK."
+          else
+            echo "Passphrase set; skipping local ssh-keygen verify."
+          fi
+
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
-          # Pass the private key directly. Routing multiline keys through job env can strip newlines → "ssh: no key found".
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          # Required if the private key is passphrase-protected ("this private key is passphrase protected").
+          key_path: ${{ github.workspace }}/.ssh_deploy_key
+          # Required if the private key is passphrase-protected.
           passphrase: ${{ secrets.DROPLET_SSH_KEY_PASSPHRASE }}
           # Full --no-cache build: each service has two ~28m npm install steps; allow 2h so all images can finish
           command_timeout: 120m

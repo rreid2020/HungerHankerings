@@ -29,6 +29,7 @@ id_ecdsa
 id_ecdsa.pub
 deploy_key
 deploy_key.pub
+.ssh_deploy_key
 HungerTwo
 HungerTwo.pub
 jwt_key.pem
