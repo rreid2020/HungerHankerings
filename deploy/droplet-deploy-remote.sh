@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Run on the droplet via: ssh ... bash -s < deploy/droplet-deploy-remote.sh
+# See .github/workflows/deploy-droplet.yml
+set -e
+cd /root/HungerHankerings
+git fetch origin main
+git reset --hard origin/main
+export COMPOSE_PROJECT_NAME=hungerhankerings
+if [ ! -f .env ]; then
+  echo "ERROR: .env not found at /root/HungerHankerings/.env. Create it from deploy/env.production.example."
+  exit 1
+fi
+# Source .env into shell AND use --env-file so Compose always has DB_* for substitution (run and up must see same values)
+set -a && . ./.env && set +a
+echo "DB target (from .env): DB_HOST=$DB_HOST DB_NAME=$DB_NAME"
+comp="docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.nginx.yml"
+# Build while old stack still serves traffic (avoids ~40m downtime). Then swap containers.
+echo "Building images (site stays up until swap)..."
+$comp build --no-cache
+echo "Stopping stack for swap..."
+# Do not hide down failures: old containers left behind cause "name already in use" on compose run/up.
+$comp down --remove-orphans --timeout 120 || echo "WARN: compose down exited non-zero"
+proj="${COMPOSE_PROJECT_NAME:-hungerhankerings}"
+leftovers=$(docker ps -aq --filter "label=com.docker.compose.project=${proj}" 2>/dev/null || true)
+if [ -n "$leftovers" ]; then
+  echo "Removing leftover Compose project containers (${proj}): $leftovers"
+  docker rm -f $leftovers || true
+fi
+# Orphans may keep names like ${proj}-redis-1 without compose labels (stale manual run / partial down)
+name_leftovers=$(docker ps -aq --filter "name=${proj}-" 2>/dev/null || true)
+if [ -n "$name_leftovers" ]; then
+  echo "Removing name-matched project containers (${proj}-*): $name_leftovers"
+  docker rm -f $name_leftovers || true
+fi
+# Explicit names: ps --filter name= can miss edge cases; these exact names must be free for compose run/up
+for svc in redis mailpit vendure vendure-worker storefront nginx; do
+  docker rm -f "${proj}-${svc}-1" 2>/dev/null || true
+done
+# Stale default network prevents compose run/up from creating a fresh stack
+docker network rm "${proj}_default" 2>/dev/null || true
+echo "Pruning build cache (optional disk recovery)..."
+docker builder prune -af 2>/dev/null || true
+# Ensure Vendure schema exists on the DB we use (same .env). With no migration files, runMigrations does nothing;
+# the "creating a new table" logs are TypeORM's diff only—tables are not created when synchronize is false.
+# So: if administrator table is missing, run one-time schema creation (synchronize) against that DB.
+echo "Checking if Vendure schema exists on $DB_NAME..."
+set +e
+$comp run --rm vendure node dist/check-schema.js
+schema_ok=$?
+set -e
+if [ "$schema_ok" -ne 0 ]; then
+  echo "Schema missing; running one-time schema creation (RUN_SCHEMA_SYNC=1)..."
+  $comp run --rm -e RUN_SCHEMA_SYNC=1 vendure node dist/schema-init.js
+else
+  echo "Vendure schema already exists."
+fi
+echo "Running migrations (one-off container, same .env as stack)..."
+$comp run --rm vendure node dist/migrate.js
+# postal_code_zone table + seed: run once on droplet (see deploy/run-postal-zone-once.sh)
+echo "Starting stack (all services must reach running state for health checks)..."
+$comp up -d --force-recreate --remove-orphans
+echo "Compose up finished; container list:"
+$comp ps -a
+echo "Verify vendure container DB env (must match .env):"
+$comp exec -T vendure env | grep -E '^DB_HOST=|^DB_NAME=|^DB_PORT=' || true
+echo "Waiting for Vendure to listen (up to 90s)..."
+ok=0
+for i in $(seq 1 18); do
+  if $comp exec -T nginx wget -qO- --timeout=5 http://vendure:3000/health 2>/dev/null | head -c 1 | grep -q .; then
+    ok=1
+    break
+  fi
+  echo "Attempt $i/18: Vendure not ready, waiting 5s..."
+  sleep 5
+done
+if [ "$ok" = "1" ]; then
+  echo "Vendure reachable from nginx."
+else
+  echo "Vendure did not become reachable. Dumping vendure logs:"
+  $comp logs vendure --tail=100 || true
+  echo "--- nginx can resolve vendure?"
+  $comp exec -T nginx wget -qO- --timeout=3 http://vendure:3000/health 2>&1 || true
+  exit 1
+fi
+
+echo "--- Health checks ---"
+psout=$($comp ps -a 2>/dev/null) || { echo "FAIL: docker compose ps failed"; exit 1; }
+# All required containers must be running (status contains "Up" and not "Restarting")
+for svc in vendure vendure-worker storefront nginx redis; do
+  line=$(echo "$psout" | grep -E "\s+$svc\s+" | head -1)
+  if [ -z "$line" ]; then
+    echo "FAIL: No container for service $svc."
+    echo "$psout"
+    exit 1
+  fi
+  if echo "$line" | grep -q "Restarting"; then
+    echo "FAIL: $svc is in restart loop."
+    $comp logs "$svc" --tail=30
+    exit 1
+  fi
+  if ! echo "$line" | grep -q "Up"; then
+    echo "FAIL: $svc is not up (status: $line)."
+    echo "$psout"
+    exit 1
+  fi
+  echo "  $svc: running"
+done
+# Public endpoints via nginx (localhost:80 on droplet)
+health_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 http://127.0.0.1/health 2>/dev/null || echo "000")
+if [ "$health_code" != "200" ]; then
+  echo "FAIL: GET /health returned $health_code (expected 200)."
+  exit 1
+fi
+echo "  GET /health: 200"
+storefront_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 http://127.0.0.1/ 2>/dev/null || echo "000")
+if [ "$storefront_code" != "200" ]; then
+  echo "FAIL: GET / (storefront) returned $storefront_code (expected 200)."
+  exit 1
+fi
+echo "  GET / (storefront): 200"
+echo "Pruning unused images (frees disk; new stack already running)..."
+docker image prune -af 2>/dev/null || true
+echo "Health checks passed."
+echo "Tip: on the droplet always use: export COMPOSE_PROJECT_NAME=hungerhankerings"

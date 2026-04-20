@@ -27,7 +27,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compos
 
 ## Optional: Auto-deploy on push (GitHub Actions)
 
-The workflow in `.github/workflows/deploy-droplet.yml` deploys to your droplet when you push to `main`: it SSHs in, pulls the latest code, rebuilds images, and restarts the stack.
+The workflow in `.github/workflows/deploy-droplet.yml` deploys when you push to `main`: it checks out the repo, then runs **`ssh`** on the GitHub runner (same OpenSSH as your laptop) and streams **`deploy/droplet-deploy-remote.sh`** to the droplet — no third-party Docker SSH action.
 
 ### Setup (one-time)
 
@@ -46,7 +46,7 @@ The workflow in `.github/workflows/deploy-droplet.yml` deploys to your droplet w
    | `DROPLET_SSH_KEY` | Full contents of the **private** deploy key (entire file, including `-----BEGIN ... KEY-----` / `-----END ... KEY-----`). |
    | `DROPLET_SSH_KEY_PASSPHRASE` | **Only if** the private key has a passphrase: the exact passphrase (same string you type locally). Omit if the key has no passphrase. |
 
-   For CI, a dedicated **deploy key with no passphrase** is simplest; passphrase-protected keys work as long as `DROPLET_SSH_KEY_PASSPHRASE` is set.
+   For CI, a dedicated **deploy key with no passphrase** is simplest. Passphrase-protected keys need `ssh-agent`/`sshpass` to automate — not wired in this workflow; use an unencrypted deploy key for Actions.
 
 4. On the **droplet**, the app must already be under `/root/HungerHankerings` and that directory must be a git clone of the repo (so `git fetch` / `git reset` work). If you used “clone from GitHub” when setting up the droplet, you’re set. If you used SCP, either reclone there or run `git init` and `git remote add origin https://github.com/rreid2020/HungerHankerings.git` so the workflow can pull.
 
@@ -60,9 +60,9 @@ Usually one of these:
 
 1. **Wrong material in `DROPLET_SSH_KEY`** — It must be the **private** key (OpenSSH format: begins with `-----BEGIN OPENSSH PRIVATE KEY-----` or `-----BEGIN RSA PRIVATE KEY-----`), not the `.pub` file. PuTTY `.ppk` files do not work until exported as OpenSSH from PuTTYgen.
 2. **Broken newlines** — The secret must include the full key with line breaks. Re-paste the entire private key in **Settings → Secrets → Actions →** edit `DROPLET_SSH_KEY`.
-3. **Passphrase** — If you see `this private key is passphrase protected`, add repository secret `DROPLET_SSH_KEY_PASSPHRASE` with the key’s passphrase (the workflow passes it to the SSH action).
+3. **Passphrase** — This workflow uses plain `ssh` without `ssh-agent`. Use a **passphraseless** deploy key for CI, or you’ll need to change the workflow to support interactive/crypto unlocking.
 
-The workflow first writes `DROPLET_SSH_KEY` to a short-lived file on the runner and passes **`key_path`** into `appleboy/ssh-action`, so multiline PEM newlines are preserved. The file is then **`chmod 644`** so the action’s Docker process (different UID than `runner`) can read the bind-mounted key; **`600` alone causes `getKeyFile: permission denied`**.
+The workflow writes the private key under **`~/.ssh/ci_deploy_key`** (mode `600`) on the runner and runs **`ssh -i … root@$DROPLET_IP`**, matching how you connect from your PC.
 
 ### Deploy failed: `ssh: this private key is passphrase protected`
 
