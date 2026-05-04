@@ -1,4 +1,5 @@
 # Paste into DigitalOcean → App → Settings → App spec → Edit (omit # comments if the editor rejects them).
+# Replace BUILD_TIME URLs with your real App URL before relying on the storefront bundle.
 
 alerts:
   - rule: DEPLOYMENT_FAILED
@@ -33,16 +34,23 @@ services:
     http_port: 8080
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 120
+      period_seconds: 15
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 5
     envs:
       - key: NEXT_PUBLIC_VENDURE_SHOP_API_URL
         scope: BUILD_TIME
-        value: "https://REPLACE-WITH-YOUR-APP-HOST/shop-api"
+        value: "https://hunger-hankerings-enxau.ondigitalocean.app/shop-api"
       - key: NEXT_PUBLIC_SITE_URL
         scope: BUILD_TIME
-        value: "https://REPLACE-WITH-YOUR-APP-HOST"
+        value: "https://hunger-hankerings-enxau.ondigitalocean.app"
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         scope: BUILD_TIME
-        value: "pk_live_OR_pk_test_REPLACE_ME"
+        value: "pk_test_REPLACE_IN_UI_WITH_YOUR_KEY"
       - key: DB_HOST
         scope: RUN_TIME
         value: "${db-postgresql-tor1-60715.HOSTNAME}"
@@ -66,7 +74,7 @@ services:
         value: "http://127.0.0.1:3000/shop-api"
       - key: APP_URL
         scope: RUN_TIME
-        value: "https://REPLACE-WITH-YOUR-APP-HOST"
+        value: "https://hunger-hankerings-enxau.ondigitalocean.app"
       - key: NODE_ENV
         scope: RUN_TIME
         value: "production"

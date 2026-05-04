@@ -104,6 +104,12 @@ Usually one of:
 
 Nothing is listening on **`PORT`** (8080) yet, or the container exited. Check **Runtime logs** for nginx/supervisord/node errors. Ensure **`http_port: 8080`** matches the image.
 
+### App status **Degraded** (not **Healthy**)
+
+Usually **health checks** hit **`/health`** before Vendure + nginx are ready (first boot does `npm` build inside the image layers — runtime still starts vendure + next + nginx). In the app spec, raise **`health_check.initial_delay_seconds`** (e.g. **120**) and **`timeout_seconds`** (e.g. **10**), and keep **`http_path: /health`** (proxied to Vendure in `nginx-app.conf.template`). After deploy, open **Runtime logs** and confirm no crash loop (DB SSL, missing `COOKIE_SECRET`, bad `APP_URL` typos like `https://https://`).
+
+**Env typos that break health / APIs:** `https://https://…`, `…//shop-api`, `APP_URL` ending in **`/.com`**, or **`DO_SPACES_*`** values pasted **with quote characters** — the secret value must be the raw key, not `"key"` in quotes.
+
 ### `Unlinking stale socket /run/supervisor.sock` (repeating)
 
 Supervisord was restarting quickly and fighting a leftover RPC socket. The image **disables the RPC socket** (no `unix_http_server`) and uses **`/tmp/supervisord.pid`**. If you still see a tight loop, check logs **above** that line for **Node/nginx crash** (bad env, DB connect, nginx config).
