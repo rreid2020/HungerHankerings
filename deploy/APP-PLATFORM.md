@@ -104,6 +104,10 @@ Usually one of:
 
 Nothing is listening on **`PORT`** (8080) yet, or the container exited. Check **Runtime logs** for nginx/supervisord/node errors. Ensure **`http_port: 8080`** matches the image.
 
+### `Unlinking stale socket /run/supervisor.sock` (repeating)
+
+Supervisord was restarting quickly and fighting a leftover RPC socket. The image **disables the RPC socket** (no `unix_http_server`) and uses **`/tmp/supervisord.pid`**. If you still see a tight loop, check logs **above** that line for **Node/nginx crash** (bad env, DB connect, nginx config).
+
 ## Operational caveats
 
 - **Single instance** runs API, worker, and storefront together; deploys and crashes affect all three.
