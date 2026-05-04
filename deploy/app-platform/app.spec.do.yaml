@@ -1,0 +1,80 @@
+# Copy everything below the line into DigitalOcean → App → Settings → App spec → Edit → Save.
+# ---------------------------------------------------------------------------
+# BEFORE first deploy: replace BUILD_TIME URLs with your real app URL (same host as /shop-api).
+# After App Platform assigns a default URL, use that or your custom domain.
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+databases:
+  - cluster_name: db-postgresql-tor1-60715
+    db_name: vendure
+    db_user: doadmin
+    engine: PG
+    name: db-postgresql-tor1-60715
+    production: true
+
+ingress:
+  rules:
+    - component:
+        name: hungerhankerings
+      match:
+        path:
+          prefix: /
+
+name: hunger-hankerings
+region: tor
+
+services:
+  - name: hungerhankerings
+    github:
+      repo: rreid2020/HungerHankerings
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: deploy/app-platform/Dockerfile
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    envs:
+      # Next.js — BUILD_TIME (baked into client bundle). Replace with your real https URL before deploy.
+      - key: NEXT_PUBLIC_VENDURE_SHOP_API_URL
+        scope: BUILD_TIME
+        value: "https://REPLACE-WITH-YOUR-APP-HOST/shop-api"
+      - key: NEXT_PUBLIC_SITE_URL
+        scope: BUILD_TIME
+        value: "https://REPLACE-WITH-YOUR-APP-HOST"
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        scope: BUILD_TIME
+        value: "pk_live_OR_pk_test_REPLACE_ME"
+      # Vendure expects DB_* (see deploy/env.production.example). Bindables = database `name` in spec.
+      - key: DB_HOST
+        scope: RUN_TIME
+        value: "${db-postgresql-tor1-60715.HOSTNAME}"
+      - key: DB_PORT
+        scope: RUN_TIME
+        value: "${db-postgresql-tor1-60715.PORT}"
+      - key: DB_USER
+        scope: RUN_TIME
+        value: "${db-postgresql-tor1-60715.USERNAME}"
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        value: "${db-postgresql-tor1-60715.PASSWORD}"
+      - key: DB_NAME
+        scope: RUN_TIME
+        value: "${db-postgresql-tor1-60715.DATABASE}"
+      # Optional: SSL for managed Postgres (set false if you see TLS errors)
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        scope: RUN_TIME
+        value: "false"
+      # Storefront server → Vendure inside the container
+      - key: VENDURE_SHOP_API_URL
+        scope: RUN_TIME
+        value: "http://127.0.0.1:3000/shop-api"
+      # Public origin for Vendure (match your real URL after you know it)
+      - key: APP_URL
+        scope: RUN_TIME
+        value: "https://REPLACE-WITH-YOUR-APP-HOST"
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: "production"

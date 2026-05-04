@@ -1,0 +1,49 @@
+# DigitalOcean App Platform spec — example only.
+# Copy to app.yaml (or paste into the control panel), replace placeholders, then: doctl apps create --spec app.yaml
+#
+# Docs: https://docs.digitalocean.com/products/app-platform/reference/app-specification/
+
+name: hunger-hankerings
+region: tor
+
+services:
+  - name: web
+    github:
+      repo: YOUR_GITHUB_ORG/YOUR_REPO_NAME
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: deploy/app-platform/Dockerfile
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 60
+      period_seconds: 10
+      timeout_seconds: 15
+      success_threshold: 1
+      failure_threshold: 5
+    # Must match your live storefront URL (same host nginx exposes). Rebuild after changing.
+    build_environment_variables:
+      - key: NEXT_PUBLIC_VENDURE_SHOP_API_URL
+        scope: BUILD_TIME
+        value: https://YOUR-APP-HOSTNAME/shop-api
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        scope: BUILD_TIME
+        value: pk_live_OR_pk_test_REPLACE_ME
+      - key: NEXT_PUBLIC_SITE_URL
+        scope: BUILD_TIME
+        value: https://YOUR-APP-HOSTNAME
+    envs:
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      # Server-side Shop API (inside container — loopback only).
+      - key: VENDURE_SHOP_API_URL
+        scope: RUN_TIME
+        value: http://127.0.0.1:3000/shop-api
+      # Mirror public origin for redirects / links (use your real URL).
+      - key: APP_URL
+        scope: RUN_TIME
+        value: https://YOUR-APP-HOSTNAME
+      # Add the rest from deploy/env.production.example as RUN_TIME (secrets via ENCRYPTED type in UI or EV[] refs).
