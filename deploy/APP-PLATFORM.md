@@ -6,18 +6,18 @@ Files:
 
 | Path | Purpose |
 |------|---------|
-| `deploy/app-platform/Dockerfile` | Multi-stage build + runtime image |
+| `Dockerfile` (repo root) | Multi-stage build + runtime image (root path so App Platform prefers Docker over Node buildpack) |
 | `deploy/app-platform/nginx-main.conf` | `http { … limit_* zones … }` |
 | `deploy/app-platform/nginx-app.conf.template` | Server block → `default.conf` at startup |
 | `deploy/app-platform/supervisord.conf` | Starts vendure, worker, storefront, nginx |
 | `deploy/app-platform/docker-entrypoint.sh` | Substitutes listen port, runs supervisord |
 | `deploy/app-platform/app.spec.example.yaml` | Example App Platform spec |
 
-Build **from the repository root** (`docker build -f deploy/app-platform/Dockerfile .`).
+Build **from the repository root** (`docker build .` or explicitly `docker build -f Dockerfile .`).
 
 ## No “Dockerfile path” in the UI? Use the App Spec (YAML)
 
-DigitalOcean does not always show a separate **Dockerfile path** field on the **Source** screen. The supported way to point at a non-root Dockerfile is the **app spec**: set `dockerfile_path` on your Web Service (see [Builds with Dockerfiles](https://docs.digitalocean.com/products/app-platform/reference/dockerfile/)).
+DigitalOcean does not always show a separate **Dockerfile path** field on the **Source** screen. This repo keeps **`Dockerfile` at the repository root** so App Platform [auto-detects Docker](https://docs.digitalocean.com/products/app-platform/reference/dockerfile/) instead of the root `package.json` (Node buildpack). You can still set **`dockerfile_path: Dockerfile`** explicitly in the app spec (see [Builds with Dockerfiles](https://docs.digitalocean.com/products/app-platform/reference/dockerfile/)).
 
 ### Find it in the control panel
 
@@ -29,11 +29,11 @@ DigitalOcean does not always show a separate **Dockerfile path** field on the **
 6. Under your **Web Service** (the `services:` entry that has `github:`), add a line **next to** the other keys at the same indentation:
 
    ```yaml
-   dockerfile_path: deploy/app-platform/Dockerfile
+   dockerfile_path: Dockerfile
    ```
 
 7. Ensure **`source_dir`** for that service is **not** set to `deploy/app-platform` only — use the **repo root** (omit `source_dir`, or use `.` / `/` per [App spec reference](https://docs.digitalocean.com/products/app-platform/reference/app-spec/)).
-8. Remove any **`build_command`** / **`run_command`** on that service if they were added for buildpacks, so the image starts from the Dockerfile **`ENTRYPOINT`**.
+8. Remove any **`build_command`** / **`run_command`** on that service if they were added for buildpacks, so the image starts from the Dockerfile **`CMD`**.
 9. Set **`http_port: 8080`** on that service if it is not already set.
 10. Save — the app will redeploy. Official overview: [Update App Spec](https://docs.digitalocean.com/products/app-platform/how-to/update-app-spec/).
 
@@ -83,7 +83,7 @@ Point webhook URLs at your **new** public hostname (`https://…/payments/…` a
 
 ## Creating the app
 
-1. Connect the GitHub repo in App Platform; set **Dockerfile path** to `deploy/app-platform/Dockerfile` and **HTTP port** to **8080**.
+1. Connect the GitHub repo in App Platform; leave **Dockerfile at repo root** (or set **Dockerfile path** to `Dockerfile`) and **HTTP port** to **8080**.
 2. Add **build-time** variables for `NEXT_PUBLIC_*` (see example spec).
 3. Add **runtime** variables (and secrets) from your Droplet `.env`, including `VENDURE_SHOP_API_URL` loopback URL above.
 4. Optionally set **health check path** to **`/health`** (proxied to Vendure).
@@ -96,8 +96,9 @@ First deploy can take several minutes (npm install + Next build + Vendure compil
 
 Usually one of:
 
-1. **Buildpack image, not Docker** — In the deploy log, confirm you see a **Dockerfile** build (layers / `FROM node`), not Node buildpack / Procfile. Fix: `dockerfile_path` on the Web Service in the [app spec](https://docs.digitalocean.com/products/app-platform/reference/app-spec/), and remove **`environment_slug`**. Remove any empty **`run_command:`** / **`build_command:`** lines that override the image.
-2. **Explicit process** — The image uses **`CMD ["/docker-entrypoint.sh"]`** so App Platform has a default process. Redeploy after pulling latest `main`.
+1. **Buildpack image, not Docker** — In the deploy log, confirm you see a **Dockerfile** build (layers / `FROM node`), not Node buildpack / Procfile. Fix: remove **`environment_slug`**, ensure a root **`Dockerfile`** exists (this repo) or set **`dockerfile_path: Dockerfile`** in the [app spec](https://docs.digitalocean.com/products/app-platform/reference/app-spec/). Remove any empty **`run_command:`** / **`build_command:`** lines that override the image.
+2. **Ignore “add a Procfile”** if the build log shows Docker — that advice applies to **buildpack** deploys only. This app starts via **`CMD ["/docker-entrypoint.sh"]`** in the Dockerfile.
+3. **Explicit process** — Redeploy after pulling latest `main` so the runner picks up the current image.
 
 ### `Readiness probe failed: … :8080: connect: connection refused`
 

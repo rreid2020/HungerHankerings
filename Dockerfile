@@ -1,6 +1,7 @@
-# Single Web Service: Vendure (API + Admin) + Vendure worker + Next.js storefront + nginx edge.
-# Build from repository root (DigitalOcean: source_dir `/`, dockerfile_path `deploy/app-platform/Dockerfile`).
 # syntax=docker/dockerfile:1
+# Single Web Service: Vendure + worker + Next.js + nginx on $PORT (default 8080).
+# Repo root: App Platform auto-detects Docker (avoids Node buildpack / Procfile on root package.json).
+# Build context = repository root. Supporting files: deploy/app-platform/*.conf, docker-entrypoint.sh
 
 FROM node:20-alpine AS vendure-build
 WORKDIR /vendure
@@ -64,5 +65,4 @@ EXPOSE 8080
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Use CMD (not only ENTRYPOINT) so platforms that look for a "default process" see a start command.
 CMD ["/docker-entrypoint.sh"]
