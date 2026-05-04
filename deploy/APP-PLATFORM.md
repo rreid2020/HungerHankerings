@@ -104,6 +104,10 @@ Usually one of:
 
 Nothing is listening on **`PORT`** (8080) yet, or the container exited. Check **Runtime logs** for nginx/supervisord/node errors. Ensure **`http_port: 8080`** matches the image.
 
+### `listen EADDRINUSE 0.0.0.0:8080` (NestApplication / Vendure)
+
+App Platform sets **`PORT=8080`** for the container (matches **`http_port`**). Vendure uses **`process.env.PORT`** for its HTTP server. Our image runs **nginx on `$PORT`** and proxies to Vendure on **3000**. **Supervisord sets `PORT=3000`** for the Vendure and worker processes only so they never compete with nginx for 8080.
+
 ### App status **Degraded** (not **Healthy**)
 
 Usually **health checks** hit **`/health`** before Vendure + nginx are ready (first boot does `npm` build inside the image layers — runtime still starts vendure + next + nginx). In the app spec, raise **`health_check.initial_delay_seconds`** (e.g. **120**) and **`timeout_seconds`** (e.g. **10**), and keep **`http_path: /health`** (proxied to Vendure in `nginx-app.conf.template`). After deploy, open **Runtime logs** and confirm no crash loop (DB SSL, missing `COOKIE_SECRET`, bad `APP_URL` typos like `https://https://`).

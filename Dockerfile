@@ -63,6 +63,6 @@ COPY --from=storefront-build /storefront /app/storefront
 
 EXPOSE 8080
 ENV NODE_ENV=production
-ENV PORT=8080
+# Do not set PORT here — App Platform sets PORT=8080 for nginx; supervisord forces Vendure PORT=3000.
 
 CMD ["/docker-entrypoint.sh"]
