@@ -360,12 +360,19 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
       paymentIntentCreateParams: (_injector, _ctx, order) => {
         const raw = order.customFields?.checkoutGiftSurchargeCents as number | null | undefined;
         const extra = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : 0;
-        if (extra <= 0) {
-          return {};
-        }
         const base = getAmountInStripeMinorUnits(order);
-        // Stripe types omit `amount` from overrides; runtime merge replaces PI amount.
-        return { amount: base + extra } as Record<string, unknown>;
+        // Storefront uses Stripe Card Element + `confirmCardPayment`. Vendure's default
+        // `automatic_payment_methods: { enabled: true }` targets Payment Element; with
+        // Card Element, Stripe often returns "Your card number is incomplete" for valid PANs.
+        const cardOnlyPi: Record<string, unknown> = {
+          automatic_payment_methods: { enabled: false },
+          payment_method_types: ["card"],
+        };
+        if (extra > 0) {
+          // Stripe types omit `amount` from overrides; runtime merge replaces PI amount.
+          cardOnlyPi.amount = base + extra;
+        }
+        return cardOnlyPi;
       },
     }),
     buildAssetServerPlugin(),
