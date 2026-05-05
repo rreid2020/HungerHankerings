@@ -3,7 +3,7 @@ server {
     listen __LISTEN_PORT__;
     server_name _;
 
-    limit_conn conn 20;
+    limit_conn conn 80;
 
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
@@ -16,7 +16,7 @@ server {
     }
 
     location /shop-api {
-        limit_req zone=api burst=20 nodelay;
+        limit_req zone=api burst=100 nodelay;
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -29,7 +29,7 @@ server {
     }
 
     location /admin-api {
-        limit_req zone=api burst=20 nodelay;
+        limit_req zone=api burst=60 nodelay;
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;

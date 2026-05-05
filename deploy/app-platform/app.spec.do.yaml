@@ -1,5 +1,9 @@
 # Paste into DigitalOcean → App → Settings → App spec → Edit (omit # comments if the editor rejects them).
 # Replace BUILD_TIME URLs with your real App URL before relying on the storefront bundle.
+#
+# Add RUN_TIME env vars in the UI for mail (not shown below): SMTP_HOST, SMTP_PORT, SMTP_USER,
+# SMTP_PASS, SMTP_SECURE, SMTP_FROM, ORDERS_INBOX_EMAIL — required for order + inbox emails on worker.
+# Consider apps-s-1vcpu-2gb+ if you see 504/timeouts (API + worker + Next share one container).
 
 alerts:
   - rule: DEPLOYMENT_FAILED

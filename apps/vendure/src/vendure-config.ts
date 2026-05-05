@@ -150,6 +150,11 @@ const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path.join(__dirname, "../assets");
 const isProduction = process.env.NODE_ENV === "production";
 
+/** Slower SQL polling on small hosts (e.g. DO App 1 vCPU + worker + Next) reduces DB contention with Shop API. */
+const jobQueuePlugin = isProduction
+  ? DefaultJobQueuePlugin.init({ pollInterval: 4000, concurrency: 1 })
+  : DefaultJobQueuePlugin;
+
 /**
  * Pre-built Admin UI defaults to apiHost localhost:3000. In production the browser must call the
  * public origin (same host Nginx exposes for /admin-api). See https://docs.vendure.io/guides/deployment/deploying-admin-ui/
@@ -353,7 +358,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   },
   plugins: [
     PostalZonePlugin,
-    DefaultJobQueuePlugin,
+    jobQueuePlugin,
     DefaultSearchPlugin.init({}),
     StripePlugin.init({
       storeCustomersInStripe: true,
