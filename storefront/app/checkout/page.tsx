@@ -70,6 +70,8 @@ const CheckoutPage = () => {
   const nameOnCardEditedByUser = useRef(false)
   const stripeRef = useRef<Awaited<ReturnType<typeof loadStripe>>>(null)
   const cardElementRef = useRef<StripeCardElement | null>(null)
+  /** Stripe `change` event `complete` — used to block premature `confirmCardPayment` and avoid stale banner errors. */
+  const stripeCardCompleteRef = useRef(false)
   const cardMountRef = useRef<HTMLDivElement | null>(null)
   /** Invalidates in-flight loadStripe when mount node is cleared (Strict Mode / navigation). */
   const stripeCardMountSessionRef = useRef(0)
@@ -98,6 +100,7 @@ const CheckoutPage = () => {
 
       if (!node) {
         stripeCardMountSessionRef.current += 1
+        stripeCardCompleteRef.current = false
         return
       }
 
@@ -131,6 +134,12 @@ const CheckoutPage = () => {
             }
           })
           card.mount(node)
+          stripeCardCompleteRef.current = false
+          card.on("change", (event) => {
+            stripeCardCompleteRef.current = event.complete
+            // Stale banner from a prior failed confirm (e.g. Enter in "Name on card") must not persist while editing.
+            setCheckoutError(null)
+          })
           cardElementRef.current = card
         })
         .catch((err: unknown) => {
@@ -273,6 +282,14 @@ const CheckoutPage = () => {
   useEffect(() => {
     if (typeof window === "undefined") return
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [checkoutStep])
+
+  const prevCheckoutStepRef = useRef<number | null>(null)
+  useEffect(() => {
+    const prev = prevCheckoutStepRef.current
+    prevCheckoutStepRef.current = checkoutStep
+    if (prev == null) return
+    if (prev === 2 || checkoutStep === 2) setCheckoutError(null)
   }, [checkoutStep])
 
   // Sync main shipping address to Vendure so tax/shipping are calculated by province; then refetch cart
@@ -1039,6 +1056,11 @@ const CheckoutPage = () => {
         if (!cardholderName) {
           throw new Error("Enter the name on your card (or complete billing first and last name).")
         }
+        if (!stripeCardCompleteRef.current) {
+          throw new Error(
+            "Enter your full card number, expiry date, and CVC, then tap Confirm order. (Pressing Enter in the name field can submit the form before the card is filled.)",
+          )
+        }
         const billingCountry =
           typeof billing.country === "string"
             ? billing.country.trim().slice(0, 2).toUpperCase()
@@ -1697,6 +1719,9 @@ const CheckoutPage = () => {
                     placeholder="As shown on your card"
                     className={inputClass + " w-full"}
                     value={nameOnCard}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.preventDefault()
+                    }}
                     onChange={(e) => {
                       nameOnCardEditedByUser.current = true
                       setNameOnCard(e.target.value)
