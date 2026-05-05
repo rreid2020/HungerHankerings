@@ -10,8 +10,8 @@ ENV npm_config_fetch_retries=5
 ENV npm_config_fetch_retry_mintimeout=15000
 ENV npm_config_fetch_retry_maxtimeout=120000
 COPY package.json ./
-# postinstall patches @vendure/payments-plugin; must exist before npm install
-COPY scripts/vendor-patch-stripe-service.cjs ./scripts/
+# postinstall patches vendor deps; scripts directory must exist before npm install
+COPY scripts ./scripts/
 COPY vendor-patches/stripe.service.js ./vendor-patches/
 RUN npm install --no-audit --no-fund
 
@@ -30,11 +30,12 @@ ENV npm_config_fetch_retry_mintimeout=15000
 ENV npm_config_fetch_retry_maxtimeout=120000
 
 COPY package.json ./
-COPY scripts/vendor-patch-stripe-service.cjs ./scripts/
+COPY scripts ./scripts/
 COPY vendor-patches/stripe.service.js ./vendor-patches/
 RUN npm install --omit=dev --no-audit --no-fund
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/email-templates ./email-templates
 RUN mkdir -p /app/assets
 
 ENV NODE_ENV=production

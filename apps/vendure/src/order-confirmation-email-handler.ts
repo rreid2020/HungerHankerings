@@ -4,11 +4,12 @@ import {
   transformOrderLineAssetUrls,
   type EventWithAsyncData,
 } from "@vendure/email-plugin";
-import { OrderStateTransitionEvent } from "@vendure/core";
+import { Logger, OrderStateTransitionEvent } from "@vendure/core";
 import { mockOrderStateTransitionEvent } from "@vendure/email-plugin/lib/src/handler/mock-events";
 import { toPlainShippingLinesForEmail, type PlainShippingLineForEmail } from "./email-plain-shipping-lines";
 
 type OrderConfirmationLoadData = { shippingLines: PlainShippingLineForEmail[] };
+const loggerCtx = "OrderConfirmationEmail";
 
 /**
  * Same as Vendure's `orderConfirmationHandler`, but `loadData` returns plain `shippingLines`
@@ -24,8 +25,17 @@ export const orderConfirmationEmailHandler = new EmailEventListener("order-confi
   )
   .loadData(async ({ event, injector }) => {
     transformOrderLineAssetUrls(event.ctx, event.order, injector);
-    const hydrated = await hydrateShippingLines(event.ctx, event.order, injector);
-    return { shippingLines: toPlainShippingLinesForEmail(hydrated) };
+    try {
+      const hydrated = await hydrateShippingLines(event.ctx, event.order, injector);
+      return { shippingLines: toPlainShippingLinesForEmail(hydrated) };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      Logger.warn(
+        `Shipping line hydration failed for order ${event.order.code}; sending confirmation with fallback shipping totals only. ${msg}`,
+        loggerCtx,
+      );
+      return { shippingLines: [] };
+    }
   })
   .setRecipient((event) => event.order.customer!.emailAddress)
   .setFrom("{{ fromAddress }}")

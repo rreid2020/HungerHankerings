@@ -29,6 +29,7 @@ COPY apps/vendure/scripts ./scripts/
 COPY apps/vendure/vendor-patches ./vendor-patches/
 RUN npm install --omit=dev --no-audit --no-fund
 COPY --from=vendure-build /vendure/dist ./dist
+COPY --from=vendure-build /vendure/email-templates ./email-templates
 RUN mkdir -p assets
 
 FROM node:20-alpine AS storefront-build
