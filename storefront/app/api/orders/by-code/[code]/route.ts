@@ -31,6 +31,12 @@ export async function GET(
     return NextResponse.json({ order })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load order"
-    return NextResponse.json({ error: message }, { status: 500 })
+    const lower = message.toLowerCase()
+    const forbidden =
+      lower.includes("forbidden") ||
+      lower.includes("not authorized") ||
+      lower.includes("not currently authorized") ||
+      message.includes("FORBIDDEN")
+    return NextResponse.json({ error: message }, { status: forbidden ? 403 : 500 })
   }
 }

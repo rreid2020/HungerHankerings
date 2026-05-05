@@ -13,8 +13,12 @@ function durationToMs(spec: string): number {
 
 /**
  * Like DefaultOrderByCodeAccessStrategy, but if `orderPlacedAt` is not set yet (common between
- * Stripe client confirm and server transitions), allow guests to load the order by code using
- * `createdAt` within the same anonymous window and only for pre-fulfillment payment-related states.
+ * Stripe client confirm and server transitions), allow loading the order by code using
+ * `createdAt` within the same time window and only for pre-fulfillment payment-related states.
+ *
+ * Time-window access must apply even when `ctx.activeUserId` is set (Bearer from a prior login).
+ * Otherwise `orderByCode` throws Forbidden for the same shopper who just paid while logged in
+ * but whose order customer record does not match that user (guest merge / session edge cases).
  */
 export class RelaxedOrderByCodeAccessStrategy implements OrderByCodeAccessStrategy {
   private readonly windowMs: number;
@@ -54,7 +58,7 @@ export class RelaxedOrderByCodeAccessStrategy implements OrderByCodeAccessStrate
       ]).has(order.state);
     };
 
-    if (!ctx.activeUserId && (anonymousAfterPlaced() || anonymousAfterCreatePaymentStates())) {
+    if (anonymousAfterPlaced() || anonymousAfterCreatePaymentStates()) {
       return true;
     }
     return false;
