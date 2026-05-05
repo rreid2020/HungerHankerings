@@ -1903,7 +1903,7 @@ export async function getCurrentCustomer(
         streetLine2?: string;
         city?: string;
         postalCode?: string;
-        country?: string | null;
+        country?: { code?: string | null; name?: string | null } | null;
         province?: string;
         phoneNumber?: string;
         defaultShippingAddress?: boolean;
@@ -1925,7 +1925,10 @@ export async function getCurrentCustomer(
           streetLine2
           city
           postalCode
-          country
+          country {
+            code
+            name
+          }
           province
           phoneNumber
           defaultShippingAddress
@@ -2225,7 +2228,7 @@ function parseGiftFromPaymentMetadata(payments: unknown): { unitKey: string; mes
   return out;
 }
 
-/** Shop API `Address.country` is a string (ISO code); older schemas may return `{ code, name }`. */
+/** Shop API `Address.country` is a `Country` object (`code`, `name`); `OrderAddress.country` is a string. */
 function vendureGraphqlCountryToStorefront(country: unknown): { code: string; label: string } {
   if (country == null) return { code: "", label: "" };
   if (typeof country === "string") {
