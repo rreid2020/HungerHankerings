@@ -6,6 +6,7 @@ import {
 } from "@vendure/email-plugin";
 import { Logger, OrderStateTransitionEvent } from "@vendure/core";
 import { mockOrderStateTransitionEvent } from "@vendure/email-plugin/lib/src/handler/mock-events";
+import { toPlainOrderForEmail } from "./email-plain-order-for-email";
 import { toPlainShippingLinesForEmail, type PlainShippingLineForEmail } from "./email-plain-shipping-lines";
 
 type OrderConfirmationLoadData = { shippingLines: PlainShippingLineForEmail[] };
@@ -41,7 +42,7 @@ export const orderConfirmationEmailHandler = new EmailEventListener("order-confi
   .setFrom("{{ fromAddress }}")
   .setSubject("Order confirmation for #{{ order.code }}")
   .setTemplateVars((event: EventWithAsyncData<OrderStateTransitionEvent, OrderConfirmationLoadData>) => ({
-    order: event.order,
+    order: toPlainOrderForEmail(event.order),
     shippingLines: event.data.shippingLines,
   }))
   .setMockEvent(mockOrderStateTransitionEvent);

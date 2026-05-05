@@ -6,6 +6,7 @@ import {
 } from "@vendure/email-plugin";
 import { Logger, OrderStateTransitionEvent } from "@vendure/core";
 import type { Order } from "@vendure/core";
+import { toPlainOrderForEmail } from "./email-plain-order-for-email";
 import { toPlainShippingLinesForEmail, type PlainShippingLineForEmail } from "./email-plain-shipping-lines";
 
 /** Matches storefront checkout `unitKey(lineId, unitIndex)` gift metadata keys. */
@@ -106,7 +107,7 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
     return `[New order] #${o.code} — ${suffix}`;
   })
   .setTemplateVars((event: EventWithAsyncData<OrderStateTransitionEvent, OrdersInboxLoadData>) => ({
-    order: event.order,
+    order: toPlainOrderForEmail(event.order),
     shippingLines: event.data.shippingLines,
     giftLines: event.data.giftLines,
     giftFeeMinor: event.data.giftFeeMinor,
