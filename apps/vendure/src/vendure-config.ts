@@ -12,8 +12,14 @@ import { getAmountInStripeMinorUnits } from "@vendure/payments-plugin/package/st
 import { AdminUiPlugin } from "@vendure/admin-ui-plugin";
 import { AssetServerPlugin, configureS3AssetStorage } from "@vendure/asset-server-plugin";
 import { StripePlugin } from "@vendure/payments-plugin/package/stripe";
-import { defaultEmailHandlers, EmailPlugin } from "@vendure/email-plugin";
+import {
+  emailAddressChangeHandler,
+  emailVerificationHandler,
+  EmailPlugin,
+  passwordResetHandler,
+} from "@vendure/email-plugin";
 import { FallbackEmailTemplateLoader } from "./fallback-email-template-loader";
+import { orderConfirmationEmailHandler } from "./order-confirmation-email-handler";
 import { ordersInboxNotificationHandler } from "./orders-inbox-email-handler";
 import { RelaxedOrderByCodeAccessStrategy } from "./relaxed-order-by-code-access-strategy";
 import { canadianProvinceTaxZoneStrategy } from "./plugins/tax/canadian-province-tax-zone-strategy";
@@ -233,7 +239,13 @@ const emailTemplateLoader = new FallbackEmailTemplateLoader(
   path.join(__dirname, "..", "email-templates"),
   path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
 );
-const ordersAndDefaultEmailHandlers = [...defaultEmailHandlers, ordersInboxNotificationHandler];
+const ordersAndDefaultEmailHandlers = [
+  orderConfirmationEmailHandler,
+  emailVerificationHandler,
+  passwordResetHandler,
+  emailAddressChangeHandler,
+  ordersInboxNotificationHandler,
+];
 const emailOutputPath = path.join(assetDir, "test-emails");
 const emailGlobalTemplateVars = {
   baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",

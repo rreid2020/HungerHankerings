@@ -6,6 +6,7 @@ import {
 } from "@vendure/email-plugin";
 import { OrderStateTransitionEvent } from "@vendure/core";
 import type { Order } from "@vendure/core";
+import { toPlainShippingLinesForEmail, type PlainShippingLineForEmail } from "./email-plain-shipping-lines";
 
 /** Matches storefront checkout `unitKey(lineId, unitIndex)` gift metadata keys. */
 function parseGiftUnitKey(unitKey: string): { lineId: string; unitIndex: number } | null {
@@ -63,7 +64,7 @@ function giftFeeCents(order: Order): number {
 }
 
 type OrdersInboxLoadData = {
-  shippingLines: Awaited<ReturnType<typeof hydrateShippingLines>>;
+  shippingLines: PlainShippingLineForEmail[];
   giftLines: { unitKey: string; message: string; lineLabel: string }[];
   giftFeeMinor: number;
 };
@@ -76,7 +77,8 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
   )
   .loadData(async ({ event, injector }) => {
     transformOrderLineAssetUrls(event.ctx, event.order, injector);
-    const shippingLines = await hydrateShippingLines(event.ctx, event.order, injector);
+    const hydratedShipping = await hydrateShippingLines(event.ctx, event.order, injector);
+    const shippingLines = toPlainShippingLinesForEmail(hydratedShipping);
     const giftRows = giftRowsFromOrder(event.order);
     const giftLines = giftRows.map((row) => ({
       ...row,

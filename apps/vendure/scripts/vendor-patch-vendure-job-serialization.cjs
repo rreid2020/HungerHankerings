@@ -1,17 +1,121 @@
 /**
- * Vendure 2.3.x Job.ensureDataIsSerializable evaluates every prototype getter on class instances.
- * TypeORM entities / relations can surface DataSource#get mongoManager, which throws on Postgres
- * ("MongoEntityManager is only available for MongoDB databases"), breaking send-email jobs.
- * Wrap serialization in try/catch so order confirmation + ops inbox emails can queue.
+ * Vendure 2.3.x Job.ensureDataIsSerializable is fragile for EmailPlugin send-email jobs:
+ * - Prototype getters can throw (e.g. TypeORM DataSource#mongoManager on Postgres).
+ * - Getter values were copied without recursive serialization (nested ORM graphs).
+ * - Max depth 10 can truncate deep orders.
  *
- * Idempotent; safe to run on every postinstall. Skip if @vendure/core layout changes.
+ * Replaces ensureDataIsSerializable with a path-stack cycle guard, deeper walk,
+ * recursive getter serialization, and try/catch on each branch.
+ *
+ * Idempotent (marker: hungerhankerings-patch-job-serialization-v2).
  */
 const fs = require("fs");
 const path = require("path");
 
-const MARKER = "hungerhankerings-patch-job-serialization";
+const MARKER = "hungerhankerings-patch-job-serialization-v2";
 
 const jobPath = path.join(__dirname, "..", "node_modules", "@vendure", "core", "dist", "job-queue", "job.js");
+
+/** Replace Job.prototype.ensureDataIsSerializable body (brace-balanced). */
+function replaceEnsureDataIsSerializable(source) {
+  const needle = "    ensureDataIsSerializable(data, depth = 0) {";
+  const idx = source.indexOf(needle);
+  if (idx === -1) {
+    return { ok: false, reason: "ensureDataIsSerializable not found" };
+  }
+  const braceStart = idx + needle.length - 1;
+  if (source[braceStart] !== "{") {
+    return { ok: false, reason: "expected '{' at end of method signature" };
+  }
+  let depth = 0;
+  let i = braceStart;
+  for (; i < source.length; i++) {
+    const c = source[i];
+    if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) {
+        const endClose = i + 1;
+        const newMethod = `    ensureDataIsSerializable(data, depth = 0) {
+        const MAX_DEPTH = 50;
+        const pathStack = [];
+        const walk = (value, d) => {
+            if (d > MAX_DEPTH) {
+                return '[max depth reached]';
+            }
+            if (value === null || value === undefined) {
+                return value;
+            }
+            const t = typeof value;
+            if (t === 'string' || t === 'number' || t === 'boolean') {
+                return value;
+            }
+            if (t === 'bigint') {
+                return value.toString();
+            }
+            if (value instanceof Date) {
+                return value.toISOString();
+            }
+            if (Array.isArray(value)) {
+                if (pathStack.includes(value)) {
+                    return '[Circular]';
+                }
+                pathStack.push(value);
+                try {
+                    return value.map((item) => walk(item, d + 1));
+                }
+                finally {
+                    pathStack.pop();
+                }
+            }
+            if ((0, shared_utils_1.isObject)(value)) {
+                if (pathStack.includes(value)) {
+                    return '[Circular]';
+                }
+                pathStack.push(value);
+                try {
+                    const output = {};
+                    for (const key of Object.keys(value)) {
+                        try {
+                            output[key] = walk(value[key], d + 1);
+                        }
+                        catch (_hhWalk) {
+                            output[key] = void 0;
+                        }
+                    }
+                    if ((0, shared_utils_1.isClassInstance)(value)) {
+                        const proto = Object.getPrototypeOf(value);
+                        if (proto) {
+                            const descriptors = Object.getOwnPropertyDescriptors(proto);
+                            for (const name of Object.keys(descriptors)) {
+                                const descriptor = descriptors[name];
+                                if (typeof descriptor.get === 'function') {
+                                    try {
+                                        output[name] = walk(value[name], d + 1);
+                                    }
+                                    catch (_hhGet) {
+                                        /* hungerhankerings-patch-job-serialization-v2: skip unsafe getter values */
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return output;
+                }
+                finally {
+                    pathStack.pop();
+                }
+            }
+            return String(value);
+        };
+        return walk(data, 0);
+    }`;
+        return { ok: true, next: source.slice(0, idx) + newMethod + source.slice(endClose) };
+      }
+    }
+  }
+  return { ok: false, reason: "could not find closing brace for ensureDataIsSerializable" };
+}
 
 function main() {
   if (!fs.existsSync(jobPath)) {
@@ -20,68 +124,17 @@ function main() {
   }
   let s = fs.readFileSync(jobPath, "utf8");
   if (s.includes(MARKER)) {
-    console.log("[vendor-patch-vendure-job-serialization] already applied");
+    console.log("[vendor-patch-vendure-job-serialization] already applied (v2)");
     process.exit(0);
   }
 
-  const legacyBlock = `            for (const key of Object.keys(data)) {
-                output[key] = this.ensureDataIsSerializable(data[key], depth);
-            }
-            if ((0, shared_utils_1.isClassInstance)(data)) {
-                const descriptors = Object.getOwnPropertyDescriptors(Object.getPrototypeOf(data));
-                for (const name of Object.keys(descriptors)) {
-                    const descriptor = descriptors[name];
-                    if (typeof descriptor.get === 'function') {
-                        output[name] = data[name];
-                    }
-                }
-            }`;
-
-  const patchedBlock = `            for (const key of Object.keys(data)) {
-                try {
-                    output[key] = this.ensureDataIsSerializable(data[key], depth);
-                } catch (_hhSer) {
-                    output[key] = void 0;
-                }
-            }
-            if ((0, shared_utils_1.isClassInstance)(data)) {
-                const descriptors = Object.getOwnPropertyDescriptors(Object.getPrototypeOf(data));
-                for (const name of Object.keys(descriptors)) {
-                    const descriptor = descriptors[name];
-                    if (typeof descriptor.get === 'function') {
-                        try {
-                            output[name] = data[name];
-                        } catch (_hhSer2) {
-                            /* ${MARKER}: skip unsafe getters during job serialization */
-                        }
-                    }
-                }
-            }`;
-
-  if (!s.includes(legacyBlock)) {
-    console.warn(
-      "[vendor-patch-vendure-job-serialization] skip: expected ensureDataIsSerializable block not found (different @vendure/core build?)",
-    );
+  const r = replaceEnsureDataIsSerializable(s);
+  if (!r.ok) {
+    console.warn("[vendor-patch-vendure-job-serialization] skip:", r.reason);
     process.exit(0);
   }
-  s = s.replace(legacyBlock, patchedBlock);
-
-  const legacyForEach = `            data.forEach((item, i) => {
-                output[i] = this.ensureDataIsSerializable(item, depth);
-            });`;
-  const patchedForEach = `            data.forEach((item, i) => {
-                try {
-                    output[i] = this.ensureDataIsSerializable(item, depth);
-                } catch (_hhSer3) {
-                    output[i] = void 0;
-                }
-            });`;
-  if (s.includes(legacyForEach)) {
-    s = s.replace(legacyForEach, patchedForEach);
-  }
-
-  fs.writeFileSync(jobPath, s);
-  console.log("[vendor-patch-vendure-job-serialization] applied to", jobPath);
+  fs.writeFileSync(jobPath, r.next);
+  console.log("[vendor-patch-vendure-job-serialization] applied v2 to", jobPath);
 }
 
 main();
