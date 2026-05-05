@@ -2,9 +2,37 @@ import {
   EmailEventListener,
   hydrateShippingLines,
   transformOrderLineAssetUrls,
+  type EventWithAsyncData,
 } from "@vendure/email-plugin";
 import { OrderStateTransitionEvent } from "@vendure/core";
 import type { Order } from "@vendure/core";
+
+/** Matches storefront checkout `unitKey(lineId, unitIndex)` gift metadata keys. */
+function parseGiftUnitKey(unitKey: string): { lineId: string; unitIndex: number } | null {
+  const lastDash = unitKey.lastIndexOf("-");
+  if (lastDash < 0) return null;
+  const lineId = unitKey.slice(0, lastDash);
+  const unitStr = unitKey.slice(lastDash + 1);
+  const unitIndex = Number.parseInt(unitStr, 10);
+  if (!Number.isFinite(unitIndex) || String(unitIndex) !== unitStr) return null;
+  return { lineId, unitIndex };
+}
+
+function giftLineLabel(order: Order, unitKey: string): string {
+  const parsed = parseGiftUnitKey(unitKey);
+  if (!parsed) return unitKey;
+  const line = order.lines?.find((l) => l.id === parsed.lineId);
+  if (!line) return unitKey;
+  const pv = line.productVariant;
+  const productName = pv?.product?.name?.trim() || "Line item";
+  const variantName = pv?.name?.trim() || "";
+  const title = variantName ? `${productName} — ${variantName}` : productName;
+  const qty = line.quantity ?? 1;
+  if (qty > 1) {
+    return `${title} — Box ${parsed.unitIndex + 1} of ${qty}`;
+  }
+  return title;
+}
 
 function giftRowsFromOrder(order: Order): { unitKey: string; message: string }[] {
   const payments = order.payments ?? [];
@@ -34,6 +62,12 @@ function giftFeeCents(order: Order): number {
   return typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
 }
 
+type OrdersInboxLoadData = {
+  shippingLines: Awaited<ReturnType<typeof hydrateShippingLines>>;
+  giftLines: { unitKey: string; message: string; lineLabel: string }[];
+  giftFeeMinor: number;
+};
+
 /** Notify internal inbox when an order payment settles (runs beside customer order-confirmation). */
 export const ordersInboxNotificationHandler = new EmailEventListener("orders-inbox-notification")
   .on(OrderStateTransitionEvent)
@@ -43,7 +77,11 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
   .loadData(async ({ event, injector }) => {
     transformOrderLineAssetUrls(event.ctx, event.order, injector);
     const shippingLines = await hydrateShippingLines(event.ctx, event.order, injector);
-    const giftLines = giftRowsFromOrder(event.order);
+    const giftRows = giftRowsFromOrder(event.order);
+    const giftLines = giftRows.map((row) => ({
+      ...row,
+      lineLabel: giftLineLabel(event.order, row.unitKey),
+    }));
     const giftFeeMinor = giftFeeCents(event.order);
     return { shippingLines, giftLines, giftFeeMinor };
   })
@@ -55,9 +93,9 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
     const suffix = email && email.length > 0 ? email : "guest / no email on file";
     return `[New order] #${o.code} — ${suffix}`;
   })
-  .setTemplateVars((event) => ({
+  .setTemplateVars((event: EventWithAsyncData<OrderStateTransitionEvent, OrdersInboxLoadData>) => ({
     order: event.order,
-    shippingLines: (event as { data: { shippingLines: unknown[] } }).data.shippingLines,
-    giftLines: (event as { data: { giftLines: { unitKey: string; message: string }[] } }).data.giftLines,
-    giftFeeMinor: (event as { data: { giftFeeMinor: number } }).data.giftFeeMinor,
+    shippingLines: event.data.shippingLines,
+    giftLines: event.data.giftLines,
+    giftFeeMinor: event.data.giftFeeMinor,
   }));
