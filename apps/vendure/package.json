@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "node ./scripts/vendor-patch-stripe-service.cjs",
+    "postinstall": "node ./scripts/vendor-patch-stripe-service.cjs && node ./scripts/vendor-patch-vendure-job-serialization.cjs",
     "build": "tsc",
     "start": "node dist/index.js",
     "start:worker": "node dist/worker.js",

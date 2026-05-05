@@ -1989,7 +1989,6 @@ export async function accountAddressCreate(
     mutation CreateCustomerAddress($input: CreateAddressInput!) {
       createCustomerAddress(input: $input) {
         id
-        ... on ErrorResult { message errorCode }
       }
     }
   `, { input: buildCreateCustomerAddressInput(input, options) }, { authToken: token });
@@ -2096,17 +2095,24 @@ export async function accountAddressUpdate(
   addressId: string,
   input: StorefrontAddressInput
 ): Promise<{ errors?: { message: string; field?: string }[] }> {
-  const data = await fetchVendure<{
-    updateCustomerAddress: { message?: string };
-  }>(`
-    mutation UpdateCustomerAddress($id: ID!, $input: UpdateAddressInput!) {
-      updateCustomerAddress(id: $id, input: $input) {
-        ... on ErrorResult { message }
+  try {
+    await fetchVendure<{
+      updateCustomerAddress: { id: string };
+    }>(
+      `
+    mutation UpdateCustomerAddress($input: UpdateAddressInput!) {
+      updateCustomerAddress(input: $input) {
+        id
       }
     }
-  `, { id: addressId, input: toVendureAddress(input) }, { authToken: token });
-  const result = (data as { updateCustomerAddress?: { message?: string } }).updateCustomerAddress;
-  if (result?.message) return { errors: [{ message: result.message }] };
+  `,
+      { input: { id: addressId, ...toVendureAddress(input) } },
+      { authToken: token }
+    );
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to update address";
+    return { errors: [{ message }] };
+  }
   return {};
 }
 
@@ -2114,18 +2120,24 @@ export async function accountAddressDelete(
   token: string,
   addressId: string
 ): Promise<{ errors?: { message: string }[] }> {
-  const data = await fetchVendure<{
-    deleteCustomerAddress: { success?: boolean; message?: string };
-  }>(`
+  try {
+    await fetchVendure<{
+      deleteCustomerAddress: { success: boolean };
+    }>(
+      `
     mutation DeleteCustomerAddress($id: ID!) {
       deleteCustomerAddress(id: $id) {
         success
-        ... on ErrorResult { message }
       }
     }
-  `, { id: addressId }, { authToken: token });
-  const result = (data as { deleteCustomerAddress?: { message?: string } }).deleteCustomerAddress;
-  if (result?.message) return { errors: [{ message: result.message }] };
+  `,
+      { id: addressId },
+      { authToken: token }
+    );
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to delete address";
+    return { errors: [{ message }] };
+  }
   return {};
 }
 
