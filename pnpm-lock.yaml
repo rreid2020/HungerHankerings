@@ -64,6 +64,9 @@ importers:
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.32
+      '@types/pg':
+        specifier: ^8.11.0
+        version: 8.20.0
       graphql:
         specifier: ~16.9.0
         version: 16.9.0
@@ -1352,6 +1355,9 @@ packages:
 
   '@types/object-path@0.11.4':
     resolution: {integrity: sha512-4tgJ1Z3elF/tOMpA8JLVuR9spt9Ynsf7+JjqsQ2IqtiPJtcLoHoXcT6qU4E10cPFqyXX5HDm9QwIzZhBSkLxsw==}
+
+  '@types/pg@8.20.0':
+    resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
 
   '@types/qs@6.15.0':
     resolution: {integrity: sha512-JawvT8iBVWpzTrz3EGw9BTQFg3BQNmwERdKE22vlTxawwtbyUSlMppvZYKLZzB5zgACXdXxbD3m1bXaMqP/9ow==}
@@ -5098,6 +5104,12 @@ snapshots:
       '@types/node': 20.19.32
 
   '@types/object-path@0.11.4': {}
+
+  '@types/pg@8.20.0':
+    dependencies:
+      '@types/node': 20.19.32
+      pg-protocol: 1.13.0
+      pg-types: 2.2.0
 
   '@types/qs@6.15.0': {}
 

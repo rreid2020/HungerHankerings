@@ -1,10 +1,8 @@
 import { bootstrap } from "@vendure/core";
 import { config } from "./vendure-config";
-import { ensureChannelDefaultCurrency } from "./ensure-channel-default-currency";
-import { ensureCheckoutGiftSurchargeColumn } from "./ensure-checkout-gift-surcharge-column";
+import { runStartupEnsures } from "./run-startup-ensures";
 
-ensureCheckoutGiftSurchargeColumn()
-  .then(() => ensureChannelDefaultCurrency())
+runStartupEnsures()
   .then(() => bootstrap(config))
   .then(() => {
     console.log(`Vendure server listening on port ${config.apiOptions?.port ?? 3000}`);

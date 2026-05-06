@@ -78,7 +78,8 @@ export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
     password: opts.password,
     database: opts.database,
     ssl: opts.ssl,
-  });
+    connectionTimeoutMillis: 15_000,
+  } as ConstructorParameters<typeof Client>[0]);
   await client.connect();
 
   try {
