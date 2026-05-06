@@ -1,0 +1,174 @@
+{{> header title="Order Receipt" }}
+
+<mj-raw>
+    <style type="text/css">
+    .callout {
+        background-color: #375a67;
+        padding: 15px 0;
+    }
+    .callout-large > div {
+        text-align: center !important;
+        color: #fff !important;
+        font-size: 16px !important;
+        font-weight: bold;
+        padding: 0;
+    }
+    .callout-small > div {
+        text-align: center !important;
+        color: #fff !important;
+        font-size: 14px !important;
+        padding: 0;
+    }
+    ul.address {
+        list-style-type: none;
+        padding: 0;
+    }
+    tr.order-row td {
+        border-bottom: 1px dashed #eee;
+    }
+    tr.order-row td:last-child {
+        text-align: right;
+    }
+    tr.total-row {
+        font-weight: bold;
+    }
+    .bg-off-white {
+        background-color: #f5f5f5;
+    }
+    </style>
+</mj-raw>
+
+<mj-section css-class="bg-off-white">
+    <mj-column>
+        <mj-text>
+            Dear {{ order.customer.firstName }} {{ order.customer.lastName }},
+        </mj-text>
+        <mj-text>
+            Thank you for your order!
+        </mj-text>
+    </mj-column>
+</mj-section>
+
+
+<mj-section css-class="callout">
+    <mj-column>
+        <mj-text css-class="callout-large"><strong>Order Code</strong></mj-text>
+        <mj-text css-class="callout-small">{{ order.code }}</mj-text>
+    </mj-column>
+    <mj-column>
+        <mj-text css-class="callout-large"><strong>Order Date</strong></mj-text>
+        <mj-text css-class="callout-small">{{ formatDate order.orderPlacedAt }}</mj-text>
+    </mj-column>
+    <mj-column>
+        <mj-text css-class="callout-large"><strong>Total (incl. tax{{#if giftFeeMinor}} &amp; add-ons{{/if}})</strong></mj-text>
+        <mj-text css-class="callout-small">{{ formatMoney grandTotalChargedMinor order.currencyCode 'en-CA' }}</mj-text>
+    </mj-column>
+</mj-section>
+
+
+<mj-section css-class="bg-off-white">
+    <mj-column>
+        <mj-text>
+            {{#with order.shippingAddress }}
+                <h3>Shipping To: {{ fullName }}</h3>
+                <ul class="address">
+                    {{#if company}}<li>{{ company }}</li>{{/if}}
+                    {{#if streetLine1}}<li>{{ streetLine1 }}</li>{{/if}}
+                    {{#if streetLine2}}<li>{{ streetLine2 }}</li>{{/if}}
+                    {{#if city}}<li>{{ city }}</li>{{/if}}
+                    {{#if province}}<li>{{ province }}</li>{{/if}}
+                    {{#if postalCode}}<li>{{ postalCode }}</li>{{/if}}
+                    {{#if country}}<li>{{ country }}</li>{{/if}}
+                    {{#if phoneNumber}}<li>{{ phoneNumber }}</li>{{/if}}
+                </ul>
+            {{/with}}
+        </mj-text>
+    </mj-column>
+</mj-section>
+
+{{#if order.taxSummary}}
+<mj-section css-class="bg-off-white">
+    <mj-column>
+        <mj-text><h3>Tax breakdown</h3></mj-text>
+        {{#each order.taxSummary}}
+        <mj-text padding-top="4px">
+            {{ description }} (rate {{ taxRate }}) — taxable amount {{ formatMoney taxBase ../order.currencyCode 'en-CA' }}, tax {{ formatMoney taxTotal ../order.currencyCode 'en-CA' }}
+        </mj-text>
+        {{/each}}
+    </mj-column>
+</mj-section>
+{{/if}}
+
+<mj-section>
+    <mj-column>
+        <mj-text>
+            <h3>Order Summary:</h3>
+        </mj-text>
+        <mj-table cellpadding="6px">
+            {{#each order.lines }}
+                <tr class="order-row">
+                    <td style="width:56px;vertical-align:top;">
+                        {{#if featuredAsset.preview}}
+                        <img alt="{{ productVariant.name }}"
+                             style="width: 50px; height: 50px;"
+                             src="{{ featuredAsset.preview }}?w=50&h=50" />
+                        {{else}}
+                        <span style="display:inline-block;width:50px;height:50px;background:#eee;line-height:50px;text-align:center;font-size:11px;color:#888;">—</span>
+                        {{/if}}
+                    </td>
+                    <td>{{ quantity }} × {{ productVariant.product.name }}{{#if productVariant.name}} — {{ productVariant.name }}{{/if}}</td>
+                    <td style="text-align:right;white-space:nowrap;">{{ formatMoney discountedLinePriceWithTax ../order.currencyCode 'en-CA' }}</td>
+                </tr>
+            {{/each}}
+            {{#each order.discounts }}
+                <tr class="order-row">
+                    <td colspan="2">
+                        {{ description }}
+                    </td>
+                    <td style="text-align:right;">{{ formatMoney amount ../order.currencyCode 'en-CA' }}</td>
+                </tr>
+            {{/each}}
+            <tr class="order-row">
+                <td colspan="2">Product subtotal (incl. tax):</td>
+                <td style="text-align:right;">{{ formatMoney order.subTotalWithTax order.currencyCode 'en-CA' }}</td>
+            </tr>
+            {{#each shippingLines }}
+            <tr class="order-row">
+                <td colspan="2">Shipping ({{ shippingMethod.name }}):</td>
+                <td style="text-align:right;">{{ formatMoney priceWithTax ../order.currencyCode 'en-CA' }}</td>
+            </tr>
+            {{else}}
+            <tr class="order-row">
+                <td colspan="2">Shipping (incl. tax):</td>
+                <td style="text-align:right;">{{ formatMoney order.shippingWithTax order.currencyCode 'en-CA' }}</td>
+            </tr>
+            {{/each}}
+            {{#if giftFeeMinor}}
+            <tr class="order-row">
+                <td colspan="2">Gift packaging:</td>
+                <td style="text-align:right;">{{ formatMoney giftFeeMinor order.currencyCode 'en-CA' }}</td>
+            </tr>
+            {{/if}}
+            <tr class="order-row total-row">
+                <td colspan="2">Total charged (incl. tax{{#if giftFeeMinor}} &amp; gift add-on{{/if}}):</td>
+                <td style="text-align:right;">{{ formatMoney grandTotalChargedMinor order.currencyCode 'en-CA' }}</td>
+            </tr>
+        </mj-table>
+    </mj-column>
+</mj-section>
+
+{{#if giftLines}}
+<mj-section background-color="#fff8e6">
+    <mj-column>
+        <mj-text font-size="16px" font-weight="bold">Gift messages</mj-text>
+        {{#each giftLines}}
+        <mj-text padding-top="8px">
+            <strong>{{ lineLabel }}</strong>
+            <br/><span style="white-space:pre-wrap">{{ message }}</span>
+        </mj-text>
+        {{/each}}
+    </mj-column>
+</mj-section>
+{{/if}}
+
+{{> footer }}

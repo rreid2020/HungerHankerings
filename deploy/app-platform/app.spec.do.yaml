@@ -37,7 +37,8 @@ services:
     dockerfile_path: Dockerfile
     http_port: 8080
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-1gb
+    # 1 GB often 504s under Admin job-queue polling + worker + Next; use 2 GB+ in production.
+    instance_size_slug: apps-s-1vcpu-2gb
     health_check:
       http_path: /health
       initial_delay_seconds: 120
