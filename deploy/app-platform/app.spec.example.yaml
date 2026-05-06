@@ -18,9 +18,9 @@ services:
     instance_size_slug: basic-xxs
     health_check:
       http_path: /health
-      initial_delay_seconds: 60
+      initial_delay_seconds: 120
       period_seconds: 10
-      timeout_seconds: 15
+      timeout_seconds: 25
       success_threshold: 1
       failure_threshold: 5
     # Must match your live storefront URL (same host nginx exposes). Rebuild after changing.

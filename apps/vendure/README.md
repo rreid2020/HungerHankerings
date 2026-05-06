@@ -17,9 +17,9 @@ Vendure server and worker for Hunger Hankerings.
 The root `docker-compose.yml` includes [Mailpit](https://github.com/axllent/mailpit) (web UI **http://localhost:8025**, SMTP **mailpit:1025** inside the compose network).
 
 1. In `.env` (or export before `docker compose up`):  
-   `SMTP_HOST=mailpit` · `SMTP_PORT=1025` · leave `SMTP_USER` / `SMTP_PASS` empty · optional `ORDERS_INBOX_EMAIL=orders@hungerhankerings.com` (shown as the **To** address for internal new-order mail).
+   `SMTP_HOST=mailpit` · `SMTP_PORT=1025` · leave `SMTP_USER` / `SMTP_PASS` empty · optional `ORDERS_INBOX_EMAIL=orders@hungerhankerings.com` (**BCC** on the customer confirmation by default; use `ORDERS_INBOX_SEPARATE_EMAIL=true` for a dedicated **[New order]** message).
 2. Rebuild/restart **vendure** and **vendure-worker** so they pick up env (the worker sends queued emails).
-3. Complete a checkout so the order reaches **PaymentSettled** — you should see the customer templates plus **[New order]** in Mailpit.
+3. Complete a checkout so the order reaches **PaymentSettled** — you should see the customer confirmation in Mailpit, with the inbox address on **Bcc** (or a separate **[New order]** thread if `ORDERS_INBOX_SEPARATE_EMAIL=true`).
 
 If `SMTP_HOST` is **unset** and `NODE_ENV` is development, Vendure uses the built-in **`/mailbox`** file capture instead of SMTP (no Mailpit required).
 

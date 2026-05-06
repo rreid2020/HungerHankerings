@@ -110,7 +110,9 @@ App Platform sets **`PORT=8080`** for the container (matches **`http_port`**). V
 
 ### App status **Degraded** (not **Healthy**)
 
-Usually **health checks** hit **`/health`** before Vendure + nginx are ready (first boot does `npm` build inside the image layers — runtime still starts vendure + next + nginx). In the app spec, raise **`health_check.initial_delay_seconds`** (e.g. **120**) and **`timeout_seconds`** (e.g. **10**), and keep **`http_path: /health`** (proxied to Vendure in `nginx-app.conf.template`). After deploy, open **Runtime logs** and confirm no crash loop (DB SSL, missing `COOKIE_SECRET`, bad `APP_URL` typos like `https://https://`).
+Usually **health checks** hit **`/health`** before Vendure + nginx are ready (first boot does `npm` build inside the image layers — runtime still starts vendure + next + nginx). In the app spec, raise **`health_check.initial_delay_seconds`** (e.g. **120**) and **`timeout_seconds`** (e.g. **15–30**), and keep **`http_path: /health`** (proxied to Vendure in `nginx-app.conf.template`). After deploy, open **Runtime logs** and confirm no crash loop (DB SSL, missing `COOKIE_SECRET`, bad `APP_URL` typos like `https://https://`).
+
+If logs show **Vendure started** but DO stays **Degraded**, the probe may be timing out on Vendure’s **database health ping** (default TypeORM check). This repo **disables DB checks on `/health` by default** so the platform sees a fast **200** once Nest is up. To restore the DB probe (e.g. for your own monitoring), set runtime **`VENDURE_HEALTHCHECK_DATABASE=true`**.
 
 **Env typos that break health / APIs:** `https://https://…`, `…//shop-api`, `APP_URL` ending in **`/.com`**, or **`DO_SPACES_*`** values pasted **with quote characters** — the secret value must be the raw key, not `"key"` in quotes.
 

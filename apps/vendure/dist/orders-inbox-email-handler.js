@@ -4,7 +4,7 @@ exports.ordersInboxNotificationHandler = void 0;
 const email_plugin_1 = require("@vendure/email-plugin");
 const core_1 = require("@vendure/core");
 const email_plain_order_for_email_1 = require("./email-plain-order-for-email");
-const email_plain_shipping_lines_1 = require("./email-plain-shipping-lines");
+const email_shipping_lines_1 = require("./email-shipping-lines");
 /** Matches storefront checkout `unitKey(lineId, unitIndex)` gift metadata keys. */
 function parseGiftUnitKey(unitKey) {
     const lastDash = unitKey.lastIndexOf("-");
@@ -64,7 +64,11 @@ function giftFeeCents(order) {
     return typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
 }
 const loggerCtx = "OrdersInboxEmail";
-/** Notify internal inbox when an order payment settles (runs beside customer order-confirmation). */
+/**
+ * Notify internal inbox when an order payment settles.
+ * Registered only when `ORDERS_INBOX_SEPARATE_EMAIL=true`; otherwise the inbox receives a **BCC** on the
+ * customer order confirmation (see `order-confirmation-email-handler.ts`).
+ */
 exports.ordersInboxNotificationHandler = new email_plugin_1.EmailEventListener("orders-inbox-notification")
     .on(core_1.OrderStateTransitionEvent)
     .filter((event) => event.toState === "PaymentSettled" && event.fromState !== "Modifying")
@@ -72,12 +76,11 @@ exports.ordersInboxNotificationHandler = new email_plugin_1.EmailEventListener("
     (0, email_plugin_1.transformOrderLineAssetUrls)(event.ctx, event.order, injector);
     let shippingLines = [];
     try {
-        const hydratedShipping = await (0, email_plugin_1.hydrateShippingLines)(event.ctx, event.order, injector);
-        shippingLines = (0, email_plain_shipping_lines_1.toPlainShippingLinesForEmail)(hydratedShipping);
+        shippingLines = await (0, email_shipping_lines_1.loadShippingLinesForEmailPlain)(event.ctx, event.order, injector);
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        core_1.Logger.warn(`Shipping line hydration failed for order ${event.order.code}; sending inbox email with fallback shipping totals only. ${msg}`, loggerCtx);
+        core_1.Logger.warn(`Shipping lines for inbox email failed for order ${event.order.code}; continuing without shipping breakdown. ${msg}`, loggerCtx);
     }
     const giftRows = giftRowsFromOrder(event.order);
     const giftLines = giftRows.map((row) => ({

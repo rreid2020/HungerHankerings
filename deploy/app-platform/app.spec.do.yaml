@@ -42,7 +42,7 @@ services:
       http_path: /health
       initial_delay_seconds: 120
       period_seconds: 15
-      timeout_seconds: 10
+      timeout_seconds: 25
       success_threshold: 1
       failure_threshold: 5
     envs:

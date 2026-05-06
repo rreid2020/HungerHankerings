@@ -64,6 +64,10 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # DB-backed Terminus checks can be slow under load; avoid DO marking the app unhealthy on cold/slow pings.
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 45s;
+        proxy_send_timeout 45s;
     }
 
     location /shipping-rates {

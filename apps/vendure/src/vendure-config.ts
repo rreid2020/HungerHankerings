@@ -6,6 +6,7 @@ import {
   dummyPaymentHandler,
   LanguageCode,
   mergeConfig,
+  TypeORMHealthCheckStrategy,
   VendureConfig,
 } from "@vendure/core";
 import { getAmountInStripeMinorUnits } from "@vendure/payments-plugin/package/stripe/stripe-utils";
@@ -244,12 +245,16 @@ const emailTemplateLoader = new FallbackEmailTemplateLoader(
   path.join(__dirname, "..", "email-templates"),
   path.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"),
 );
+const ordersInboxSeparateEmailJob =
+  process.env.ORDERS_INBOX_SEPARATE_EMAIL === "true" ||
+  process.env.ORDERS_INBOX_SEPARATE_EMAIL === "1";
+
 const ordersAndDefaultEmailHandlers = [
   orderConfirmationEmailHandler,
   emailVerificationHandler,
   passwordResetHandler,
   emailAddressChangeHandler,
-  ordersInboxNotificationHandler,
+  ...(ordersInboxSeparateEmailJob ? [ordersInboxNotificationHandler] : []),
 ];
 const emailOutputPath = path.join(assetDir, "test-emails");
 const emailGlobalTemplateVars = {
@@ -361,6 +366,19 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   shippingOptions: {
     shippingEligibilityCheckers: [postalShippingEligibilityChecker],
     shippingCalculators: [postalShippingCalculator],
+  },
+  /**
+   * Default Vendure health checks include a TypeORM ping; it can intermittently fail or exceed upstream
+   * timeouts when the DB is busy (single 1GB container running API + worker + Next). App Platform then
+   * shows **Degraded** even though the server booted. We disable DB checks unless explicitly enabled.
+   * Set `VENDURE_HEALTHCHECK_DATABASE=true` to restore the default DB probe on `/health`.
+   */
+  systemOptions: {
+    healthChecks:
+      process.env.VENDURE_HEALTHCHECK_DATABASE === "1" ||
+      process.env.VENDURE_HEALTHCHECK_DATABASE === "true"
+        ? [new TypeORMHealthCheckStrategy()]
+        : [],
   },
   plugins: [
     PostalZonePlugin,

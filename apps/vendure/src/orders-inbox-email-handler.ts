@@ -1,13 +1,9 @@
-import {
-  EmailEventListener,
-  hydrateShippingLines,
-  transformOrderLineAssetUrls,
-  type EventWithAsyncData,
-} from "@vendure/email-plugin";
+import { EmailEventListener, transformOrderLineAssetUrls, type EventWithAsyncData } from "@vendure/email-plugin";
 import { Logger, OrderStateTransitionEvent } from "@vendure/core";
 import type { Order } from "@vendure/core";
 import { toPlainOrderForEmail } from "./email-plain-order-for-email";
-import { toPlainShippingLinesForEmail, type PlainShippingLineForEmail } from "./email-plain-shipping-lines";
+import type { PlainShippingLineForEmail } from "./email-plain-shipping-lines";
+import { loadShippingLinesForEmailPlain } from "./email-shipping-lines";
 
 /** Matches storefront checkout `unitKey(lineId, unitIndex)` gift metadata keys. */
 function parseGiftUnitKey(unitKey: string): { lineId: string; unitIndex: number } | null {
@@ -71,7 +67,11 @@ type OrdersInboxLoadData = {
 };
 const loggerCtx = "OrdersInboxEmail";
 
-/** Notify internal inbox when an order payment settles (runs beside customer order-confirmation). */
+/**
+ * Notify internal inbox when an order payment settles.
+ * Registered only when `ORDERS_INBOX_SEPARATE_EMAIL=true`; otherwise the inbox receives a **BCC** on the
+ * customer order confirmation (see `order-confirmation-email-handler.ts`).
+ */
 export const ordersInboxNotificationHandler = new EmailEventListener("orders-inbox-notification")
   .on(OrderStateTransitionEvent)
   .filter(
@@ -81,12 +81,11 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
     transformOrderLineAssetUrls(event.ctx, event.order, injector);
     let shippingLines: PlainShippingLineForEmail[] = [];
     try {
-      const hydratedShipping = await hydrateShippingLines(event.ctx, event.order, injector);
-      shippingLines = toPlainShippingLinesForEmail(hydratedShipping);
+      shippingLines = await loadShippingLinesForEmailPlain(event.ctx, event.order, injector);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       Logger.warn(
-        `Shipping line hydration failed for order ${event.order.code}; sending inbox email with fallback shipping totals only. ${msg}`,
+        `Shipping lines for inbox email failed for order ${event.order.code}; continuing without shipping breakdown. ${msg}`,
         loggerCtx,
       );
     }

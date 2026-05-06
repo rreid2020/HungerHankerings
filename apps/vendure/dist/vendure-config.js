@@ -186,12 +186,14 @@ const smtpHostConfigured = Boolean(process.env.SMTP_HOST?.trim());
 /** Dev file mailbox at /mailbox only when not sending via SMTP (e.g. use Mailpit with SMTP_HOST=mailpit). */
 const useEmailDevMode = !isProduction && !smtpHostConfigured;
 const emailTemplateLoader = new fallback_email_template_loader_1.FallbackEmailTemplateLoader(path_1.default.join(__dirname, "..", "email-templates"), path_1.default.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"));
+const ordersInboxSeparateEmailJob = process.env.ORDERS_INBOX_SEPARATE_EMAIL === "true" ||
+    process.env.ORDERS_INBOX_SEPARATE_EMAIL === "1";
 const ordersAndDefaultEmailHandlers = [
     order_confirmation_email_handler_1.orderConfirmationEmailHandler,
     email_plugin_1.emailVerificationHandler,
     email_plugin_1.passwordResetHandler,
     email_plugin_1.emailAddressChangeHandler,
-    orders_inbox_email_handler_1.ordersInboxNotificationHandler,
+    ...(ordersInboxSeparateEmailJob ? [orders_inbox_email_handler_1.ordersInboxNotificationHandler] : []),
 ];
 const emailOutputPath = path_1.default.join(assetDir, "test-emails");
 const emailGlobalTemplateVars = {
@@ -295,6 +297,18 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
     shippingOptions: {
         shippingEligibilityCheckers: [shipping_plugin_1.postalShippingEligibilityChecker],
         shippingCalculators: [shipping_plugin_1.postalShippingCalculator],
+    },
+    /**
+     * Default Vendure health checks include a TypeORM ping; it can intermittently fail or exceed upstream
+     * timeouts when the DB is busy (single 1GB container running API + worker + Next). App Platform then
+     * shows **Degraded** even though the server booted. We disable DB checks unless explicitly enabled.
+     * Set `VENDURE_HEALTHCHECK_DATABASE=true` to restore the default DB probe on `/health`.
+     */
+    systemOptions: {
+        healthChecks: process.env.VENDURE_HEALTHCHECK_DATABASE === "1" ||
+            process.env.VENDURE_HEALTHCHECK_DATABASE === "true"
+            ? [new core_1.TypeORMHealthCheckStrategy()]
+            : [],
     },
     plugins: [
         postal_zone_plugin_1.PostalZonePlugin,

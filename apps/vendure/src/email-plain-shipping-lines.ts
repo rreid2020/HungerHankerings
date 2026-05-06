@@ -1,14 +1,17 @@
-import type { hydrateShippingLines } from "@vendure/email-plugin";
-
-/** Fields used by stock `order-confirmation` and our `orders-inbox-notification` templates only. */
+/** Fields used by order confirmation and orders-inbox email templates. */
 export type PlainShippingLineForEmail = {
   shippingMethod: { name: string };
   price: number;
   priceWithTax: number;
 };
 
+/** Maps hydrated shipping lines (e.g. from tests) into the plain email shape. */
 export function toPlainShippingLinesForEmail(
-  lines: Awaited<ReturnType<typeof hydrateShippingLines>>,
+  lines: Array<{
+    shippingMethod?: { name?: string | null } | null;
+    price: number;
+    priceWithTax: number;
+  }>,
 ): PlainShippingLineForEmail[] {
   return lines.map((line) => ({
     shippingMethod: { name: line.shippingMethod?.name?.trim() ?? "" },
