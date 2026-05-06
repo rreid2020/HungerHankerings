@@ -26,12 +26,30 @@ class FallbackEmailTemplateLoader {
         }
     }
     async loadPartials() {
-        const partialsPath = path_1.default.join(this.fallbackDir, "partials");
-        const files = await fs_1.promises.readdir(partialsPath);
-        return Promise.all(files.map(async (file) => ({
-            name: path_1.default.basename(file, ".hbs"),
-            content: await fs_1.promises.readFile(path_1.default.join(partialsPath, file), "utf-8"),
-        })));
+        const readPartialsDir = async (dir) => {
+            const map = new Map();
+            let files = [];
+            try {
+                files = await fs_1.promises.readdir(dir);
+            }
+            catch {
+                return map;
+            }
+            await Promise.all(files
+                .filter((f) => f.endsWith(".hbs"))
+                .map(async (file) => {
+                const name = path_1.default.basename(file, ".hbs");
+                const content = await fs_1.promises.readFile(path_1.default.join(dir, file), "utf-8");
+                map.set(name, content);
+            }));
+            return map;
+        };
+        const merged = await readPartialsDir(path_1.default.join(this.fallbackDir, "partials"));
+        const primary = await readPartialsDir(path_1.default.join(this.primaryDir, "partials"));
+        for (const [name, content] of primary) {
+            merged.set(name, content);
+        }
+        return Array.from(merged.entries()).map(([name, content]) => ({ name, content }));
     }
 }
 exports.FallbackEmailTemplateLoader = FallbackEmailTemplateLoader;

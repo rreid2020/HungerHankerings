@@ -67,6 +67,7 @@ async function ensureCheckoutGiftSurchargeColumn() {
         password: opts.password,
         database: opts.database,
         ssl: opts.ssl,
+        connectionTimeoutMillis: 15000,
     });
     await client.connect();
     try {

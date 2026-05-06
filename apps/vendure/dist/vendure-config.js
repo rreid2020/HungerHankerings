@@ -199,6 +199,11 @@ const emailGlobalTemplateVars = {
     passwordResetUrl: (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
     verifyEmailAddressUrl: (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
     fromAddress: process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
+    /** Header/footer branding (override via env for white-label) */
+    storeDisplayName: process.env.STORE_DISPLAY_NAME?.trim() || "Hunger Hankerings",
+    storeTagline: process.env.STORE_EMAIL_TAGLINE?.trim() ||
+        "Artisan treats and gifts delivered across Canada",
+    emailCopyrightYear: new Date().getFullYear(),
 };
 const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
     customFields: {
