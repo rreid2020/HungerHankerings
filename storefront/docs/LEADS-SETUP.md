@@ -30,11 +30,11 @@ The unified contact form on `/contact` (and site CTAs with `?reason=`) posts to 
 
    ```
    RESEND_API_KEY=re_xxxx
-   LEAD_EMAIL_TO=info@hungerhankerings.com
+   LEAD_EMAIL_TO=hello@hungerhankerings.com
    LEAD_EMAIL_FROM=Hunger Hankerings <hello@hungerhankerings.com>
    ```
 
-- `LEAD_EMAIL_TO` – Comma-separated list of recipients for lead notifications (optional: defaults to **info@hungerhankerings.com** when unset)
+- `LEAD_EMAIL_TO` – Comma-separated list of recipients for lead notifications (optional: defaults to **hello@hungerhankerings.com** when unset)
 - `LEAD_EMAIL_FROM` – Sender address (must use a verified domain in Resend)
 
 ## Fallback behavior

@@ -6,7 +6,7 @@ const resend = process.env.RESEND_API_KEY
   : null
 
 const FROM_EMAIL = process.env.LEAD_EMAIL_FROM ?? "Hunger Hankerings <onboarding@resend.dev>"
-const DEFAULT_LEAD_TO = "info@hungerhankerings.com"
+const DEFAULT_LEAD_TO = "hello@hungerhankerings.com"
 const TO_EMAIL = (process.env.LEAD_EMAIL_TO ?? "").trim() || DEFAULT_LEAD_TO
 
 function formatPayloadForEmail(payload: Record<string, unknown>): string {
