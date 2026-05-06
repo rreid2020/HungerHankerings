@@ -12,6 +12,7 @@ const asset_server_plugin_1 = require("@vendure/asset-server-plugin");
 const stripe_1 = require("@vendure/payments-plugin/package/stripe");
 const email_plugin_1 = require("@vendure/email-plugin");
 const fallback_email_template_loader_1 = require("./fallback-email-template-loader");
+const order_confirmation_email_handler_1 = require("./order-confirmation-email-handler");
 const orders_inbox_email_handler_1 = require("./orders-inbox-email-handler");
 const relaxed_order_by_code_access_strategy_1 = require("./relaxed-order-by-code-access-strategy");
 const canadian_province_tax_zone_strategy_1 = require("./plugins/tax/canadian-province-tax-zone-strategy");
@@ -50,8 +51,53 @@ function buildEmailTransport() {
             port,
             secure: process.env.SMTP_SECURE === "true",
             ...(auth ? { auth } : {}),
-            logging: true,
+            // Verbose SMTP transcript logging can leak credentials / message content; keep for local dev only.
+            logging: process.env.NODE_ENV !== "production",
         },
+    };
+}
+/**
+ * Production browser CORS: fail closed if APP_URL is missing (never fall back to `origin: true`).
+ * Includes apex + www variants when applicable. Optional comma-separated APP_CORS_EXTRA_ORIGINS.
+ */
+function buildProductionCors() {
+    const appUrl = process.env.APP_URL?.trim();
+    if (!appUrl) {
+        console.error("[vendure] APP_URL must be set in production — CORS disabled until fixed (browsers cannot call the Shop API cross-origin).");
+        return { origin: false, credentials: true };
+    }
+    const origins = new Set();
+    const normalized = appUrl.replace(/\/$/, "");
+    origins.add(normalized);
+    try {
+        const u = new URL(appUrl);
+        const host = u.hostname;
+        const isLocal = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+        // Pair apex <-> www only for real hostnames, not raw IPv4/IPv6 literals.
+        const isIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+        const isIpv6 = host.includes(":");
+        if (!isLocal && !isIpv4 && !isIpv6 && host.includes(".")) {
+            if (host.startsWith("www.")) {
+                const bare = host.slice(4);
+                origins.add(`${u.protocol}//${bare}${u.port ? `:${u.port}` : ""}`.replace(/\/$/, ""));
+            }
+            else {
+                origins.add(`${u.protocol}//www.${host}${u.port ? `:${u.port}` : ""}`.replace(/\/$/, ""));
+            }
+        }
+    }
+    catch {
+        console.warn(`[vendure] APP_URL could not be parsed for CORS extras: ${appUrl}`);
+    }
+    for (const raw of (process.env.APP_CORS_EXTRA_ORIGINS ?? "").split(",")) {
+        const o = raw.trim().replace(/\/$/, "");
+        if (o) {
+            origins.add(o);
+        }
+    }
+    return {
+        origin: [...origins],
+        credentials: true,
     };
 }
 if (process.env.NODE_ENV === "production") {
@@ -67,6 +113,10 @@ if (process.env.NODE_ENV === "production") {
 const port = parseInt(process.env.PORT ?? "3000", 10);
 const assetDir = process.env.ASSET_UPLOAD_DIR ?? path_1.default.join(__dirname, "../assets");
 const isProduction = process.env.NODE_ENV === "production";
+/** Slower SQL polling on small hosts (e.g. DO App 1 vCPU + worker + Next) reduces DB contention with Shop API. */
+const jobQueuePlugin = isProduction
+    ? core_1.DefaultJobQueuePlugin.init({ pollInterval: 4000, concurrency: 1 })
+    : core_1.DefaultJobQueuePlugin;
 /**
  * Pre-built Admin UI defaults to apiHost localhost:3000. In production the browser must call the
  * public origin (same host Nginx exposes for /admin-api). See https://docs.vendure.io/guides/deployment/deploying-admin-ui/
@@ -130,13 +180,19 @@ const requireCustomerEmailVerification = process.env.VENDURE_REQUIRE_EMAIL_VERIF
 if (isProduction && !requireCustomerEmailVerification) {
     console.warn("[vendure] VENDURE_REQUIRE_EMAIL_VERIFICATION=false — customers can sign in without confirming email. Turn this off before real launch.");
 }
-// In production restrict CORS to APP_URL; in dev allow all (localhost)
-const corsOptions = isProduction && process.env.APP_URL ? { origin: [process.env.APP_URL] } : true;
+// In production restrict CORS to APP_URL (plus www / APP_CORS_EXTRA_ORIGINS); in dev allow all (localhost)
+const corsOptions = isProduction ? buildProductionCors() : true;
 const smtpHostConfigured = Boolean(process.env.SMTP_HOST?.trim());
 /** Dev file mailbox at /mailbox only when not sending via SMTP (e.g. use Mailpit with SMTP_HOST=mailpit). */
 const useEmailDevMode = !isProduction && !smtpHostConfigured;
 const emailTemplateLoader = new fallback_email_template_loader_1.FallbackEmailTemplateLoader(path_1.default.join(__dirname, "..", "email-templates"), path_1.default.join(__dirname, "..", "node_modules", "@vendure", "email-plugin", "templates"));
-const ordersAndDefaultEmailHandlers = [...email_plugin_1.defaultEmailHandlers, orders_inbox_email_handler_1.ordersInboxNotificationHandler];
+const ordersAndDefaultEmailHandlers = [
+    order_confirmation_email_handler_1.orderConfirmationEmailHandler,
+    email_plugin_1.emailVerificationHandler,
+    email_plugin_1.passwordResetHandler,
+    email_plugin_1.emailAddressChangeHandler,
+    orders_inbox_email_handler_1.ordersInboxNotificationHandler,
+];
 const emailOutputPath = path_1.default.join(assetDir, "test-emails");
 const emailGlobalTemplateVars = {
     baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
@@ -171,6 +227,12 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
         adminApiPath: "admin-api",
         shopApiPath: "shop-api",
         cors: corsOptions,
+        // Default Vendure introspection is true — disable in production to reduce schema exposure.
+        introspection: !isProduction,
+        adminApiPlayground: false,
+        shopApiPlayground: false,
+        adminApiDebug: false,
+        shopApiDebug: false,
     },
     dbConnectionOptions: {
         type: "postgres",
@@ -231,19 +293,26 @@ const vendureConfig = (0, core_1.mergeConfig)(core_1.defaultConfig, {
     },
     plugins: [
         postal_zone_plugin_1.PostalZonePlugin,
-        core_1.DefaultJobQueuePlugin,
+        jobQueuePlugin,
         core_1.DefaultSearchPlugin.init({}),
         stripe_1.StripePlugin.init({
             storeCustomersInStripe: true,
             paymentIntentCreateParams: (_injector, _ctx, order) => {
                 const raw = order.customFields?.checkoutGiftSurchargeCents;
                 const extra = typeof raw === "number" && Number.isFinite(raw) ? Math.floor(raw) : 0;
-                if (extra <= 0) {
-                    return {};
-                }
                 const base = (0, stripe_utils_1.getAmountInStripeMinorUnits)(order);
-                // Stripe types omit `amount` from overrides; runtime merge replaces PI amount.
-                return { amount: base + extra };
+                // Storefront uses Stripe Card Element + `confirmCardPayment`. Vendure's default
+                // `automatic_payment_methods: { enabled: true }` targets Payment Element; with
+                // Card Element, Stripe often returns "Your card number is incomplete" for valid PANs.
+                const cardOnlyPi = {
+                    automatic_payment_methods: { enabled: false },
+                    payment_method_types: ["card"],
+                };
+                if (extra > 0) {
+                    // Stripe types omit `amount` from overrides; runtime merge replaces PI amount.
+                    cardOnlyPi.amount = base + extra;
+                }
+                return cardOnlyPi;
             },
         }),
         buildAssetServerPlugin(),

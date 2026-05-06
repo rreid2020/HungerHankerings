@@ -1,4 +1,3 @@
-import type { CreateCustomerInput } from "@vendure/common/lib/generated-shop-types";
 import { DefaultGuestCheckoutStrategy, type DefaultGuestCheckoutStrategyOptions, type GuestCheckoutStrategy, Injector, Order, RequestContext } from "@vendure/core";
 /**
  * Wraps {@link DefaultGuestCheckoutStrategy} so the active order always gets a real {@link Customer} id:
@@ -14,9 +13,10 @@ import { DefaultGuestCheckoutStrategy, type DefaultGuestCheckoutStrategyOptions,
 export declare class LinkGuestCheckoutStrategy implements GuestCheckoutStrategy {
     private customerService;
     private readonly delegate;
+    /** Same flag as {@link DefaultGuestCheckoutStrategy} — used for createOrUpdate when not delegating. */
     private readonly allowGuestCheckoutForRegisteredCustomers;
     constructor(options?: DefaultGuestCheckoutStrategyOptions);
     init(injector: Injector): void;
-    setCustomerForOrder(ctx: RequestContext, order: Order, input: CreateCustomerInput): Promise<Awaited<ReturnType<DefaultGuestCheckoutStrategy["setCustomerForOrder"]>>>;
+    setCustomerForOrder(ctx: RequestContext, order: Order, input: Parameters<GuestCheckoutStrategy["setCustomerForOrder"]>[2]): Promise<Awaited<ReturnType<DefaultGuestCheckoutStrategy["setCustomerForOrder"]>>>;
 }
 //# sourceMappingURL=link-guest-checkout-strategy.d.ts.map

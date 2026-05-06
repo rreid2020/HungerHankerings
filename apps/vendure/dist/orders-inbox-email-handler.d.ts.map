@@ -1,0 +1,1 @@
+{"version":3,"file":"orders-inbox-email-handler.d.ts","sourceRoot":"","sources":["../src/orders-inbox-email-handler.ts"],"names":[],"mappings":"AAAA,OAAO,EAIL,KAAK,kBAAkB,EACxB,MAAM,uBAAuB,CAAC;AAC/B,OAAO,EAAU,yBAAyB,EAAE,MAAM,eAAe,CAAC;AAGlE,OAAO,EAAgC,KAAK,yBAAyB,EAAE,MAAM,8BAA8B,CAAC;AAgE5G,qGAAqG;AACrG,eAAO,MAAM,8BAA8B;;;;iBApCU,MAAM;iBAAW,MAAM;;;GA2EvE,CAAC"}
