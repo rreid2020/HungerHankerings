@@ -28,13 +28,31 @@ export class FallbackEmailTemplateLoader implements TemplateLoader {
   }
 
   async loadPartials() {
-    const partialsPath = path.join(this.fallbackDir, "partials");
-    const files = await fs.readdir(partialsPath);
-    return Promise.all(
-      files.map(async (file) => ({
-        name: path.basename(file, ".hbs"),
-        content: await fs.readFile(path.join(partialsPath, file), "utf-8"),
-      })),
-    );
+    const readPartialsDir = async (dir: string): Promise<Map<string, string>> => {
+      const map = new Map<string, string>();
+      let files: string[] = [];
+      try {
+        files = await fs.readdir(dir);
+      } catch {
+        return map;
+      }
+      await Promise.all(
+        files
+          .filter((f) => f.endsWith(".hbs"))
+          .map(async (file) => {
+            const name = path.basename(file, ".hbs");
+            const content = await fs.readFile(path.join(dir, file), "utf-8");
+            map.set(name, content);
+          }),
+      );
+      return map;
+    };
+
+    const merged = await readPartialsDir(path.join(this.fallbackDir, "partials"));
+    const primary = await readPartialsDir(path.join(this.primaryDir, "partials"));
+    for (const [name, content] of primary) {
+      merged.set(name, content);
+    }
+    return Array.from(merged.entries()).map(([name, content]) => ({ name, content }));
   }
 }

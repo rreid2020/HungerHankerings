@@ -1,0 +1,36 @@
+<mjml>
+    <mj-head>
+        <mj-title>{{ title }}</mj-title>
+        <mj-style inline="inline">
+            h3 {
+                font-size: 18px;
+                color: #555;
+                font-weight: normal;
+            }
+            .brand-name {
+                font-size: 22px;
+                font-weight: bold;
+                color: #2c3e46;
+                letter-spacing: 0.02em;
+            }
+            .brand-tagline {
+                font-size: 14px;
+                color: #666;
+            }
+        </mj-style>
+    </mj-head>
+
+    <mj-body background-color="#ffffff">
+        <mj-section background-color="#eeeeee" padding="28px 20px">
+            <mj-column>
+                <mj-text align="center" padding="0">
+                    <span class="brand-name">{{ storeDisplayName }}</span>
+                </mj-text>
+                <mj-text align="center" padding="10px 0 0 0" css-class="brand-tagline">
+                    {{ storeTagline }}
+                </mj-text>
+                <mj-text align="center" padding="14px 0 0 0" font-size="13px" color="#444444">
+                    <a href="{{ baseUrl }}" style="color:#3d5a61;text-decoration:none;font-weight:600;">{{ baseUrl }}</a>
+                </mj-text>
+            </mj-column>
+        </mj-section>
