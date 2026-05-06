@@ -97,12 +97,27 @@ function getVendureRequestTimeoutMs(): number {
 }
 
 /** Pass when calling from server (e.g. API route) to authenticate with Vendure */
-export type VendureRequestOptions = { cookie?: string; authToken?: string };
+export type VendureRequestOptions = {
+  cookie?: string;
+  authToken?: string;
+  /**
+   * When true, return `data` even if GraphQL included top-level errors (e.g. one variant
+   * missing price in the active channel). Use for catalog queries so one bad row does
+   * not empty the whole shop. Fix data with Admin or `backfill:cad-prices-from-usd`.
+   */
+  allowGraphqlErrors?: boolean;
+};
+
+/** True when Shop API resolved a variant list price (missing channel/currency price omits this). */
+function variantHasListPrice(v: { price?: number | null } | null | undefined): boolean {
+  if (!v) return false;
+  return typeof v.price === "number" && Number.isFinite(v.price);
+}
 
 export async function fetchVendure<T>(
   query: string,
   variables?: Record<string, unknown>,
-  options?: { cookie?: string; authToken?: string }
+  options?: VendureRequestOptions
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), getVendureRequestTimeoutMs());
@@ -145,11 +160,19 @@ export async function fetchVendure<T>(
     }
 
     const payload = (await res.json()) as GraphQLResponse<T>;
-    if (payload.errors?.length) {
-      throw new Error(payload.errors[0]?.message || "Vendure query failed");
-    }
     if (!payload.data) {
-      throw new Error("Vendure returned empty response");
+      const msg = payload.errors?.[0]?.message || "Vendure returned empty response";
+      throw new Error(msg);
+    }
+    if (payload.errors?.length) {
+      if (options?.allowGraphqlErrors) {
+        console.warn(
+          "[vendure] GraphQL returned errors; using partial data for this request:",
+          payload.errors.map((e) => e.message).join(" | ")
+        );
+      } else {
+        throw new Error(payload.errors[0]?.message || "Vendure query failed");
+      }
     }
     return payload.data;
   } catch (err) {
@@ -551,7 +574,8 @@ function mapVendureProductToStorefront(p: {
   }>;
   assets?: Array<{ preview?: string | null } | null> | null;
 }): StorefrontProduct {
-  const amount = p.variants?.[0]?.price ?? 0;
+  const pricedVariants = p.variants?.filter((v) => variantHasListPrice(v)) ?? [];
+  const amount = pricedVariants[0]?.price ?? 0;
   const currency = "CAD";
   const previewRaw =
     (p.featuredAsset?.preview && p.featuredAsset.preview.trim()) ||
@@ -570,18 +594,17 @@ function mapVendureProductToStorefront(p: {
         start: { gross: { amount: amount / 100, currency } },
       },
     },
-    variants:
-      p.variants?.map((v) => ({
-        id: v.id,
-        name: v.name,
-        pricing: {
-          price: {
-            gross: { amount: v.price / 100, currency },
-          },
+    variants: pricedVariants.map((v) => ({
+      id: v.id,
+      name: v.name,
+      pricing: {
+        price: {
+          gross: { amount: v.price / 100, currency },
         },
-        quantityAvailable: v.stockLevel === "IN_STOCK" ? 999 : 0,
-        attributes: vendureOptionsToAttributes(v.options),
-      })) ?? [],
+      },
+      quantityAvailable: v.stockLevel === "IN_STOCK" ? 999 : 0,
+      attributes: vendureOptionsToAttributes(v.options),
+    })),
   };
 }
 
@@ -617,8 +640,15 @@ export async function listProducts(): Promise<StorefrontProduct[]> {
         }
       }
     }
-  `);
-  const items = (data.products?.items ?? []).filter((p) => isCatalogProduct(p));
+  `,
+    undefined,
+    { allowGraphqlErrors: true }
+  );
+  const items = (data.products?.items ?? []).filter(
+    (p) =>
+      isCatalogProduct(p) &&
+      (p.variants?.some((v) => variantHasListPrice(v)) ?? false)
+  );
   return items.map(mapVendureProductToStorefront);
 }
 
@@ -664,7 +694,8 @@ export async function listProductsInCollectionBySlug(
       }
     }
   `,
-    { slug: trimmed }
+    { slug: trimmed },
+    { allowGraphqlErrors: true }
   );
 
   if (!data.collection) return [];
@@ -677,6 +708,7 @@ export async function listProductsInCollectionBySlug(
     const p = row.product;
     if (!p || seen.has(p.id)) continue;
     if (!isCatalogProduct(p)) continue;
+    if (!(p.variants?.some((v) => variantHasListPrice(v)) ?? false)) continue;
     seen.add(p.id);
     out.push(mapVendureProductToStorefront(p));
   }
@@ -715,10 +747,14 @@ export async function getProductByHandle(
         ${productFields}
       }
     }
-  `, { slug });
+  `,
+    { slug },
+    { allowGraphqlErrors: true }
+  );
   if (!data.product) return null;
   const p = data.product as Parameters<typeof mapVendureProductToStorefront>[0];
   if (!isCatalogProduct({ id: p.id, slug: p.slug })) return null;
+  if (!(p.variants?.some((v) => variantHasListPrice(v)) ?? false)) return null;
   return mapVendureProductToStorefront(p);
 }
 
