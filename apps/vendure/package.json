@@ -20,6 +20,7 @@
     "alter-postal-zone-prefix": "node dist/alter-postal-zone-prefix-length.js",
     "alter-postal-zone-city-region": "node dist/alter-postal-zone-add-city-region.js",
     "seed:postal-zones": "node dist/seed-postal-code-zones.js",
+    "backfill:cad-prices-from-usd": "node dist/backfill-cad-variant-prices-from-usd.js",
     "dev": "ts-node src/index.ts",
     "dev:worker": "ts-node src/worker.ts"
   },
