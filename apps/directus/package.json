@@ -1,0 +1,11 @@
+{
+  "name": "@hungerhankerings/directus",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "start": "directus start"
+  },
+  "dependencies": {
+    "directus": "^11.7.2"
+  }
+}

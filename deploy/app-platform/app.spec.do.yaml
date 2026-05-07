@@ -83,3 +83,13 @@ services:
       - key: NODE_ENV
         scope: RUN_TIME
         value: "production"
+      # --- Directus (optional): add domains ops.<your-domain> on this App, then set e.g. ---
+      # ENABLE_DIRECTUS: RUN_TIME "true"
+      # INTERNAL_OPS_HOST: RUN_TIME "ops.hungerhankerings.com"
+      # PUBLIC_URL: RUN_TIME "https://ops.hungerhankerings.com"
+      # KEY / SECRET: RUN_TIME secrets (stable across deploys)
+      # ADMIN_EMAIL / ADMIN_PASSWORD: RUN_TIME (first boot)
+      # DB_CLIENT: RUN_TIME "pg"
+      # DB_DATABASE: RUN_TIME "hungerhankeringsadmin"
+      # DB_SSL__reject_unauthorized: RUN_TIME "false"
+      # (Reuse DB_HOST, DB_PORT, DB_USER, DB_PASSWORD with Vendure; keep DB_NAME=vendure for Vendure.)
