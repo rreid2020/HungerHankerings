@@ -23,8 +23,11 @@ Reuse **`DB_HOST`**, **`DB_PORT`**, **`DB_USER`**, **`DB_PASSWORD`**, **`DB_SSL_
 ```text
 DB_CLIENT=pg
 DB_DATABASE=hungerhankeringsadmin
-DB_SSL__reject_unauthorized=false   # typical for DO Managed Postgres
+DB_SSL=true                         # required for DigitalOcean Managed Postgres (non-TLS is rejected)
+DB_SSL__reject_unauthorized=false   # typical for DO’s CA / managed certs
 ```
+
+`start.sh` defaults **`DB_SSL=true`** and **`DB_SSL__reject_unauthorized=false`** when unset. For **local Postgres without TLS**, set **`DB_SSL=false`**.
 
 Run `storefront/scripts/init-leads-db.sql` (or your schema) against **`DB_DATABASE`** before or after enabling Directus.
 
