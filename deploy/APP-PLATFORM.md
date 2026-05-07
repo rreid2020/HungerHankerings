@@ -96,7 +96,7 @@ Directus runs **inside the same container** on **`127.0.0.1:8055`**. Nginx expos
 | `DB_CLIENT` | Usually **`pg`**. |
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Same managed Postgres as Vendure (shared). |
 | **`DB_DATABASE`** | Directus DB name (e.g. **`hungerhankeringsadmin`**). **Not** `DB_NAME` — Vendure still uses **`DB_NAME=vendure`**. Set **both** names on the same component. |
-| `DB_SSL__reject_unauthorized` | Typically **`false`** on DigitalOcean Postgres (`__` = nested key). |
+| `DB_SSL` for Directus | Prefer **`json:{"rejectUnauthorized":false}`** on DO Postgres (see `apps/directus/start.sh`). App Platform may break nested **`DB_SSL__*`** keys. |
 | `PUBLIC_URL` vs `APP_URL` | **`PUBLIC_URL`** is for Directus only when enabled; **`APP_URL`** is for Vendure/storefront — set both if both run. |
 
 See `apps/directus/README.md`. Prefer a **subdomain** rather than `/directus` under the storefront path (asset and routing issues).

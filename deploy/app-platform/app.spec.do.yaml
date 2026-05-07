@@ -91,6 +91,5 @@ services:
       # ADMIN_EMAIL / ADMIN_PASSWORD: RUN_TIME (first boot)
       # DB_CLIENT: RUN_TIME "pg"
       # DB_DATABASE: RUN_TIME "hungerhankeringsadmin"
-      # DB_SSL: RUN_TIME "true"
-      # DB_SSL__reject_unauthorized: RUN_TIME "false"
+      # Directus DO Postgres TLS (avoid "__" keys on App Platform): DB_SSL: RUN_TIME 'json:{"rejectUnauthorized":false}'
       # (Reuse DB_HOST, DB_PORT, DB_USER, DB_PASSWORD with Vendure; keep DB_NAME=vendure for Vendure.)

@@ -23,9 +23,14 @@ export HOST="${DIRECTUS_BIND_HOST:-127.0.0.1}"
 export EXTENSIONS_PATH="${EXTENSIONS_PATH:-/app/directus/extensions}"
 export DB_CLIENT="${DB_CLIENT:-pg}"
 
-# Managed Postgres (e.g. DigitalOcean) rejects non-TLS clients: pg_hba "no encryption".
-# Override for local Postgres without SSL: DB_SSL=false
-export DB_SSL="${DB_SSL:-true}"
-export DB_SSL__reject_unauthorized="${DB_SSL__reject_unauthorized:-false}"
+# Managed Postgres (e.g. DigitalOcean): TLS required; Node often rejects DO's chain unless rejectUnauthorized=false.
+# Many hosts (including DO App Platform) mangle env keys containing "__", so nested DB_SSL__reject_unauthorized may never reach Directus.
+# Directus supports cast prefix "json:" — one variable, no "__".
+# Local Postgres without TLS: DB_SSL=false
+if [ -z "${DB_SSL:-}" ]; then
+  export DB_SSL='json:{"rejectUnauthorized":false}'
+elif [ "${DB_SSL}" = "true" ] || [ "${DB_SSL}" = "1" ]; then
+  export DB_SSL='json:{"rejectUnauthorized":false}'
+fi
 
 exec ./node_modules/.bin/directus start
