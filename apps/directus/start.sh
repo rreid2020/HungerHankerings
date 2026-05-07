@@ -33,4 +33,9 @@ elif [ "${DB_SSL}" = "true" ] || [ "${DB_SSL}" = "1" ]; then
   export DB_SSL='json:{"rejectUnauthorized":false}'
 fi
 
+# directus start refuses to run until system tables exist. Bootstrap is idempotent: installs once,
+# then only applies migrations on later deploys.
+echo "[directus] bootstrap (schema + migrations; creates admin from ADMIN_EMAIL/PASSWORD when DB is new)..."
+./node_modules/.bin/directus bootstrap
+
 exec ./node_modules/.bin/directus start

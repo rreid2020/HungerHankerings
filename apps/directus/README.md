@@ -29,7 +29,9 @@ DB_DATABASE=hungerhankeringsadmin
 
 `start.sh` sets **`DB_SSL=json:{"rejectUnauthorized":false}`** when **`DB_SSL`** is unset or literally **`true`** (fixes DO **`SELF_SIGNED_CERT_IN_CHAIN`**). For **local Postgres without TLS**, set **`DB_SSL=false`**.
 
-Run `storefront/scripts/init-leads-db.sql` (or your schema) against **`DB_DATABASE`** before or after enabling Directus.
+Run `storefront/scripts/init-leads-db.sql` (or your schema) against **`DB_DATABASE`** for app-specific tables **after** Directus has bootstrapped.
+
+On startup, **`start.sh` runs `directus bootstrap`** before `directus start` so an empty database gets system tables and migrations automatically (admin from **`ADMIN_EMAIL`** / **`ADMIN_PASSWORD`** when the DB is new).
 
 ## DNS & App Platform
 
