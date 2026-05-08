@@ -22,7 +22,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_read_timeout 180s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 180s;
@@ -35,7 +35,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_connect_timeout 60s;
         proxy_read_timeout 180s;
         proxy_send_timeout 180s;
@@ -47,7 +47,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
     }
 
     location = /mailbox {
@@ -63,7 +63,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         # DB-backed Terminus checks can be slow under load; avoid DO marking the app unhealthy on cold/slow pings.
         proxy_connect_timeout 10s;
         proxy_read_timeout 45s;
@@ -77,7 +77,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_connect_timeout 10s;
         proxy_read_timeout 60s;
     }
@@ -89,7 +89,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_connect_timeout 60s;
         proxy_read_timeout 180s;
         proxy_send_timeout 180s;
@@ -102,7 +102,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_connect_timeout 10s;
         proxy_read_timeout 60s;
     }
@@ -114,7 +114,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_read_timeout 300s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 300s;
@@ -127,7 +127,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_read_timeout 180s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 180s;
@@ -140,7 +140,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_connect_timeout 60s;
         proxy_read_timeout 180s;
         proxy_send_timeout 180s;
@@ -153,7 +153,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
         proxy_read_timeout 120s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 120s;
