@@ -1,6 +1,26 @@
 import type { NextRequest } from "next/server"
 
 /**
+ * Scheme the **browser** used (HTTPS at the edge). Nginx may set `X-Forwarded-Proto: http`
+ * for the internal Next.js hop while forwarding the real scheme as `X-Forwarded-Client-Proto`.
+ */
+export function effectiveClientScheme(request: NextRequest): string | null {
+  const p =
+    request.headers.get("x-forwarded-client-proto")?.split(",")?.[0]?.trim().toLowerCase() ||
+    request.headers.get("x-forwarded-proto")?.split(",")?.[0]?.trim().toLowerCase()
+  return p || null
+}
+
+export function effectiveClientSchemeFromHeaders(
+  getHeader: (name: string) => string | null,
+): string | null {
+  const p =
+    getHeader("x-forwarded-client-proto")?.split(",")?.[0]?.trim().toLowerCase() ||
+    getHeader("x-forwarded-proto")?.split(",")?.[0]?.trim().toLowerCase()
+  return p || null
+}
+
+/**
  * Origin the browser can navigate to (e.g. after logout redirect).
  * In Docker, `request.nextUrl.origin` is often `http://0.0.0.0:3000` because the server
  * binds to 0.0.0.0 — that is invalid for clients (ERR_ADDRESS_INVALID).
@@ -68,8 +88,7 @@ function isLoopbackOrWildcardHost(hostname: string): boolean {
  * :3001 internally, so `request.url` becomes `https://localhost:3001/...` and breaks clients.
  */
 export function requestAwareOrigin(request: NextRequest): string {
-  const forwardedProto =
-    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https"
+  const forwardedProto = effectiveClientScheme(request) || "https"
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim()
   if (forwardedHost && !isInvalidHost(forwardedHost) && !isLoopbackOrWildcardHost(forwardedHost)) {
     return `${forwardedProto}://${forwardedHost}`

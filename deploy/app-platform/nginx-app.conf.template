@@ -114,7 +114,9 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
+        # Next listens with plain HTTP on :3001; forwarding client "https" makes Next build https://127.0.0.1:3001… and TLS-proxy → EPROTO.
+        proxy_set_header X-Forwarded-Proto http;
+        proxy_set_header X-Forwarded-Client-Proto $pass_forwarded_proto;
         proxy_read_timeout 300s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 300s;
@@ -127,7 +129,8 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
+        proxy_set_header X-Forwarded-Proto http;
+        proxy_set_header X-Forwarded-Client-Proto $pass_forwarded_proto;
         proxy_read_timeout 180s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 180s;
@@ -140,7 +143,8 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
+        proxy_set_header X-Forwarded-Proto http;
+        proxy_set_header X-Forwarded-Client-Proto $pass_forwarded_proto;
         proxy_connect_timeout 60s;
         proxy_read_timeout 180s;
         proxy_send_timeout 180s;
@@ -153,7 +157,8 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $pass_forwarded_proto;
+        proxy_set_header X-Forwarded-Proto http;
+        proxy_set_header X-Forwarded-Client-Proto $pass_forwarded_proto;
         proxy_read_timeout 120s;
         proxy_connect_timeout 60s;
         proxy_send_timeout 120s;
