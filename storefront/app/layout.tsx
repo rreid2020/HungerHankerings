@@ -1,6 +1,7 @@
 import "./globals.css"
 import { ClerkProvider } from "@clerk/nextjs"
 import { headers } from "next/headers"
+import { Suspense } from "react"
 import SiteHeader from "../components/SiteHeader"
 import SiteFooter from "../components/SiteFooter"
 import ThemeInit from "../components/ThemeInit"
@@ -81,9 +82,11 @@ export default async function RootLayout({
     return (
       <html lang="en-CA" suppressHydrationWarning>
         <body className="min-h-screen min-w-0 antialiased">
-          <ClerkProvider afterSignOutUrl="/ops/sign-in">
-            <ThemeInit>{children}</ThemeInit>
-          </ClerkProvider>
+          <Suspense fallback={<div className="min-h-screen bg-zinc-950" aria-hidden />}>
+            <ClerkProvider dynamic afterSignOutUrl="/ops/sign-in">
+              <ThemeInit>{children}</ThemeInit>
+            </ClerkProvider>
+          </Suspense>
         </body>
       </html>
     )
