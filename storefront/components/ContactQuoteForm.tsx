@@ -19,6 +19,7 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
   const searchParams = useSearchParams()
   const [reason, setReason] = useState<InquiryReason>(initialReason)
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle")
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
 
   useEffect(() => {
     const fromUrl = normalizeInquiryReason(searchParams.get("reason"))
@@ -28,6 +29,7 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setStatus("loading")
+    setErrorDetail(null)
 
     const form = event.currentTarget
     const formData = new FormData(form)
@@ -57,6 +59,14 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
     })
 
     if (!response.ok) {
+      let message: string | null = null
+      try {
+        const data = (await response.json()) as { error?: string }
+        if (typeof data.error === "string" && data.error.trim()) message = data.error.trim()
+      } catch {
+        /* ignore */
+      }
+      setErrorDetail(message)
       setStatus("error")
       return
     }
@@ -124,7 +134,8 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         )}
         {status === "error" && (
           <span className="text-sm text-light_coral-600">
-            Something went wrong. Please try again or email us directly.
+            {errorDetail ??
+              "Something went wrong. Please try again or email hello@hungerhankerings.com."}
           </span>
         )}
       </div>

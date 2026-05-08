@@ -61,9 +61,9 @@ Storefront: http://localhost:3000
 ## Lead Submissions
 
 The storefront `/contact` form and related CTAs post to `POST /api/leads` with
-`type: "inquiry"` (reason, name, email, etc.). Submissions are stored in Postgres
-when `DATABASE_URL` is set and emailed via Resend when `RESEND_API_KEY` is set.
-See `storefront/docs/LEADS-SETUP.md`.
+`type: "inquiry"` (reason, name, email, etc.). Production expects **`DATABASE_URL`**
+(typically the ops DB, e.g. `hungerhankeringsadmin`) **and** **`RESEND_API_KEY`**;
+both save and email must succeed for a happy response. See `storefront/docs/LEADS-SETUP.md`.
 
 ## Docker
 

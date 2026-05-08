@@ -5,6 +5,14 @@ import { sendLeadNotification } from "../../../lib/email"
 
 export async function POST(request: Request) {
   try {
+    if (!process.env.DATABASE_URL?.trim()) {
+      console.error("Lead submission: DATABASE_URL is not set (expected ops DB e.g. hungerhankeringsadmin).")
+      return NextResponse.json(
+        { ok: false, error: "Contact form is temporarily unavailable." },
+        { status: 503 }
+      )
+    }
+
     const body = await request.json()
     const { type, ...payload } = body
 
@@ -51,12 +59,31 @@ export async function POST(request: Request) {
       )
     }
 
-    await insertLead(type, { ...normalizedPayload })
-    await sendLeadNotification(type, normalizedPayload)
+    const saved = await insertLead(type, { ...normalizedPayload })
+    if (!saved) {
+      console.error("Lead submission: insertLead returned null despite DATABASE_URL being set.")
+      return NextResponse.json(
+        { ok: false, error: "Could not save your message. Please try again or email hello@hungerhankerings.com." },
+        { status: 503 }
+      )
+    }
+
+    const emailed = await sendLeadNotification(type, normalizedPayload)
+    if (!emailed.success) {
+      console.error("Lead submission: email failed after DB save:", emailed.error, "lead_id=", saved.id)
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Your message was saved but we could not send the notification email. Please email hello@hungerhankerings.com directly so we can follow up."
+        },
+        { status: 502 }
+      )
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("Lead submission error:", err)
-    return NextResponse.json({ ok: false }, { status: 500 })
+    return NextResponse.json({ ok: false, error: "Something went wrong. Please try again later." }, { status: 500 })
   }
 }

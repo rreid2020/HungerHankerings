@@ -1,12 +1,16 @@
 import postgres from "postgres"
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.DATABASE_URL?.trim()
+
+/** Same flag as Vendure on App Platform + DO Managed Postgres (TLS with relaxed CA verify). */
+const sslRelaxed = process.env.DB_SSL_REJECT_UNAUTHORIZED === "false"
 
 export const sql = connectionString
   ? postgres(connectionString, {
       max: 10,
       idle_timeout: 20,
-      connect_timeout: 10
+      connect_timeout: 10,
+      ...(sslRelaxed ? { ssl: { rejectUnauthorized: false } } : {})
     })
   : null
 
@@ -25,7 +29,7 @@ export async function insertLead(
 
   const [row] = await sql<Lead[]>`
     INSERT INTO leads (type, payload)
-    VALUES (${type}, ${JSON.stringify(payload)})
+    VALUES (${type}, ${sql.json(payload as import("postgres").JSONValue)})
     RETURNING id, type, payload, created_at
   `
   return row ?? null
