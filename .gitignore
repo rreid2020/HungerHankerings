@@ -6,6 +6,7 @@
 node_modules
 .pnpm-store
 .DS_Store
+*.tsbuildinfo
 .next
 .dist
 .dist/*
@@ -39,6 +40,9 @@ recovered
 *secret*.json
 *secret*.yml
 *secret*.yaml
+
+# Vendure Admin UI compile cache (local Angular)
+apps/vendure/admin-ui/.angular/
 
 # Archives (may contain secrets)
 *.tar
