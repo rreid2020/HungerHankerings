@@ -108,6 +108,19 @@ When **`INTERNAL_OPS_HOST`** is set (e.g. `ops.hungerhankerings.com`), nginx app
 
 Routes: **`/ops`** (dashboard), **`/ops/leads`** (stub). **`/ops`** on the public storefront hostname is redirected to `/`. Remove any old Directus-only env if present.
 
+#### Staff portal over the internet (production — not localhost)
+
+Traffic is **HTTPS from the browser → App Platform → nginx on `$PORT` (8080) → Next on 127.0.0.1:3001**. Staff should **never** open `localhost:3001` or an internal port; those addresses exist only **inside** the container.
+
+1. **App Platform → your app → Settings → Domains** — Add **`ops.<your-domain>`** (and keep your apex/www domains for the storefront). DigitalOcean terminates TLS and forwards requests into the container; nginx preserves **`X-Forwarded-Proto`** so Next.js and Clerk see **`https`** (required for cookies and redirects).
+2. **DNS** — At your DNS host, create a **CNAME** for **`ops`** pointing at the hostname DigitalOcean shows for the app (often **`your-app-xxxxx.ondigitalocean.app`** or similar).
+3. **Runtime env** — **`INTERNAL_OPS_HOST=ops.<your-domain>`** (exact FQDN, no `https://`).
+4. **Build-time env** — **`NEXT_PUBLIC_OPS_HOST`** set to the **same** FQDN, then trigger a **new deploy** so the Next.js bundle includes it (middleware host detection).
+5. **Clerk** — Use **production** keys (`pk_live_` / `sk_live_`) on the live app when ready. In the Clerk dashboard, allow **`https://ops.<your-domain>`** (and paths if prompted) for redirects / authorized frontends. Staff bookmark: **`https://ops.<your-domain>/`** (redirects to **`/ops`**) or **`https://ops.<your-domain>/ops/sign-in`**.
+6. **Secrets** — **`CLERK_SECRET_KEY`** = runtime **SECRET**; **`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`** = **BUILD_TIME** (embedded in the client bundle — not confidential, but required at build).
+
+Local development remains optional: run **`pnpm dev`** from the repo (storefront defaults to port **3003**); set **`NEXT_PUBLIC_OPS_HOST=localhost`** in **`storefront/.env.local`** if you need the ops layout and **`/ops`** routes locally. That path does **not** replace internet access for real staff workflows.
+
 ## Creating the app
 
 1. Connect the GitHub repo in App Platform; leave **Dockerfile at repo root** (or set **Dockerfile path** to `Dockerfile`) and **HTTP port** to **8080**.
