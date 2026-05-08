@@ -112,7 +112,7 @@ Routes: **`/ops`** (dashboard), **`/ops/leads`** (stub). **`/ops`** on the publi
 
 Traffic is **HTTPS from the browser → App Platform → nginx on `$PORT` (8080) → Next on 127.0.0.1:3001**. Staff should **never** open `localhost:3001` or an internal port; those addresses exist only **inside** the container.
 
-For paths proxied to **Next.js on `127.0.0.1:3001`**, nginx sets **`X-Forwarded-Proto: http`** so Next does not build internal URLs like `https://127.0.0.1:3001/…` (which triggers TLS proxy errors). The **browser’s** scheme is still passed as **`X-Forwarded-Client-Proto`** (usually `https`). The storefront uses **`x-forwarded-client-proto`** first for public redirects and **Secure** cookies.
+For paths proxied to **Next.js on `127.0.0.1:3001`**, nginx sets **`X-Forwarded-Proto: http`** so Next does not build internal URLs like `https://127.0.0.1:3001/…` (which triggers TLS proxy errors). The **browser’s** scheme is still passed as **`X-Forwarded-Client-Proto`** (usually `https`). The storefront uses **`x-forwarded-client-proto`** first for public redirects and **Secure** cookies. **`X-Forwarded-Host`** is set from **`$host`** so the load balancer cannot overwrite it with the apex domain (which would confuse ops hostname detection and redirects).
 
 1. **App Platform → your app → Settings → Domains** — Add **`ops.<your-domain>`** (and keep your apex/www domains for the storefront). DigitalOcean terminates TLS and forwards requests into the container; nginx forwards **`X-Forwarded-Client-Proto`** so the app still treats the session as **HTTPS** at the edge.
 2. **DNS** — At your DNS host, create a **CNAME** for **`ops`** pointing at the hostname DigitalOcean shows for the app (often **`your-app-xxxxx.ondigitalocean.app`** or similar).

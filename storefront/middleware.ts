@@ -1,34 +1,43 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import type { NextFetchEvent, NextRequest } from "next/server"
-import { getPublicOrigin, requestAwareOrigin } from "./lib/public-origin"
-import { getConfiguredOpsHostname, normalizeHostname } from "./lib/ops-host"
+import { effectiveClientScheme, getPublicOrigin, requestAwareOrigin } from "./lib/public-origin"
+import {
+  getConfiguredOpsHostname,
+  isOpsHostname,
+  isOpsRequestHeaders,
+  normalizeHostname,
+} from "./lib/ops-host"
 
 const isOpsSignInRoute = createRouteMatcher(["/ops/sign-in(.*)"])
 
-function requestHost(request: NextRequest): string {
-  const raw =
-    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
-    request.headers.get("host")?.split(",")[0]?.trim() ||
-    ""
-  return normalizeHostname(raw)
-}
-
-function isOpsRequest(request: NextRequest): boolean {
-  const configuredOps = getConfiguredOpsHostname()
-  const host = requestHost(request)
-  return Boolean(configuredOps && host === configuredOps)
-}
-
-/** Avoid redirect Location: https://localhost:3001/... when proxy headers are missing in edge cases. */
+/**
+ * Origin for ops redirects. Prefer Host / X-Forwarded-Host only when it matches configured ops —
+ * App Platform may send X-Forwarded-Host as the apex while Host is ops.example.com, which made
+ * requestAwareOrigin point at the storefront domain.
+ */
 function opsRedirectOrigin(request: NextRequest): string {
+  const ops = getConfiguredOpsHostname()
+  const proto = effectiveClientScheme(request) || "https"
+  if (ops) {
+    const host = request.headers.get("host")?.split(",")[0]?.trim() ?? ""
+    if (isOpsHostname(host)) {
+      return `${proto}://${normalizeHostname(host)}`
+    }
+    const forwarded = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ?? ""
+    if (isOpsHostname(forwarded)) {
+      return `${proto}://${normalizeHostname(forwarded)}`
+    }
+    return `${proto}://${ops}`
+  }
+
   let origin = requestAwareOrigin(request)
   try {
     const hostname = new URL(origin).hostname.toLowerCase()
     if (hostname === "localhost" || hostname === "127.0.0.1") {
-      const ops = getConfiguredOpsHostname()
-      if (ops) {
-        origin = `https://${ops}`
+      const fallbackOps = getConfiguredOpsHostname()
+      if (fallbackOps) {
+        origin = `https://${fallbackOps}`
       }
     }
   } catch {
@@ -116,7 +125,7 @@ const opsClerkMiddleware = clerkMiddleware(async (auth, request) => {
 })
 
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
-  if (!isOpsRequest(request)) {
+  if (!isOpsRequestHeaders(request.headers)) {
     return storefrontMiddleware(request)
   }
   return opsClerkMiddleware(request, event)
