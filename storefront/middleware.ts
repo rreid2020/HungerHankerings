@@ -1,4 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+import {
+  clerkMiddleware,
+  createRouteMatcher,
+  type ClerkMiddlewareOptions,
+} from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import type { NextFetchEvent, NextRequest } from "next/server"
 import { effectiveClientScheme, getPublicOrigin, requestAwareOrigin } from "./lib/public-origin"
@@ -51,6 +55,27 @@ function clerkKeysPresent(): boolean {
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() &&
       process.env.CLERK_SECRET_KEY?.trim(),
   )
+}
+
+/**
+ * Absolute sign-in URL Clerk uses for redirects / handshake. Required for stable auth behind reverse
+ * proxies; if missing, Clerk can enter Handshake without Location → middleware throws (500).
+ * Prefer NEXT_PUBLIC_CLERK_SIGN_IN_URL in dev (include port, e.g. http://localhost:3003/ops/sign-in).
+ */
+function opsClerkMiddlewareOptions(): ClerkMiddlewareOptions {
+  const opsHost = getConfiguredOpsHostname()
+  const signInUrl =
+    process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL?.trim() ||
+    (opsHost
+      ? `${opsHost === "localhost" || opsHost === "127.0.0.1" ? "http" : "https"}://${opsHost}/ops/sign-in`
+      : undefined)
+
+  return {
+    contentSecurityPolicy: {},
+    // Same-origin FAPI proxy: avoids third-party / cross-site cookie issues and fixes many handshake failures.
+    frontendApiProxy: { enabled: true },
+    ...(signInUrl ? { signInUrl } : {}),
+  }
 }
 
 /** Vendure customer auth + hide /ops on the public storefront — no Clerk (Clerk would handshake-redirect every matched route). */
@@ -124,11 +149,7 @@ const opsClerkMiddleware = clerkMiddleware(
 
     return NextResponse.next()
   },
-  {
-    // Clerk-owned CSP for the ops host (FAPI, img.clerk.com, Cloudflare challenges). Global nginx CSP
-    // previously blocked these (separate browser policies) and broke handshake/iframes — see APP-PLATFORM.md.
-    contentSecurityPolicy: {},
-  },
+  opsClerkMiddlewareOptions,
 )
 
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
