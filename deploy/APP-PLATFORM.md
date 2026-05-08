@@ -1,6 +1,6 @@
 # DigitalOcean App Platform (single Web Service)
 
-This repo includes a **one-container** production layout: **Vendure** (`127.0.0.1:3000`), **Vendure worker**, **Next.js** (`127.0.0.1:3001`), optional **Directus** (`127.0.0.1:8055`, internal ops DB UI), and **nginx** on **`$PORT`** (App Platform sets this; default **8080**).
+This repo includes a **one-container** production layout: **Vendure** (`127.0.0.1:3000`), **Vendure worker**, **Next.js** (`127.0.0.1:3001`), and **nginx** on **`$PORT`** (App Platform sets this; default **8080**). Optional **`INTERNAL_OPS_HOST`** adds a second nginx `server_name` so a staff subdomain (e.g. `ops.example.com`) hits the **same** Next.js process — use `Host` in the app to serve a custom admin portal.
 
 Files:
 
@@ -9,8 +9,8 @@ Files:
 | `Dockerfile` (repo root) | Multi-stage build + runtime image (root path so App Platform prefers Docker over Node buildpack) |
 | `deploy/app-platform/nginx-main.conf` | `http { … limit_* zones … }` |
 | `deploy/app-platform/nginx-app.conf.template` | Server block → `default.conf` at startup |
-| `deploy/app-platform/nginx-directus-ops.conf.template` | Optional second `server_name` for Directus (appended when `INTERNAL_OPS_HOST` is set) |
-| `deploy/app-platform/supervisord.conf` | Starts vendure, worker, storefront, directus (idle unless enabled), nginx |
+| `deploy/app-platform/nginx-ops-host.conf.template` | Optional second `server_name` for staff subdomain → Next (appended when `INTERNAL_OPS_HOST` is set) |
+| `deploy/app-platform/supervisord.conf` | Starts vendure, worker, storefront, nginx |
 | `deploy/app-platform/docker-entrypoint.sh` | Substitutes listen port, runs supervisord |
 | `deploy/app-platform/app.spec.example.yaml` | Example App Platform spec |
 
@@ -82,24 +82,9 @@ Set all four: `DO_SPACES_BUCKET`, `DO_SPACES_KEY`, `DO_SPACES_SECRET`, `DO_SPACE
 
 Point webhook URLs at your **new** public hostname (`https://…/payments/…` as configured for Vendure).
 
-### Directus (optional — same component, no extra web service)
+### Staff subdomain (`ops`) — custom admin on Next.js
 
-Directus runs **inside the same container** on **`127.0.0.1:8055`**. Nginx exposes it only when you set **`INTERNAL_OPS_HOST`** (e.g. `ops.hungerhankerings.com`) and add that hostname to the App’s **Domains** + DNS (same load balancer as the storefront).
-
-| Variable | Notes |
-|----------|--------|
-| `ENABLE_DIRECTUS` | Set to **`true`** to start Directus; if unset/false, the process idles (minimal RAM). |
-| `INTERNAL_OPS_HOST` | Bare hostname only (no `https://`). Required for nginx to route the ops subdomain to Directus. |
-| `PUBLIC_URL` | Directus expects its own public base URL, e.g. **`https://ops.hungerhankerings.com`** (match `INTERNAL_OPS_HOST`). |
-| `KEY`, `SECRET` | Required random strings when Directus is enabled (keep stable across deploys). |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Bootstrap the first admin on an empty database. |
-| `DB_CLIENT` | Usually **`pg`**. |
-| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Same managed Postgres as Vendure (shared). |
-| **`DB_DATABASE`** | Directus DB name (e.g. **`hungerhankeringsadmin`**). **Not** `DB_NAME` — Vendure still uses **`DB_NAME=vendure`**. Set **both** names on the same component. |
-| `DB_SSL` for Directus | Prefer **`json:{"rejectUnauthorized":false}`** on DO Postgres (see `apps/directus/start.sh`). App Platform may break nested **`DB_SSL__*`** keys. |
-| `PUBLIC_URL` vs `APP_URL` | **`PUBLIC_URL`** is for Directus only when enabled; **`APP_URL`** is for Vendure/storefront — set both if both run. |
-
-See `apps/directus/README.md`. Prefer a **subdomain** rather than `/directus` under the storefront path (asset and routing issues).
+When **`INTERNAL_OPS_HOST`** is set (e.g. `ops.hungerhankerings.com`), nginx appends a vhost that proxies that hostname to **Next.js on `127.0.0.1:3001`** (same app as the storefront). Add the domain on the App and DNS as usual. Implement the admin UI in the Next repo using `headers().get("host")` / `middleware.ts` to branch when `Host` matches your ops hostname (and remove **`ENABLE_DIRECTUS`**, **`PUBLIC_URL`**, **`KEY`**, **`SECRET`**, **`ADMIN_*`**, **`DB_DATABASE`** for Directus if you had added them).
 
 ## Creating the app
 

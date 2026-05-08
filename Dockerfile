@@ -46,25 +46,13 @@ RUN npm install --no-audit --no-fund
 COPY storefront .
 RUN npm run build && npm prune --omit=dev
 
-FROM node:20-alpine AS directus-app
-WORKDIR /app/directus
-ENV CI=true
-ENV npm_config_progress=false
-ENV npm_config_fetch_retries=5
-COPY apps/directus/package.json ./
-RUN npm install --omit=dev --no-audit --no-fund
-COPY apps/directus/extensions ./extensions
-COPY apps/directus/start.sh ./
-RUN chmod +x start.sh \
-  && sed -i 's/\r$//' start.sh
-
 FROM node:20-alpine
 RUN apk add --no-cache nginx supervisor \
   && rm -f /etc/nginx/http.d/default.conf
 
 COPY deploy/app-platform/nginx-main.conf /etc/nginx/nginx.conf
 COPY deploy/app-platform/nginx-app.conf.template /etc/nginx/app-platform-server.conf.template
-COPY deploy/app-platform/nginx-directus-ops.conf.template /etc/nginx/directus-ops-server.conf.template
+COPY deploy/app-platform/nginx-ops-host.conf.template /etc/nginx/ops-host-server.conf.template
 COPY deploy/app-platform/supervisord.conf /etc/supervisord.conf
 COPY deploy/app-platform/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh \
@@ -74,7 +62,6 @@ RUN chmod +x /docker-entrypoint.sh \
 
 COPY --from=vendure-app /app/vendure /app/vendure
 COPY --from=storefront-build /storefront /app/storefront
-COPY --from=directus-app /app/directus /app/directus
 
 EXPOSE 8080
 ENV NODE_ENV=production

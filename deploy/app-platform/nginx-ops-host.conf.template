@@ -1,5 +1,6 @@
 # Appended at container start when INTERNAL_OPS_HOST is set (see docker-entrypoint.sh).
-# Directus listens on 127.0.0.1:8055 — employee subdomain only; do not link from public storefront.
+# Staff subdomain (e.g. ops.hungerhankerings.com) → same Next.js app as the storefront; use Host header
+# in Next.js middleware / routes to serve a custom admin portal. Do not link from public storefront.
 
 server {
     listen __LISTEN_PORT__;
@@ -8,7 +9,7 @@ server {
     client_max_body_size 64m;
 
     location / {
-        proxy_pass http://127.0.0.1:8055;
+        proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

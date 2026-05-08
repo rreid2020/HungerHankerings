@@ -22,7 +22,7 @@ Both must succeed for the user to see a success message (if email fails after sa
    DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/hungerhankeringsadmin
    ```
 
-   Use the same host/port/user/password as your cluster; only the **database name** should be the ops DB. On the same component as Vendure, set **`DB_SSL_REJECT_UNAUTHORIZED=false`** so the storefront Postgres client relaxes TLS verification (same as Directus / typical DO Managed Postgres).
+   Use the same host/port/user/password as your cluster; only the **database name** should be the ops DB. On the same component as Vendure, set **`DB_SSL_REJECT_UNAUTHORIZED=false`** so the storefront Postgres client relaxes TLS verification (typical for DO Managed Postgres).
 
 ## Resend
 
