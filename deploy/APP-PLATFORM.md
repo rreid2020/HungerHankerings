@@ -74,6 +74,24 @@ Mark secrets (**`DB_PASSWORD`**, **`COOKIE_SECRET`**, **`DO_SPACES_*`**, **`SMTP
 
 Allow connections from App Platform to your Managed Database ([trusted sources / dedicated egress IP](https://docs.digitalocean.com/products/app-platform/how-to/manage-databases/)). Use the same `DB_*` values as on the Droplet once networking is allowed.
 
+**Private hostname (`private-db-postgresql-…`) vs public (`db-postgresql-…`):** the private host resolves to a **VPC-only IP** (e.g. `10.118.x.x`). Runtime logs like **`connect ETIMEDOUT 10.x.x.x:25060`** mean the container opened a socket toward that address but **no route answered** — almost always because **App Platform is not attached to the same VPC** as the database. **Trusted sources** only control who may connect once traffic reaches Postgres; they do not route your app into the VPC.
+
+**Fix (pick one):**
+
+1. **Stay on private networking:** [Enable VPC networking for the App Platform app](https://docs.digitalocean.com/products/app-platform/how-to/enable-vpc/) and join the **same VPC** (and compatible region/datacenter) as the managed database. Then keep **`DB_HOST`** on the **`private-db-…`** hostname. See also [Manage databases in App Platform](https://docs.digitalocean.com/products/app-platform/how-to/manage-databases/).
+
+2. **Stay on App Platform without VPC attachment:** Switch **`DB_HOST`** back to the **public** hostname (`db-postgresql-…ondigitalocean.com`, not `private-db-postgresql-…`) and rely on TLS + trusted sources (or a **dedicated egress IP**). Your Droplet in the VPC can keep using the private host if you split environments later.
+
+**Constraint:** DigitalOcean documents that **VPC networking and dedicated egress IP cannot both be enabled** on the same app — plan accordingly.
+
+### Same VPC but logs still show `ETIMEDOUT` to `10.x.x.x:25060`
+
+DigitalOcean ties App Platform to **one datacenter per region** (not “any VPC in the account”). Example: an app in region **`tor`** can attach only to VPCs in **`tor1`**. Your managed Postgres cluster must live in that **same datacenter** VPC, or you need **[VPC peering](https://docs.digitalocean.com/products/networking/vpc/how-to/create-peering/)** between the app’s VPC and the database’s VPC. See the region → datacenter table in [Enable App Platform VPC](https://docs.digitalocean.com/products/app-platform/how-to/enable-vpc/).
+
+If the database uses **trusted sources**, the VPC doc also requires adding the **app’s VPC egress private IP** to the database’s trusted sources (not only “App Platform” in the abstract). In the control panel: **Databases → your cluster → Settings / Network Access → Trusted sources** — confirm the App’s **private egress** address (from the app’s **Networking** tab after VPC is enabled) is listed. Missing or stale IPs after a redeploy can produce **timeouts**, not immediate “connection refused” from Postgres.
+
+After changing VPC or trusted sources, **redeploy the app** so workers pick up routing; then confirm runtime logs show Vendure connecting without repeating `ETIMEDOUT`.
+
 ### Spaces
 
 Set all four: `DO_SPACES_BUCKET`, `DO_SPACES_KEY`, `DO_SPACES_SECRET`, `DO_SPACES_REGION` — same as Droplet (see `vendure-config.ts`).
@@ -84,7 +102,11 @@ Point webhook URLs at your **new** public hostname (`https://…/payments/…` a
 
 ### Staff subdomain (`ops`) — custom admin on Next.js
 
-When **`INTERNAL_OPS_HOST`** is set (e.g. `ops.hungerhankerings.com`), nginx appends a vhost that proxies that hostname to **Next.js on `127.0.0.1:3001`** (same app as the storefront). Add the domain on the App and DNS as usual. Implement the admin UI in the Next repo using `headers().get("host")` / `middleware.ts` to branch when `Host` matches your ops hostname (and remove **`ENABLE_DIRECTUS`**, **`PUBLIC_URL`**, **`KEY`**, **`SECRET`**, **`ADMIN_*`**, **`DB_DATABASE`** for Directus if you had added them).
+When **`INTERNAL_OPS_HOST`** is set (e.g. `ops.hungerhankerings.com`), nginx appends a vhost that proxies that hostname to **Next.js on `127.0.0.1:3001`** (same app as the storefront). Add the **ops** domain on the App and DNS.
+
+**Ops portal in Next.js:** set **`INTERNAL_OPS_HOST`** (runtime, nginx) and the **same hostname** as **`NEXT_PUBLIC_OPS_HOST`** at **Docker build** time (`Dockerfile` `ARG`) or App Platform **BUILD_TIME** env so middleware can redirect `/` → `/ops`. At runtime, `INTERNAL_OPS_HOST` / `OPS_HOST` alone is enough for the **layout** branch; without `NEXT_PUBLIC_OPS_HOST` in the bundle, the `/` redirect on the ops host may not run until you rebuild with the build-arg.
+
+Routes: **`/ops`** (dashboard), **`/ops/leads`** (stub). **`/ops`** on the public storefront hostname is redirected to `/`. Remove any old Directus-only env if present.
 
 ## Creating the app
 
@@ -120,6 +142,18 @@ Usually **health checks** hit **`/health`** before Vendure + nginx are ready (fi
 If logs show **Vendure started** but DO stays **Degraded**, the probe may be timing out on Vendure’s **database health ping** (default TypeORM check). This repo **disables DB checks on `/health` by default** so the platform sees a fast **200** once Nest is up. To restore the DB probe (e.g. for your own monitoring), set runtime **`VENDURE_HEALTHCHECK_DATABASE=true`**.
 
 **Env typos that break health / APIs:** `https://https://…`, `…//shop-api`, `APP_URL` ending in **`/.com`**, or **`DO_SPACES_*`** values pasted **with quote characters** — the secret value must be the raw key, not `"key"` in quotes.
+
+### Shop page shows no product cards (empty grid)
+
+Server-side Next calls Vendure at **`VENDURE_SHOP_API_URL`** (default `http://localhost:3000/shop-api`). Inside this Docker image, set **`VENDURE_SHOP_API_URL=http://127.0.0.1:3000/shop-api`** so SSR always hits the local Vendure process.
+
+If Vendure logs still show DB errors after fixing **`DB_HOST`** (hostname only, not a full `postgres://…` URL):
+
+1. Set **`DB_SSL_REJECT_UNAUTHORIZED=false`** for DigitalOcean managed Postgres (TLS with a CA Node does not trust by default). Without it, TypeORM often fails to connect even when the host resolves.
+2. Confirm **`DB_PORT`** (e.g. `25060`), **`DB_USER`**, **`DB_PASSWORD`**, **`DB_NAME`** match the cluster; rotate the password if it was exposed in logs.
+3. **Trusted sources** only fix networking; they do not populate data. A **new** `vendure` database is empty until you restore a dump or run migrations + Admin setup. The storefront also **hides products whose variants have no list price** in the active channel—assign **CAD** (or your channel currency) prices in Admin if the grid is empty but products exist.
+
+To verify Vendure quickly: runtime logs should show **`Bootstrapping Vendure Server`** without repeating **`Unable to connect to the database`**; **`/admin`** should load when the server is healthy.
 
 ### `Unlinking stale socket /run/supervisor.sock` (repeating)
 

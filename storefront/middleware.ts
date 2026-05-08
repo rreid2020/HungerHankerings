@@ -1,54 +1,102 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { getPublicOrigin } from "./lib/public-origin"
+import { getConfiguredOpsHostname, normalizeHostname } from "./lib/ops-host"
 
-export function middleware(request: NextRequest) {
+const isOpsSignInRoute = createRouteMatcher(["/ops/sign-in(.*)"])
+
+function requestHost(request: NextRequest): string {
+  const raw =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host")?.split(",")[0]?.trim() ||
+    ""
+  return normalizeHostname(raw)
+}
+
+function clerkKeysPresent(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() &&
+      process.env.CLERK_SECRET_KEY?.trim(),
+  )
+}
+
+export default clerkMiddleware(async (auth, request) => {
   const { pathname, searchParams } = request.nextUrl
   const token = request.cookies.get("vendure_token")
 
-  // Allow access to account page if there's a confirmation token (from email confirmation links)
+  const configuredOps = getConfiguredOpsHostname()
+  const host = requestHost(request)
+  const isOps = Boolean(configuredOps && host === configuredOps)
+  const clerkOk = clerkKeysPresent()
+
+  if (!isOps && pathname.startsWith("/ops")) {
+    return NextResponse.redirect(new URL("/", getPublicOrigin(request)))
+  }
+
+  if (isOps && process.env.NODE_ENV === "production" && !clerkOk) {
+    if (pathname === "/" || pathname.startsWith("/ops")) {
+      return new NextResponse(
+        "Ops portal requires Clerk. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY on this component.",
+        { status: 503 },
+      )
+    }
+  }
+
+  if (isOps && pathname === "/") {
+    return NextResponse.redirect(new URL("/ops", request.url))
+  }
+
+  if (
+    isOps &&
+    (pathname.startsWith("/account") ||
+      pathname === "/login" ||
+      pathname === "/register")
+  ) {
+    return NextResponse.redirect(new URL("/ops", request.url))
+  }
+
   const hasConfirmationToken = searchParams.has("token") || searchParams.has("t") || searchParams.has("key")
   const hasConfirmationEmail = searchParams.has("email") || searchParams.has("e")
-  
-  // Protect account routes - redirect to login if not authenticated
-  // BUT allow access if there's a confirmation token (let the page handle it)
-  // OR if there's a token cookie (let the page validate it - don't create redirect loop)
+
   if (pathname.startsWith("/account")) {
-    // Allow access to /account page with confirmation token, or to /account/confirm
     if (pathname === "/account" && hasConfirmationToken && hasConfirmationEmail) {
       return NextResponse.next()
     }
     if (pathname === "/account/confirm") {
       return NextResponse.next()
     }
-    
-    // If there's a token cookie, let the page handle validation (don't redirect here to avoid loops)
+
     if (token) {
       return NextResponse.next()
     }
-    
-    // No token and no confirmation token - redirect to login
+
     const loginUrl = new URL("/login", getPublicOrigin(request))
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect logged-in users away from login/register pages
-  // BUT only if we're not coming from a redirect (to avoid loops)
-  // The account page will validate the token and clear it if invalid
   if ((pathname === "/login" || pathname === "/register") && token) {
-    // Check if there's a redirect param - if so, let the page handle it
-    // This prevents loops when token is invalid
     const hasRedirect = searchParams.has("redirect")
     if (!hasRedirect) {
       return NextResponse.redirect(new URL("/account", getPublicOrigin(request)))
     }
   }
 
+  if (isOps && pathname.startsWith("/ops") && !isOpsSignInRoute(request) && clerkOk) {
+    await auth.protect()
+  }
+
   return NextResponse.next()
-}
+})
 
 export const config = {
-  // Include exact /account — some Next versions don't match /account under only :path*
-  matcher: ["/account", "/account/:path*", "/login", "/register"],
+  matcher: [
+    "/",
+    "/ops/:path*",
+    "/account",
+    "/account/:path*",
+    "/login",
+    "/register",
+  ],
 }

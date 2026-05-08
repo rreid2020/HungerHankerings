@@ -34,6 +34,13 @@ services:
       - key: NEXT_PUBLIC_SITE_URL
         scope: BUILD_TIME
         value: https://YOUR-APP-HOSTNAME
+      - key: NEXT_PUBLIC_OPS_HOST
+        scope: BUILD_TIME
+        value: ops.YOUR-DOMAIN.com
+      # Staff ops portal (Clerk) — BUILD_TIME publishable key; set CLERK_SECRET_KEY at RUN_TIME.
+      # - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+      #   scope: BUILD_TIME
+      #   value: pk_live_xxx
     envs:
       - key: NODE_ENV
         scope: RUN_TIME
@@ -46,4 +53,12 @@ services:
       - key: APP_URL
         scope: RUN_TIME
         value: https://YOUR-APP-HOSTNAME
+      # Optional: staff ops subdomain (must match NEXT_PUBLIC_OPS_HOST build value). Nginx appends vhost when set.
+      # - key: INTERNAL_OPS_HOST
+      #   scope: RUN_TIME
+      #   value: ops.YOUR-DOMAIN.com
+      # - key: CLERK_SECRET_KEY
+      #   scope: RUN_TIME
+      #   type: SECRET
+      #   value: EV[1:YOUR_ENCRYPTED_CLERK_SECRET]
       # Add the rest from deploy/env.production.example as RUN_TIME (secrets via ENCRYPTED type in UI or EV[] refs).

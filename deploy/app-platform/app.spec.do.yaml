@@ -56,6 +56,9 @@ services:
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         scope: BUILD_TIME
         value: "pk_test_REPLACE_IN_UI_WITH_YOUR_KEY"
+      - key: NEXT_PUBLIC_OPS_HOST
+        scope: BUILD_TIME
+        value: "ops.hungerhankerings.com"
       - key: DB_HOST
         scope: RUN_TIME
         value: "${db-postgresql-tor1-60715.HOSTNAME}"
@@ -83,5 +86,8 @@ services:
       - key: NODE_ENV
         scope: RUN_TIME
         value: "production"
-      # --- Staff ops subdomain (optional): nginx routes Host to Next.js — set INTERNAL_OPS_HOST, add ops.* domain ---
-      # INTERNAL_OPS_HOST: RUN_TIME "ops.hungerhankerings.com"
+      # --- Staff ops subdomain: nginx vhost + Next host detection (set both; NEXT_PUBLIC_* is build-time in Docker) ---
+      - key: INTERNAL_OPS_HOST
+        scope: RUN_TIME
+        value: "ops.hungerhankerings.com"
+      # Ops portal (Clerk): add BUILD_TIME NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY + RUN_TIME CLERK_SECRET_KEY or /ops returns 503 in production.

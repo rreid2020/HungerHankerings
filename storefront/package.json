@@ -11,13 +11,14 @@
     "clean": "node scripts/clean-next.cjs"
   },
   "dependencies": {
+    "@clerk/nextjs": "7.3.2",
     "@stripe/stripe-js": "^8.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.7.0",
-    "next": "15.1.0",
+    "next": "15.2.8",
     "postgres": "^3.4.8",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.0.3",
+    "react-dom": "19.0.3",
     "resend": "^6.9.2",
     "sanitize-html": "^2.17.2"
   },

@@ -20,9 +20,11 @@ export const metadata: Metadata = {
 
 const ShopPage = async () => {
   let products: Awaited<ReturnType<typeof listProducts>> = []
+  let catalogLoadFailed = false
   try {
     products = await listProducts()
   } catch (err) {
+    catalogLoadFailed = true
     console.error("Products fetch failed:", err)
   }
 
@@ -41,6 +43,23 @@ const ShopPage = async () => {
         </div>
         <CheckoutButton />
       </div>
+      {catalogLoadFailed ? (
+        <p
+          className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-foreground"
+          role="alert"
+        >
+          The snack catalog could not be loaded. Check runtime logs for Vendure (database SSL,
+          <code className="mx-0.5 rounded bg-muted px-1 py-0.5 text-xs">VENDURE_SHOP_API_URL</code>
+          →<code className="mx-0.5 rounded bg-muted px-1 py-0.5 text-xs">http://127.0.0.1:3000/shop-api</code>
+          ) and see <code className="rounded bg-muted px-1 py-0.5 text-xs">deploy/APP-PLATFORM.md</code>.
+        </p>
+      ) : null}
+      {!catalogLoadFailed && products.length === 0 ? (
+        <p className="rounded-md border border-dust_grey-200 bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          No snack boxes are listed for the shop right now. If you recently moved databases, confirm
+          products exist in Vendure Admin and each variant has a price in the active channel (CAD).
+        </p>
+      ) : null}
       <div className="grid gap-6 md:grid-cols-3">
         {products.map((product) => (
           <ProductCard key={(product as { id: string }).id} product={product} />
