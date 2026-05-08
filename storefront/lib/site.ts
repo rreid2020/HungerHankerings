@@ -14,7 +14,11 @@ function trimTrailingSlashes(s: string): string {
  */
 export function getSiteOrigin(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (explicit) return trimTrailingSlashes(explicit);
+  if (explicit) {
+    const t = trimTrailingSlashes(explicit);
+    if (/^https?:\/\//i.test(t)) return t;
+    return `https://${t.replace(/^\/+/, "")}`;
+  }
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) {
     const host = vercel.replace(/^https?:\/\//i, "");
