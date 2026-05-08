@@ -121,6 +121,17 @@ For paths proxied to **Next.js on `127.0.0.1:3001`**, nginx forwards the **brows
 5. **Clerk** — Use **production** keys (`pk_live_` / `sk_live_`) on the live app when ready. In the Clerk dashboard, allow **`https://ops.<your-domain>`** (and paths if prompted) for redirects / authorized frontends. Staff bookmark: **`https://ops.<your-domain>/`** (redirects to **`/ops`**) or **`https://ops.<your-domain>/ops/sign-in`**.
 6. **Secrets** — **`CLERK_SECRET_KEY`** = runtime **SECRET**; **`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`** = **BUILD_TIME** (embedded in the client bundle — not confidential, but required at build).
 
+#### Diagnosis (why this looked like “going in circles”)
+
+Several **independent** layers had to line up; fixing only one left the others broken.
+
+| Layer | What went wrong | What fixes it |
+|--------|------------------|----------------|
+| **Next.js `initURL`** | `resolveRoutes()` sets `initURL`, then **`attachRequestMeta()` overwrites it**. If `next start` uses **`-H 127.0.0.1`**, Next sets **`fetchHostname`** and uses **`https://127.0.0.1:3001`…** whenever **`x-forwarded-proto`** contains `https` — TLS to a **plain HTTP** listener (**EPROTO**) or inconsistent URLs for RSC/Clerk. | **`experimental.trustHostHeader`** in production **and** **`next start -p 3001` without `-H`** so the trusted **`Host`** branch wins. |
+| **Forwarded protocol** | Clerk (and Next) treat **`x-forwarded-proto`** as the browser scheme. Forcing it to **`http`** on the nginx→Next hop produced **`http://`** redirect URLs and wrong JWT **`azp`**. | Forward **`X-Forwarded-Proto`** / **`X-Forwarded-Client-Proto`** as **`$pass_forwarded_proto`** (HTTPS at the edge). |
+| **Ops vs storefront host** | Middleware used **`x-forwarded-host` first** only; the root layout used **`Host OR forwarded`**. A misleading forwarded host sent ops traffic down the **storefront** middleware path. | **`isOpsRequestHeaders()`** in middleware; **`X-Forwarded-Host: $host`** on Next upstreams. |
+| **Content-Security-Policy** | nginx sent a **global** CSP (`connect-src 'self'`, tight **`frame-src`**). The browser applies **each** CSP separately; Clerk must **`fetch`** and **`iframe`** the **Frontend API** host (e.g. **`https://clerk.ops…`**). That violated nginx’s policy → handshake / frame errors and unstable auth. **This is not fixed by changing headers alone if CSP still blocks Clerk.** | **Do not** attach a blanket CSP from nginx for Next. **`clerkMiddleware(..., { contentSecurityPolicy: {} })`** on the ops host (see Clerk docs). Re-introduce CSP for the **storefront** via **`next.config.js`** or nginx **per-location** if you need parity with the old policy. |
+
 Local development remains optional: run **`pnpm dev`** from the repo (storefront defaults to port **3003**); set **`NEXT_PUBLIC_OPS_HOST=localhost`** in **`storefront/.env.local`** if you need the ops layout and **`/ops`** routes locally. That path does **not** replace internet access for real staff workflows.
 
 ## Creating the app

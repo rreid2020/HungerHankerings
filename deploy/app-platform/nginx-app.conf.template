@@ -9,7 +9,9 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://applepay.cdn-apple.com https://pay.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://login-image.vendure.io https://api.stripe.com https://merchant-ui-api.stripe.com https://errors.stripe.com https://r.stripe.com https://ppm.stripe.com https://qr.stripe.com https://m.stripe.network https://apple-pay-gateway.apple.com https://apple-pay-gateway-cert.apple.com https://www.googleapis.com https://pay.google.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://pay.google.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';" always;
+    # No global Content-Security-Policy here: it blocked Clerk (connect-src/frame-src to the Frontend API
+    # host, e.g. clerk.ops.example.com). Multiple CSP sources combine as separate policies in the browser.
+    # Ops HTML uses Clerk's CSP via middleware; add CSP in next.config or per-location if you need it on Vendure.
 
     location ~* ^/assets/.*\.(html?|htm)$ {
         return 404;

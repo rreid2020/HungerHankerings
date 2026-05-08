@@ -92,37 +92,44 @@ function storefrontMiddleware(request: NextRequest): NextResponse {
   return NextResponse.next()
 }
 
-const opsClerkMiddleware = clerkMiddleware(async (auth, request) => {
-  const { pathname } = request.nextUrl
-  const clerkOk = clerkKeysPresent()
+const opsClerkMiddleware = clerkMiddleware(
+  async (auth, request) => {
+    const { pathname } = request.nextUrl
+    const clerkOk = clerkKeysPresent()
 
-  if (process.env.NODE_ENV === "production" && !clerkOk) {
-    if (pathname === "/" || pathname.startsWith("/ops")) {
-      return new NextResponse(
-        "Ops portal requires Clerk. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY on this component.",
-        { status: 503 },
-      )
+    if (process.env.NODE_ENV === "production" && !clerkOk) {
+      if (pathname === "/" || pathname.startsWith("/ops")) {
+        return new NextResponse(
+          "Ops portal requires Clerk. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY on this component.",
+          { status: 503 },
+        )
+      }
     }
-  }
 
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
-  }
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
+    }
 
-  if (
-    pathname.startsWith("/account") ||
-    pathname === "/login" ||
-    pathname === "/register"
-  ) {
-    return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
-  }
+    if (
+      pathname.startsWith("/account") ||
+      pathname === "/login" ||
+      pathname === "/register"
+    ) {
+      return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
+    }
 
-  if (pathname.startsWith("/ops") && !isOpsSignInRoute(request) && clerkOk) {
-    await auth.protect()
-  }
+    if (pathname.startsWith("/ops") && !isOpsSignInRoute(request) && clerkOk) {
+      await auth.protect()
+    }
 
-  return NextResponse.next()
-})
+    return NextResponse.next()
+  },
+  {
+    // Clerk-owned CSP for the ops host (FAPI, img.clerk.com, Cloudflare challenges). Global nginx CSP
+    // previously blocked these (separate browser policies) and broke handshake/iframes — see APP-PLATFORM.md.
+    contentSecurityPolicy: {},
+  },
+)
 
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
   if (!isOpsRequestHeaders(request.headers)) {

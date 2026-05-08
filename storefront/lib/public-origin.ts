@@ -39,8 +39,7 @@ export function getPublicOrigin(request: NextRequest): string {
   }
 
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim()
-  const forwardedProto =
-    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "http"
+  const forwardedProto = effectiveClientScheme(request) || "http"
   if (forwardedHost && !isInvalidHost(forwardedHost)) {
     return `${forwardedProto}://${forwardedHost}`
   }
