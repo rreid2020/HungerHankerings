@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import type { NextFetchEvent, NextRequest } from "next/server"
-import { getPublicOrigin } from "./lib/public-origin"
+import { getPublicOrigin, requestAwareOrigin } from "./lib/public-origin"
 import { getConfiguredOpsHostname, normalizeHostname } from "./lib/ops-host"
 
 const isOpsSignInRoute = createRouteMatcher(["/ops/sign-in(.*)"])
@@ -18,6 +18,23 @@ function isOpsRequest(request: NextRequest): boolean {
   const configuredOps = getConfiguredOpsHostname()
   const host = requestHost(request)
   return Boolean(configuredOps && host === configuredOps)
+}
+
+/** Avoid redirect Location: https://localhost:3001/... when proxy headers are missing in edge cases. */
+function opsRedirectOrigin(request: NextRequest): string {
+  let origin = requestAwareOrigin(request)
+  try {
+    const hostname = new URL(origin).hostname.toLowerCase()
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      const ops = getConfiguredOpsHostname()
+      if (ops) {
+        origin = `https://${ops}`
+      }
+    }
+  } catch {
+    /* keep origin */
+  }
+  return origin
 }
 
 function clerkKeysPresent(): boolean {
@@ -80,7 +97,7 @@ const opsClerkMiddleware = clerkMiddleware(async (auth, request) => {
   }
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/ops", request.url))
+    return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
   }
 
   if (
@@ -88,7 +105,7 @@ const opsClerkMiddleware = clerkMiddleware(async (auth, request) => {
     pathname === "/login" ||
     pathname === "/register"
   ) {
-    return NextResponse.redirect(new URL("/ops", request.url))
+    return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
   }
 
   if (pathname.startsWith("/ops") && !isOpsSignInRoute(request) && clerkOk) {

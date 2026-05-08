@@ -51,3 +51,39 @@ function isInvalidPublicHost(url: string): boolean {
     return true
   }
 }
+
+function isLoopbackOrWildcardHost(hostname: string): boolean {
+  const h = hostname.toLowerCase().split(":")[0]
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "[::1]" ||
+    h === "::1"
+  )
+}
+
+/**
+ * Origin as the browser sees it (trust proxy headers). Use for redirects on the **same** host
+ * as the request (e.g. ops → /ops). Do not use `request.url` behind nginx: Next binds to
+ * :3001 internally, so `request.url` becomes `https://localhost:3001/...` and breaks clients.
+ */
+export function requestAwareOrigin(request: NextRequest): string {
+  const forwardedProto =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https"
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim()
+  if (forwardedHost && !isInvalidHost(forwardedHost) && !isLoopbackOrWildcardHost(forwardedHost)) {
+    return `${forwardedProto}://${forwardedHost}`
+  }
+
+  const host = request.headers.get("host")?.split(",")[0]?.trim()
+  if (host && !isInvalidHost(host) && !isLoopbackOrWildcardHost(host)) {
+    return `${forwardedProto}://${host}`
+  }
+
+  const nu = request.nextUrl
+  if (nu.hostname && !isInvalidHost(nu.hostname) && !isLoopbackOrWildcardHost(nu.hostname)) {
+    return nu.origin
+  }
+
+  return getPublicOrigin(request)
+}
