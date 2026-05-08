@@ -1,6 +1,11 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Production: absolute URLs use Host + https instead of https://127.0.0.1:PORT (avoids TLS→plain-HTTP
+  // proxy errors and lets Clerk see HTTPS via X-Forwarded-Proto). Dev keeps default (localhost).
+  experimental: {
+    trustHostHeader: process.env.NODE_ENV === "production",
+  },
   async headers() {
     return [
       {
