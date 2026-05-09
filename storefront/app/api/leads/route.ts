@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { after, NextResponse } from "next/server"
 import { isInquiryReason } from "../../../lib/contact-inquiry"
 import { insertLead, isLeadsDatabaseConfigured } from "../../../lib/db"
 import { sendLeadNotification } from "../../../lib/email"
@@ -96,18 +96,22 @@ export async function POST(request: Request) {
       )
     }
 
-    const emailed = await sendLeadNotification(type, normalizedPayload)
-    if (!emailed.success) {
-      console.error("Lead submission: email failed after DB save:", emailed.error, "lead_id=", saved.id)
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "Your message was saved but we could not send the notification email. Please email hello@hungerhankerings.com directly so we can follow up."
-        },
-        { status: 502 }
-      )
-    }
+    // Send email after the response — avoids 504 when Resend or outer proxies time out before SMTP/API finishes.
+    after(async () => {
+      try {
+        const emailed = await sendLeadNotification(type, normalizedPayload)
+        if (!emailed.success) {
+          console.error(
+            "Lead submission: notification email failed (async):",
+            emailed.error,
+            "lead_id=",
+            saved.id,
+          )
+        }
+      } catch (mailErr) {
+        console.error("Lead submission: notification email threw (async):", mailErr, "lead_id=", saved.id)
+      }
+    })
 
     return NextResponse.json({ ok: true })
   } catch (err) {

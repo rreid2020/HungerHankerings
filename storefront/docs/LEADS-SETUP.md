@@ -3,9 +3,9 @@
 The unified contact form on `/contact` (and site CTAs with `?reason=`) posts to `/api/leads` with **`type: "inquiry"`** and a **`reason`** field (see `lib/contact-inquiry.ts`). The handler:
 
 1. **Saves** each submission to the **`leads`** table in the database pointed to by **`DATABASE_URL`** (use your ops DB, e.g. **`hungerhankeringsadmin`**, not the Vendure `vendure` database).
-2. **Sends** an email notification via **Resend** (defaults to **hello@hungerhankerings.com** when `LEAD_EMAIL_TO` is unset).
+2. **Queues** an email notification via **Resend** after the HTTP response (defaults to **hello@hungerhankerings.com** when `LEAD_EMAIL_TO` is unset). The browser sees success as soon as the row is saved so gateways do not **504** while Resend runs.
 
-Both must succeed for the user to see a success message (if email fails after save, the API returns **502** with guidance to email directly).
+If Resend fails, check runtime logs for `notification email failed (async)` (the lead row still exists).
 
 ## PostgreSQL (Digital Ocean)
 
@@ -43,7 +43,7 @@ Both must succeed for the user to see a success message (if email fails after sa
 ## Failure behavior
 
 - If **`DATABASE_URL`** is missing, the API returns **503** and the form shows an error (nothing is stored).
-- If **`RESEND_API_KEY`** is missing or Resend rejects the send, the lead may already be stored; the API returns **502** with a message to email **hello@hungerhankerings.com** directly (check runtime logs and fix Resend / domain verification).
+- If **`RESEND_API_KEY`** is missing or Resend rejects the send, the response may still be **200** (email runs in the background); errors are logged with **`notification email failed (async)`**. Fix Resend / domain verification and rely on the stored lead or logs.
 
 ## CRM integration (future)
 
