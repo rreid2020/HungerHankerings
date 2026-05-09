@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg"
 import { Prisma, PrismaClient } from "@prisma/client"
+import type { PoolConfig } from "pg"
 import { Pool } from "pg"
 
 /** Same flag as Vendure on App Platform + DO Managed Postgres (TLS with relaxed CA verify). */
@@ -31,12 +32,43 @@ function resolveLeadsConnectionString(): string | undefined {
   return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${dbName}`
 }
 
-/** Match relaxed TLS used with DO managed DB when verification is disabled in env. */
-function withSslForDriver(url: string): string {
-  if (!sslRelaxed()) return url
-  if (/[?&]sslmode=/.test(url)) return url
-  const join = url.includes("?") ? "&" : "?"
-  return `${url}${join}sslmode=no-verify`
+/** Remove sslmode query params so we can pass TLS options via Pool.ssl (node-pg / pg v8+ semantics). */
+function stripSslModeFromUrl(rawUrl: string): string {
+  try {
+    const u = new URL(rawUrl)
+    u.searchParams.delete("sslmode")
+    const out = u.toString()
+    return out.endsWith("?") ? out.slice(0, -1) : out
+  } catch {
+    return rawUrl.replace(/[?&]sslmode=[^&]*/gi, "").replace(/\?$/, "")
+  }
+}
+
+function leadsPoolConfig(connectionString: string): PoolConfig {
+  const relaxed = sslRelaxed()
+  const connectMs = Math.min(
+    Math.max(Number(process.env.LEADS_PG_CONNECT_TIMEOUT_MS ?? "45000") || 45000, 5000),
+    120_000,
+  )
+
+  if (relaxed) {
+    return {
+      connectionString: stripSslModeFromUrl(connectionString),
+      ssl: { rejectUnauthorized: false },
+      max: Number(process.env.LEADS_PG_POOL_MAX ?? "10") || 10,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: connectMs,
+      keepAlive: true,
+    }
+  }
+
+  return {
+    connectionString,
+    max: Number(process.env.LEADS_PG_POOL_MAX ?? "10") || 10,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: connectMs,
+    keepAlive: true,
+  }
 }
 
 export function isLeadsDatabaseConfigured(): boolean {
@@ -52,15 +84,8 @@ function getLeadsPrisma(): PrismaClient | null {
   const raw = resolveLeadsConnectionString()
   if (!raw) return null
 
-  const connectionString = withSslForDriver(raw)
-
   if (!globalForPrisma.leadsPgPool) {
-    globalForPrisma.leadsPgPool = new Pool({
-      connectionString,
-      max: 10,
-      idleTimeoutMillis: 20_000,
-      connectionTimeoutMillis: 10_000,
-    })
+    globalForPrisma.leadsPgPool = new Pool(leadsPoolConfig(raw))
   }
 
   if (!globalForPrisma.leadsPrisma) {
