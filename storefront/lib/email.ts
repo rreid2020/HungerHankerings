@@ -9,6 +9,22 @@ const FROM_EMAIL = process.env.LEAD_EMAIL_FROM ?? "Hunger Hankerings <onboarding
 const DEFAULT_LEAD_TO = "hello@hungerhankerings.com"
 const TO_EMAIL = (process.env.LEAD_EMAIL_TO ?? "").trim() || DEFAULT_LEAD_TO
 
+/** Avoid hanging until nginx/Cloudflare returns 504 if Resend never responds. */
+const SEND_TIMEOUT_MS = Math.min(
+  Math.max(Number(process.env.LEAD_EMAIL_SEND_TIMEOUT_MS ?? "15000") || 15000, 3000),
+  120_000,
+)
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  })
+}
+
 function formatPayloadForEmail(payload: Record<string, unknown>): string {
   return Object.entries(payload)
     .filter(([, v]) => v != null && v !== "")
@@ -37,12 +53,16 @@ export async function sendLeadNotification(
   const body = formatPayloadForEmail(payload)
 
   try {
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: TO_EMAIL.split(",").map((e) => e.trim()).filter(Boolean),
-      subject,
-      text: body
-    })
+    const { error } = await withTimeout(
+      resend.emails.send({
+        from: FROM_EMAIL,
+        to: TO_EMAIL.split(",").map((e) => e.trim()).filter(Boolean),
+        subject,
+        text: body,
+      }),
+      SEND_TIMEOUT_MS,
+      "Resend email send",
+    )
 
     if (error) {
       return { success: false, error: error.message }
