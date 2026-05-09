@@ -4,7 +4,8 @@ import {
   type ClerkMiddlewareOptions,
 } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
-import type { NextFetchEvent, NextRequest } from "next/server"
+import type { NextFetchEvent } from "next/server"
+import { NextRequest } from "next/server"
 import { effectiveClientScheme, getPublicOrigin, requestAwareOrigin } from "./lib/public-origin"
 import {
   getConfiguredOpsHostname,
@@ -14,6 +15,36 @@ import {
 } from "./lib/ops-host"
 
 const isOpsSignInRoute = createRouteMatcher(["/ops/sign-in(.*)"])
+
+function isInternalNextHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase()
+  return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]" || h === "::1"
+}
+
+/**
+ * nginx → Next passes correct `Host`, but `request.nextUrl` is often still `https://localhost:3001/...`.
+ * Clerk builds `clerkUrl` and middleware rewrites from that → `x-middleware-rewrite: https://localhost:3001/ops`,
+ * which breaks handshakes and POST callbacks (e.g. Cloudflare challenge form posts back to `/ops`).
+ */
+function normalizeProxyRequestUrl(request: NextRequest): NextRequest {
+  const hostHeader = request.headers.get("host")?.split(",")[0]?.trim()
+  if (!hostHeader || !isInternalNextHostname(request.nextUrl.hostname)) {
+    return request
+  }
+
+  const proto = effectiveClientScheme(request) || "https"
+  const path = `${request.nextUrl.pathname}${request.nextUrl.search}`
+  const url = new URL(path, `${proto}://${hostHeader}`)
+
+  const hasBody = request.method !== "GET" && request.method !== "HEAD"
+  const source = request.clone()
+  return new NextRequest(url, {
+    method: source.method,
+    headers: source.headers,
+    ...(hasBody ? { body: source.body, duplex: "half" as const } : {}),
+    signal: source.signal,
+  })
+}
 
 /**
  * Origin for ops redirects. Prefer Host / X-Forwarded-Host only when it matches configured ops —
@@ -156,7 +187,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
   if (!isOpsRequestHeaders(request.headers)) {
     return storefrontMiddleware(request)
   }
-  return opsClerkMiddleware(request, event)
+  return opsClerkMiddleware(normalizeProxyRequestUrl(request), event)
 }
 
 export const config = {
