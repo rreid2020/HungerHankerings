@@ -47,6 +47,8 @@ foreach ($r in @("DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD")) {
   }
 }
 
+# psql reads PGPASSWORD, not DB_PASSWORD — without this it prompts and ignores .env.
+$env:PGPASSWORD = [Environment]::GetEnvironmentVariable("DB_PASSWORD", "Process")
 $env:PGSSLMODE = "require"
 
 $sqlFile = Join-Path $repoRoot "storefront\scripts\init-leads-db.sql"
@@ -61,13 +63,22 @@ if (-not (Get-Command psql -ErrorAction SilentlyContinue)) {
 if ($CreateDatabase) {
   $exists = & psql -h $env:DB_HOST -p $env:DB_PORT -U $env:DB_USER -d postgres -tAc `
     "SELECT 1 FROM pg_database WHERE datname = '$DatabaseName'" 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    throw "psql failed checking database (exit $LASTEXITCODE). Wrong password? Update DB_PASSWORD in $EnvFile from DigitalOcean → Database → Users."
+  }
   if (-not ($exists -match "1")) {
     Write-Host "Creating database $DatabaseName ..."
     & psql -h $env:DB_HOST -p $env:DB_PORT -U $env:DB_USER -d postgres -v ON_ERROR_STOP=1 `
       -c "CREATE DATABASE $DatabaseName;"
+    if ($LASTEXITCODE -ne 0) {
+      throw "psql CREATE DATABASE failed (exit $LASTEXITCODE)."
+    }
   }
 }
 
 Write-Host "Applying init-leads-db.sql to database $DatabaseName ..."
 & psql -h $env:DB_HOST -p $env:DB_PORT -U $env:DB_USER -d $DatabaseName -v ON_ERROR_STOP=1 -f $sqlFile
+if ($LASTEXITCODE -ne 0) {
+  throw "psql failed applying schema (exit $LASTEXITCODE). If auth failed, reset doadmin password in DigitalOcean and update DB_PASSWORD in $EnvFile."
+}
 Write-Host "Done."
