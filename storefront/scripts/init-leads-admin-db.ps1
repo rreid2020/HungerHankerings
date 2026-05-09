@@ -3,20 +3,17 @@
 Applies storefront/scripts/init-leads-db.sql to hungerhankeringsadmin (or -DatabaseName).
 
 Connection (first match wins):
-  1) Environment variables already set when you run this script:
-       LEADS_DATABASE_URL  (preferred) or DATABASE_URL
-     Use the same private connection string as App Platform (must include database name).
-  2) Those variables inside the env file (if not already set in the shell).
+  1) DATABASE_URL in your shell (same as App Platform web service — must include database name, e.g. .../hungerhankeringsadmin).
+  2) DATABASE_URL inside the env file (only if not already set in the shell).
   3) DB_HOST, DB_PORT, DB_USER, DB_PASSWORD + -DatabaseName from the env file.
 
-Loading from file never overwrites variables you already exported in the shell — so you can
-paste DATABASE_URL from DigitalOcean → App → your web component without editing apps/vendure/.env.
+Loading from file never overwrites variables you already exported in the shell.
 
 Usage (repo root):
   powershell -NoProfile -File storefront/scripts/init-leads-admin-db.ps1
 
-With URI (recommended if vendure .env is stale):
-  $env:LEADS_DATABASE_URL = "postgresql://doadmin:...@host:25060/hungerhankeringsadmin?sslmode=require"
+One-off with DATABASE_URL (same value as DO App Platform):
+  $env:DATABASE_URL = "postgresql://doadmin:...@host:25060/hungerhankeringsadmin?sslmode=require"
   powershell -NoProfile -File storefront/scripts/init-leads-admin-db.ps1
 
 Optional env file:
@@ -74,12 +71,10 @@ function Import-DotEnv([string]$Path) {
   }
 }
 
-function Get-FirstConnectionUri {
-  foreach ($key in @("LEADS_DATABASE_URL", "DATABASE_URL")) {
-    $v = [Environment]::GetEnvironmentVariable($key, "Process")
-    if ($v -and $v.Trim()) {
-      return @{ Uri = $v.Trim(); Key = $key }
-    }
+function Get-DatabaseUrlUri {
+  $v = [Environment]::GetEnvironmentVariable("DATABASE_URL", "Process")
+  if ($v -and $v.Trim()) {
+    return $v.Trim()
   }
   return $null
 }
@@ -101,12 +96,12 @@ if (Test-Path $EnvFile) {
   Import-DotEnv $EnvFile
 }
 
-$conn = Get-FirstConnectionUri
-if ($conn) {
+$dbUrl = Get-DatabaseUrlUri
+if ($dbUrl) {
   $env:PGSSLMODE = "require"
-  Write-Host "Using $($conn.Key) (sslmode ensured for DigitalOcean)."
+  Write-Host "Using DATABASE_URL (sslmode ensured for DigitalOcean)."
   Write-Host "Applying init-leads-db.sql ..."
-  & psql (Add-SslModeRequire $conn.Uri) -v ON_ERROR_STOP=1 -f $sqlFile
+  & psql (Add-SslModeRequire $dbUrl) -v ON_ERROR_STOP=1 -f $sqlFile
   if ($LASTEXITCODE -ne 0) {
     throw "psql failed (exit $LASTEXITCODE). Confirm the URI targets database '$DatabaseName' and your IP is a trusted source."
   }
@@ -116,17 +111,17 @@ if ($conn) {
 
 if (-not (Test-Path $EnvFile)) {
   throw @"
-No LEADS_DATABASE_URL or DATABASE_URL set, and env file missing: $EnvFile
+No DATABASE_URL set, and env file missing: $EnvFile
 
 Fix one of:
-  - Export LEADS_DATABASE_URL with your hungerhankeringsadmin connection string (copy from App Platform / DO), then re-run.
+  - Set `$env:DATABASE_URL` to your hungerhankeringsadmin connection string (copy from App Platform), then re-run.
   - Or restore apps/vendure/.env with DB_HOST, DB_PORT, DB_USER, DB_PASSWORD matching the cluster.
 "@
 }
 
 foreach ($r in @("DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD")) {
   if (-not [Environment]::GetEnvironmentVariable($r, "Process")) {
-    throw "Missing $r in $EnvFile (or set LEADS_DATABASE_URL / DATABASE_URL in the shell)."
+    throw "Missing $r in $EnvFile (or set DATABASE_URL in the shell)."
   }
 }
 
