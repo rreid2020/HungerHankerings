@@ -10,10 +10,11 @@ Both must succeed for the user to see a success message (if email fails after sa
 ## PostgreSQL (Digital Ocean)
 
 1. Create a database in your Digital Ocean control panel (e.g. `hungerhankeringsadmin`) if you have not already.
-2. Run the schema to create the `leads` table **on that database**:
+2. Apply Prisma migrations on that database (from repo `storefront/`):
 
    ```bash
-   psql $DATABASE_URL -f scripts/init-leads-db.sql
+   export DATABASE_URL="postgres://USER:PASSWORD@HOST:PORT/hungerhankeringsadmin"
+   npx prisma migrate deploy
    ```
 
 3. Add to **App Platform / Docker** env for the **storefront** (same component as Next):

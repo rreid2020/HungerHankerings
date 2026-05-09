@@ -45,6 +45,8 @@ ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 ENV CI=true
 ENV npm_config_progress=false
 ENV npm_config_fetch_retries=5
+# prisma generate (via npm run build) only needs a syntactically valid URL; no DB connection at image build time.
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 COPY storefront/package.json ./
 RUN npm install --no-audit --no-fund
 COPY storefront .

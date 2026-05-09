@@ -1,20 +1,32 @@
 import { NextResponse } from "next/server"
 import { isInquiryReason } from "../../../lib/contact-inquiry"
-import { insertLead } from "../../../lib/db"
+import { insertLead, isLeadsDatabaseConfigured } from "../../../lib/db"
 import { sendLeadNotification } from "../../../lib/email"
+
+export const runtime = "nodejs"
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.DATABASE_URL?.trim()) {
-      console.error("Lead submission: DATABASE_URL is not set (expected ops DB e.g. hungerhankeringsadmin).")
+    if (!isLeadsDatabaseConfigured()) {
+      console.error(
+        "Lead submission: no database URL (set DATABASE_URL or DB_HOST/DB_PORT/DB_USER/DB_PASSWORD + LEADS_DATABASE_NAME or DB_NAME).",
+      )
       return NextResponse.json(
         { ok: false, error: "Contact form is temporarily unavailable." },
-        { status: 503 }
+        { status: 503 },
       )
     }
 
-    const body = await request.json()
-    const { type, ...payload } = body
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
+    }
+    const { type, ...payload } = body as Record<string, unknown>
 
     if (!type || typeof type !== "string") {
       return NextResponse.json(
@@ -59,12 +71,28 @@ export async function POST(request: Request) {
       )
     }
 
-    const saved = await insertLead(type, { ...normalizedPayload })
-    if (!saved) {
-      console.error("Lead submission: insertLead returned null despite DATABASE_URL being set.")
+    let saved
+    try {
+      saved = await insertLead(type, { ...normalizedPayload })
+    } catch (dbErr) {
+      console.error("Lead submission: database error:", dbErr)
       return NextResponse.json(
-        { ok: false, error: "Could not save your message. Please try again or email hello@hungerhankerings.com." },
-        { status: 503 }
+        {
+          ok: false,
+          error:
+            "Could not save your message. Please try again or email hello@hungerhankerings.com.",
+        },
+        { status: 503 },
+      )
+    }
+    if (!saved) {
+      console.error("Lead submission: insertLead returned null despite DB being configured.")
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Could not save your message. Please try again or email hello@hungerhankerings.com.",
+        },
+        { status: 503 },
       )
     }
 
@@ -84,6 +112,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("Lead submission error:", err)
-    return NextResponse.json({ ok: false, error: "Something went wrong. Please try again later." }, { status: 500 })
+    return NextResponse.json(
+      { ok: false, error: "Something went wrong. Please try again later." },
+      { status: 500 },
+    )
   }
 }

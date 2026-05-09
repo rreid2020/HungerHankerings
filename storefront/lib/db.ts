@@ -1,18 +1,65 @@
-import postgres from "postgres"
-
-const connectionString = process.env.DATABASE_URL?.trim()
+import { Prisma, PrismaClient } from "@prisma/client"
 
 /** Same flag as Vendure on App Platform + DO Managed Postgres (TLS with relaxed CA verify). */
-const sslRelaxed = process.env.DB_SSL_REJECT_UNAUTHORIZED === "false"
+function sslRelaxed(): boolean {
+  return process.env.DB_SSL_REJECT_UNAUTHORIZED === "false"
+}
 
-export const sql = connectionString
-  ? postgres(connectionString, {
-      max: 10,
-      idle_timeout: 20,
-      connect_timeout: 10,
-      ...(sslRelaxed ? { ssl: { rejectUnauthorized: false } } : {})
+/**
+ * Explicit URL wins. Otherwise compose from the same `DB_*` vars Vendure uses on App Platform.
+ * Database name: `LEADS_DATABASE_NAME`, else `DB_NAME`, else `hungerhankeringsadmin`.
+ */
+function resolveLeadsConnectionString(): string | undefined {
+  const direct = process.env.DATABASE_URL?.trim()
+  if (direct) return direct
+
+  const host = process.env.DB_HOST?.trim()
+  const port = process.env.DB_PORT?.trim()
+  const user = process.env.DB_USER?.trim()
+  const password = process.env.DB_PASSWORD
+  const dbName =
+    process.env.LEADS_DATABASE_NAME?.trim() ||
+    process.env.DB_NAME?.trim() ||
+    "hungerhankeringsadmin"
+
+  if (!host || !port || !user || password === undefined || password === "") {
+    return undefined
+  }
+
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${dbName}`
+}
+
+/** Match relaxed TLS used by the old `postgres` driver (DO managed DB). */
+function withSslForDriver(url: string): string {
+  if (!sslRelaxed()) return url
+  if (/[?&]sslmode=/.test(url)) return url
+  const join = url.includes("?") ? "&" : "?"
+  return `${url}${join}sslmode=no-verify`
+}
+
+export function isLeadsDatabaseConfigured(): boolean {
+  return resolveLeadsConnectionString() !== undefined
+}
+
+const globalForPrisma = globalThis as unknown as {
+  leadsPrisma?: PrismaClient
+}
+
+function getLeadsPrisma(): PrismaClient | null {
+  const raw = resolveLeadsConnectionString()
+  if (!raw) return null
+
+  const datasourceUrl = withSslForDriver(raw)
+
+  if (!globalForPrisma.leadsPrisma) {
+    globalForPrisma.leadsPrisma = new PrismaClient({
+      datasourceUrl,
+      log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     })
-  : null
+  }
+
+  return globalForPrisma.leadsPrisma
+}
 
 export type Lead = {
   id: string
@@ -23,14 +70,22 @@ export type Lead = {
 
 export async function insertLead(
   type: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
 ): Promise<Lead | null> {
-  if (!sql) return null
+  const prisma = getLeadsPrisma()
+  if (!prisma) return null
 
-  const [row] = await sql<Lead[]>`
-    INSERT INTO leads (type, payload)
-    VALUES (${type}, ${sql.json(payload as import("postgres").JSONValue)})
-    RETURNING id, type, payload, created_at
-  `
-  return row ?? null
+  const row = await prisma.lead.create({
+    data: {
+      type,
+      payload: payload as Prisma.InputJsonValue,
+    },
+  })
+
+  return {
+    id: row.id,
+    type: row.type,
+    payload: row.payload as Record<string, unknown>,
+    created_at: row.createdAt,
+  }
 }
