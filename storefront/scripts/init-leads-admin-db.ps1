@@ -3,7 +3,7 @@
 Applies storefront/scripts/init-leads-db.sql to hungerhankeringsadmin (or -DatabaseName).
 
 Connection (first match wins):
-  1) DATABASE_URL in your shell (same as App Platform web service — must include database name, e.g. .../hungerhankeringsadmin).
+  1) DATABASE_URL in your shell (same as App Platform web service; must include database name, e.g. .../hungerhankeringsadmin).
   2) DATABASE_URL inside the env file (only if not already set in the shell).
   3) DB_HOST, DB_PORT, DB_USER, DB_PASSWORD + -DatabaseName from the env file.
 
@@ -147,6 +147,6 @@ if ($CreateDatabase) {
 Write-Host "Applying init-leads-db.sql to database $DatabaseName (from DB_* in $EnvFile) ..."
 & psql -h $env:DB_HOST -p $env:DB_PORT -U $env:DB_USER -d $DatabaseName -v ON_ERROR_STOP=1 -f $sqlFile
 if ($LASTEXITCODE -ne 0) {
-  throw "psql failed (exit $LASTEXITCODE). Your web service password may differ from apps/vendure/.env — export DATABASE_URL from App Platform and run again."
+  throw "psql failed (exit $LASTEXITCODE). Fix DB_PASSWORD in apps/vendure/.env or set DATABASE_URL in this shell, then run again."
 }
 Write-Host "Done."
