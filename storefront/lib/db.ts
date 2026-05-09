@@ -1,4 +1,6 @@
+import { PrismaPg } from "@prisma/adapter-pg"
 import { Prisma, PrismaClient } from "@prisma/client"
+import { Pool } from "pg"
 
 /** Same flag as Vendure on App Platform + DO Managed Postgres (TLS with relaxed CA verify). */
 function sslRelaxed(): boolean {
@@ -29,7 +31,7 @@ function resolveLeadsConnectionString(): string | undefined {
   return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${dbName}`
 }
 
-/** Match relaxed TLS used by the old `postgres` driver (DO managed DB). */
+/** Match relaxed TLS used with DO managed DB when verification is disabled in env. */
 function withSslForDriver(url: string): string {
   if (!sslRelaxed()) return url
   if (/[?&]sslmode=/.test(url)) return url
@@ -42,6 +44,7 @@ export function isLeadsDatabaseConfigured(): boolean {
 }
 
 const globalForPrisma = globalThis as unknown as {
+  leadsPgPool?: Pool
   leadsPrisma?: PrismaClient
 }
 
@@ -49,11 +52,21 @@ function getLeadsPrisma(): PrismaClient | null {
   const raw = resolveLeadsConnectionString()
   if (!raw) return null
 
-  const datasourceUrl = withSslForDriver(raw)
+  const connectionString = withSslForDriver(raw)
+
+  if (!globalForPrisma.leadsPgPool) {
+    globalForPrisma.leadsPgPool = new Pool({
+      connectionString,
+      max: 10,
+      idleTimeoutMillis: 20_000,
+      connectionTimeoutMillis: 10_000,
+    })
+  }
 
   if (!globalForPrisma.leadsPrisma) {
+    const adapter = new PrismaPg(globalForPrisma.leadsPgPool)
     globalForPrisma.leadsPrisma = new PrismaClient({
-      datasourceUrl,
+      adapter,
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     })
   }

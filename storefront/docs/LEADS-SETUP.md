@@ -10,7 +10,7 @@ Both must succeed for the user to see a success message (if email fails after sa
 ## PostgreSQL (Digital Ocean)
 
 1. Create a database in your Digital Ocean control panel (e.g. `hungerhankeringsadmin`) if you have not already.
-2. Apply Prisma migrations on that database (from repo `storefront/`):
+2. Apply Prisma migrations on that database (from repo `storefront/`). `DATABASE_URL` is read from `prisma.config.ts` (and `.env` via `dotenv`):
 
    ```bash
    export DATABASE_URL="postgres://USER:PASSWORD@HOST:PORT/hungerhankeringsadmin"
