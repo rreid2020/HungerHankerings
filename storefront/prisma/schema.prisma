@@ -6,6 +6,8 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Contact / quote submissions: `type` discriminates the JSON shape.
+/// For type "inquiry" (contact form), `payload` holds: reason, name, email, company?, phone?, message?
 model Lead {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   type      String
