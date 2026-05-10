@@ -2,7 +2,7 @@
 
 The unified contact form on `/contact` (and site CTAs with `?reason=`) posts to `/api/leads` with **`type: "inquiry"`** and a **`reason`** field (see `lib/contact-inquiry.ts`). The handler:
 
-1. **Saves** each submission to the **`leads`** table in the database pointed to by **`DATABASE_URL`** (use your ops DB, e.g. **`hungerhankeringsadmin`**, not the Vendure `vendure` database).
+1. **Saves** each submission to the **`leads`** table only (storefront shop traffic uses **Vendure’s HTTP API**, not direct Postgres). Resolution: **`LEADS_DATABASE_URL`** → if **`DB_*`** is complete, compose with **`LEADS_DATABASE_NAME`** or default **`hungerhankeringsadmin`** (**never** `DB_NAME`, so Vendure can stay on **`vendure`**) → else **`DATABASE_URL`**. On App Platform set **`LEADS_DATABASE_NAME=hungerhankeringsadmin`** (or **`LEADS_DATABASE_URL`**) alongside existing **`DB_NAME=vendure`** for Vendure.
 2. **Queues** an email notification via **Resend** after the HTTP response (defaults to **hello@hungerhankerings.com** when `LEAD_EMAIL_TO` is unset). The browser sees success as soon as the row is saved so gateways do not **504** while Resend runs.
 
 If Resend fails, check runtime logs for `notification email failed (async)` (the lead row still exists).
@@ -17,13 +17,21 @@ If Resend fails, check runtime logs for `notification email failed (async)` (the
    npx prisma migrate deploy
    ```
 
-3. Add to **App Platform / Docker** env for the **storefront** (same component as Next):
+3. Add to **App Platform / Docker** env for the **storefront** (same component as Next). Prefer one of:
 
    ```
-   DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/hungerhankeringsadmin
+   LEADS_DATABASE_URL=postgres://USER:PASSWORD@HOST:PORT/hungerhankeringsadmin
    ```
 
-   Use the same host/port/user/password as your cluster; only the **database name** should be the ops DB. On the same component as Vendure, set **`DB_SSL_REJECT_UNAUTHORIZED=false`** so the storefront Postgres client relaxes TLS verification (typical for DO Managed Postgres).
+   Or reuse **`DB_*`** from the cluster binding and override only the database name:
+
+   ```
+   LEADS_DATABASE_NAME=hungerhankeringsadmin
+   ```
+
+   Use the same host/port/user/password as your cluster; only the **database name** should differ from **`DB_NAME`** when Vendure uses **`vendure`**. Set **`DB_SSL_REJECT_UNAUTHORIZED=false`** on the **same component** as Vendure so TLS matches `vendure-config.ts` (required for DigitalOcean Managed Postgres).
+
+4. **Trusted sources (required):** DigitalOcean → **Databases** → select your Postgres cluster → **Settings** → **Trusted sources** → **Edit** → add **Apps / App Platform** and choose the app that runs **hungerhankerings** (this Docker service). If the app is not trusted, connections stall and logs show **`Connection terminated due to connection timeout`**.
 
 ## Resend
 
@@ -42,7 +50,7 @@ If Resend fails, check runtime logs for `notification email failed (async)` (the
 
 ## Failure behavior
 
-- If **`DATABASE_URL`** is missing, the API returns **503** and the form shows an error (nothing is stored).
+- If no URL can be resolved (**`LEADS_DATABASE_URL`**, **`DATABASE_URL`**, or complete **`DB_*`** + password), the API returns **503** and the form shows an error (nothing is stored).
 - If **`RESEND_API_KEY`** is missing or Resend rejects the send, the response may still be **200** (email runs in the background); errors are logged with **`notification email failed (async)`**. Fix Resend / domain verification and rely on the stored lead or logs.
 
 ## CRM integration (future)

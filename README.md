@@ -61,9 +61,11 @@ Storefront: http://localhost:3000
 ## Lead Submissions
 
 The storefront `/contact` form and related CTAs post to `POST /api/leads` with
-`type: "inquiry"` (reason, name, email, etc.). Production expects **`DATABASE_URL`**
-(typically the ops DB, e.g. `hungerhankeringsadmin`) **and** **`RESEND_API_KEY`**;
-both save and email must succeed for a happy response. See `storefront/docs/LEADS-SETUP.md`.
+`type: "inquiry"` (reason, name, email, etc.). **Shop/catalog/checkout use Vendure over HTTP**, not Postgres from Next.
+Only **`lib/db.ts`** (leads API + ops inbox) connects to Postgres; use **`LEADS_DATABASE_NAME`** /
+**`LEADS_DATABASE_URL`** for **`hungerhankeringsadmin`** while keeping **`DB_NAME=vendure`** for Vendure.
+Email: **`RESEND_API_KEY`** + verified **`LEAD_EMAIL_FROM`** (recipient defaults to **hello@hungerhankerings.com**).
+The HTTP response succeeds after the DB insert; notification send runs afterward. See `storefront/docs/LEADS-SETUP.md`.
 
 ## Docker
 

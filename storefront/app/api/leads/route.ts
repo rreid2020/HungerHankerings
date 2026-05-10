@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   try {
     if (!isLeadsDatabaseConfigured()) {
       console.error(
-        "Lead submission: no database URL (set DATABASE_URL or DB_HOST/DB_PORT/DB_USER/DB_PASSWORD + LEADS_DATABASE_NAME or DB_NAME).",
+        "Lead submission: leads DB not configured (set LEADS_DATABASE_URL, or DB_HOST/DB_PORT/DB_USER/DB_PASSWORD + LEADS_DATABASE_NAME, or DATABASE_URL).",
       )
       return NextResponse.json(
         { ok: false, error: "Contact form is temporarily unavailable." },

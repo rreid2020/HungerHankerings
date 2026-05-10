@@ -74,6 +74,10 @@ services:
       - key: DB_NAME
         scope: RUN_TIME
         value: "${db-postgresql-tor1-60715.DATABASE}"
+      # Vendure keeps DB_NAME=vendure above. Leads (`/api/leads`) use same cluster creds + this DB name only.
+      - key: LEADS_DATABASE_NAME
+        scope: RUN_TIME
+        value: hungerhankeringsadmin
       - key: DB_SSL_REJECT_UNAUTHORIZED
         scope: RUN_TIME
         value: "false"
