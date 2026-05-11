@@ -1,5 +1,13 @@
 import { ID, RequestContext, TransactionalConnection } from "@vendure/core";
 import { PostalCodeZone } from "./entities/postal-code-zone.entity";
+type AdminShippingRate = {
+    rateCents: number;
+    zoneCode: string;
+    zoneName: string;
+    postalPrefix: string;
+    fallbackUsed: boolean;
+    overrideUsed: boolean;
+};
 /**
  * Look up shipping rate (cents) by country and postal code.
  * Canada: 3-character FSA only (e.g. K0K, M5V); if no row, use country default (prefix "").
@@ -8,6 +16,7 @@ import { PostalCodeZone } from "./entities/postal-code-zone.entity";
 export declare class PostalCodeZoneService {
     private connection;
     constructor(connection: TransactionalConnection);
+    getAdminRateCentsByPostal(countryCode: string, postalCode: string, orderSubtotalCents?: number): Promise<AdminShippingRate | null>;
     /** Lookup by exact prefix (used by Admin). */
     getRateCents(ctx: RequestContext, countryCode: string, prefix: string): Promise<number | null>;
     /** Lookup by full postal: Canada = 3-char FSA then default; US = default only. */
@@ -17,4 +26,5 @@ export declare class PostalCodeZoneService {
     /** @deprecated Use updateZone. */
     updateRate(ctx: RequestContext, id: ID, rateCents: number): Promise<PostalCodeZone | null>;
 }
+export {};
 //# sourceMappingURL=postal-code-zone.service.d.ts.map

@@ -1,6 +1,6 @@
 /**
- * Postgres access for **contact leads only** (`/api/leads`, `/ops/leads`).
- * Catalog, checkout, and accounts use **Vendure over HTTP** (`VENDURE_SHOP_API_URL` / public shop API) — not this module.
+ * Postgres access for the ops/admin database (`hungerhankeringsadmin`).
+ * Catalog, checkout, and accounts still use **Vendure over HTTP** unless a module explicitly calls this helper.
  */
 import { PrismaPg } from "@prisma/adapter-pg"
 import { Prisma, PrismaClient } from "@prisma/client"
@@ -160,6 +160,14 @@ function getLeadsPrisma(): PrismaClient | null {
   }
 
   return globalForPrisma.leadsPrisma
+}
+
+export function getAdminPrisma(): PrismaClient | null {
+  return getLeadsPrisma()
+}
+
+export async function runAdminDbQuery<T>(fn: () => Promise<T>): Promise<T> {
+  return runWithLeadRetries(fn)
 }
 
 export type Lead = {

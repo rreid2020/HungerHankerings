@@ -18,3 +18,74 @@ model Lead {
   @@index([createdAt(sort: Desc)], map: "idx_leads_created_at")
   @@map("leads")
 }
+
+model ShippingZone {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  zoneCode              String                @unique @map("zone_code") @db.VarChar
+  zoneName              String                @map("zone_name") @db.VarChar
+  province              String?               @db.VarChar(2)
+  urbanRural            String                @map("urban_rural") @db.VarChar
+  regionBand            String?               @map("region_band") @db.VarChar
+  flatRate              Decimal               @map("flat_rate") @db.Decimal(10, 2)
+  freeShippingThreshold Decimal               @default(150.00) @map("free_shipping_threshold") @db.Decimal(10, 2)
+  active                Boolean               @default(true)
+  sortOrder             Int                   @default(0) @map("sort_order")
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  fsaRegions            PostalFsaRegion[]     @relation("ShippingZoneFsaRegions")
+  fsaOverrides          ShippingFsaOverride[] @relation("ShippingZoneFsaOverrides")
+
+  @@index([active, sortOrder], map: "idx_shipping_zones_active_sort")
+  @@index([province], map: "idx_shipping_zones_province")
+  @@map("shipping_zones")
+}
+
+model PostalFsaRegion {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fsa              String       @unique @db.VarChar(3)
+  province         String       @db.VarChar(2)
+  city             String?      @db.VarChar
+  urbanRural       String       @map("urban_rural") @db.VarChar
+  regionBand       String?      @map("region_band") @db.VarChar
+  shippingZoneCode String       @map("shipping_zone_code") @db.VarChar
+  active           Boolean      @default(true)
+  notes            String?      @db.Text
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  shippingZone     ShippingZone @relation("ShippingZoneFsaRegions", fields: [shippingZoneCode], references: [zoneCode], onUpdate: Cascade, onDelete: Restrict)
+
+  @@index([province], map: "idx_postal_fsa_regions_province")
+  @@index([shippingZoneCode], map: "idx_postal_fsa_regions_zone")
+  @@index([active], map: "idx_postal_fsa_regions_active")
+  @@map("postal_fsa_regions")
+}
+
+model ShippingFsaOverride {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fsa              String       @unique @db.VarChar(3)
+  overrideZoneCode String       @map("override_zone_code") @db.VarChar
+  reason           String?      @db.Text
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  overrideZone     ShippingZone @relation("ShippingZoneFsaOverrides", fields: [overrideZoneCode], references: [zoneCode], onUpdate: Cascade, onDelete: Restrict)
+
+  @@index([overrideZoneCode], map: "idx_shipping_fsa_overrides_zone")
+  @@index([active], map: "idx_shipping_fsa_overrides_active")
+  @@map("shipping_fsa_overrides")
+}
+
+model ShippingRateAuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action     String   @db.VarChar
+  entityType String   @map("entity_type") @db.VarChar
+  entityId   String?  @map("entity_id") @db.Uuid
+  beforeData Json?    @map("before_data")
+  afterData  Json?    @map("after_data")
+  changedBy  String?  @map("changed_by") @db.VarChar
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([entityType, entityId], map: "idx_shipping_rate_audit_entity")
+  @@index([createdAt], map: "idx_shipping_rate_audit_created_at")
+  @@map("shipping_rate_audit_log")
+}

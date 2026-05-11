@@ -195,6 +195,7 @@ export const config = {
     "/",
     "/ops",
     "/ops/:path*",
+    "/api/ops/:path*",
     "/account",
     "/account/:path*",
     "/login",

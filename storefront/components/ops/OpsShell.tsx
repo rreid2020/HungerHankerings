@@ -4,6 +4,7 @@ import {
   Inbox,
   LayoutDashboard,
   PanelLeft,
+  Truck,
 } from "lucide-react"
 import { getVendureAdminUrl } from "../../lib/ops-host"
 import OpsUserMenu from "./OpsUserMenu"
@@ -11,6 +12,7 @@ import OpsUserMenu from "./OpsUserMenu"
 const nav = [
   { href: "/ops", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ops/leads", label: "Leads", icon: Inbox },
+  { href: "/ops/shipping-rates", label: "Shipping Rates", icon: Truck },
 ] as const
 
 export default function OpsShell({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,7 @@
 The unified contact form on `/contact` (and site CTAs with `?reason=`) posts to `/api/leads` with **`type: "inquiry"`** and a **`reason`** field (see `lib/contact-inquiry.ts`). The handler:
 
 1. **Saves** each submission to the **`leads`** table only (storefront shop traffic uses **Vendure’s HTTP API**, not direct Postgres). Resolution: **`LEADS_DATABASE_URL`** → if **`DB_*`** is complete, compose with **`LEADS_DATABASE_NAME`** or default **`hungerhankeringsadmin`** (**never** `DB_NAME`, so Vendure can stay on **`vendure`**) → else **`DATABASE_URL`**. On App Platform set **`LEADS_DATABASE_NAME=hungerhankeringsadmin`** (or **`LEADS_DATABASE_URL`**) alongside existing **`DB_NAME=vendure`** for Vendure.
-2. **Queues** an email notification via **Resend** after the HTTP response (defaults to **hello@hungerhankerings.com** when `LEAD_EMAIL_TO` is unset). The browser sees success as soon as the row is saved so gateways do not **504** while Resend runs.
+2. **Sends** an email notification via **Resend** without blocking the HTTP response (defaults to **hello@hungerhankerings.com** when `LEAD_EMAIL_TO` is unset). You **must** set **`LEAD_EMAIL_FROM`** to an address on a domain **verified in Resend**; the SDK default `onboarding@resend.dev` does **not** reliably deliver to **hello@hungerhankerings.com**.
 
 If Resend fails, check runtime logs for `notification email failed (async)` (the lead row still exists).
 

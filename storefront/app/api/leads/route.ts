@@ -1,4 +1,4 @@
-import { after, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { isInquiryReason } from "../../../lib/contact-inquiry"
 import { insertLead, isLeadsDatabaseConfigured } from "../../../lib/db"
 import { sendLeadNotification } from "../../../lib/email"
@@ -96,22 +96,32 @@ export async function POST(request: Request) {
       )
     }
 
-    // Send email after the response — avoids 504 when Resend or outer proxies time out before SMTP/API finishes.
-    after(async () => {
-      try {
-        const emailed = await sendLeadNotification(type, normalizedPayload)
+    // Do not await Resend (avoids 504). Avoid `after()` here — on self-hosted Docker, scheduling via the
+    // microtask queue is more reliable than Next’s post-response hook for outbound HTTP.
+    const leadId = saved.id
+    const payloadForMail = { ...normalizedPayload }
+    void Promise.resolve()
+      .then(() => sendLeadNotification(type, payloadForMail))
+      .then((emailed) => {
         if (!emailed.success) {
           console.error(
-            "Lead submission: notification email failed (async):",
+            "Lead submission: notification email failed:",
             emailed.error,
             "lead_id=",
-            saved.id,
+            leadId,
           )
+          return
         }
-      } catch (mailErr) {
-        console.error("Lead submission: notification email threw (async):", mailErr, "lead_id=", saved.id)
-      }
-    })
+        console.info(
+          "Lead submission: notification email sent lead_id=",
+          leadId,
+          "resend_id=",
+          emailed.messageId ?? "?",
+        )
+      })
+      .catch((mailErr) => {
+        console.error("Lead submission: notification email threw:", mailErr, "lead_id=", leadId)
+      })
 
     return NextResponse.json({ ok: true })
   } catch (err) {

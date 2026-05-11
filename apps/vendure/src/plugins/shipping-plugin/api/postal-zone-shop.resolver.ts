@@ -17,6 +17,7 @@ export class PostalZoneShopResolver {
     const country = (countryCode ?? "").trim().toUpperCase().slice(0, 2);
     const postal = (postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
     const cents =
+      (await this.postalZoneService.getAdminRateCentsByPostal(country, postal, 0))?.rateCents ??
       (await this.postalZoneService.getRateCentsByPostal(ctx, country, postal)) ??
       FALLBACK_RATE_CENTS;
     return cents;

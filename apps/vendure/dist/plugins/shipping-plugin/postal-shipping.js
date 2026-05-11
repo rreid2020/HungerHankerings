@@ -81,7 +81,10 @@ class PostalZoneShippingCalculator extends core_1.ShippingCalculator {
             const postalCode = (addr?.postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
             // If postal looks Canadian (e.g. K1C 7E9) but country missing, assume CA so zone lookup works
             const effectiveCountry = countryCode || (postalCode.match(/^[A-Z]\d[A-Z]\s*\d[A-Z]\d$/i) ? "CA" : "");
-            const rateCents = (await this.postalZoneService.getRateCentsByPostal(ctx, effectiveCountry, postalCode)) ??
+            const orderSubtotalCents = Number(order?.subTotal ?? order?.subTotalWithTax ?? 0) || 0;
+            const adminRate = await this.postalZoneService.getAdminRateCentsByPostal(effectiveCountry, postalCode, orderSubtotalCents);
+            const rateCents = adminRate?.rateCents ??
+                (await this.postalZoneService.getRateCentsByPostal(ctx, effectiveCountry, postalCode)) ??
                 FALLBACK_RATE_CENTS;
             let taxRate = 0;
             if (effectiveCountry === "CA") {
@@ -107,8 +110,12 @@ class PostalZoneShippingCalculator extends core_1.ShippingCalculator {
                 priceIncludesTax: ctx.channel?.pricesIncludeTax ?? false,
                 taxRate,
                 metadata: {
-                    postalPrefix: prefix || undefined,
+                    postalPrefix: adminRate?.postalPrefix || prefix || undefined,
                     countryCode: effectiveCountry || undefined,
+                    shippingZoneCode: adminRate?.zoneCode,
+                    shippingZoneName: adminRate?.zoneName,
+                    fallbackUsed: adminRate?.fallbackUsed,
+                    overrideUsed: adminRate?.overrideUsed,
                 },
             };
         }

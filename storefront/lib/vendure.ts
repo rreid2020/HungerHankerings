@@ -1411,8 +1411,22 @@ export async function checkoutCustomerAttach(
 export async function getShippingQuoteDollars(
   countryCode: string,
   postalCode: string,
+  orderSubtotal = 0,
   opts?: VendureRequestOptions
 ): Promise<number> {
+  if (typeof window !== "undefined") {
+    const res = await fetch("/api/shipping/rate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postalCode, orderSubtotal }),
+    })
+    const data = (await res.json().catch(() => ({}))) as { success?: boolean; finalRate?: number; error?: string }
+    if (!res.ok || !data.success) {
+      throw new Error(data.error ?? "Shipping rate lookup failed")
+    }
+    return Number(data.finalRate ?? 0)
+  }
+
   const data = await fetchVendure<{ shippingQuote: number }>(
     `query ShippingQuote($countryCode: String!, $postalCode: String!) {
       shippingQuote(countryCode: $countryCode, postalCode: $postalCode)

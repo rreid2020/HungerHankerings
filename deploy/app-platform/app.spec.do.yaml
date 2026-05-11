@@ -90,6 +90,13 @@ services:
       - key: NODE_ENV
         scope: RUN_TIME
         value: "production"
+      - key: LEAD_EMAIL_TO
+        scope: RUN_TIME
+        value: "hello@hungerhankerings.com"
+      - key: LEAD_EMAIL_FROM
+        scope: RUN_TIME
+        value: "Hunger Hankerings <hello@hungerhankerings.com>"
+      # Add RUN_TIME secret RESEND_API_KEY in the control panel (do not commit). Domain hungerhankerings.com must be verified in Resend.
       # --- Staff ops subdomain: nginx vhost + Next host detection (set both; NEXT_PUBLIC_* is build-time in Docker) ---
       - key: INTERNAL_OPS_HOST
         scope: RUN_TIME

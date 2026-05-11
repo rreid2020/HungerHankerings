@@ -1,5 +1,67 @@
 import { ID, RequestContext, TransactionalConnection } from "@vendure/core";
+import { Pool, type PoolConfig } from "pg";
 import { PostalCodeZone } from "./entities/postal-code-zone.entity";
+
+const FALLBACK_ZONE_CODE = "FALLBACK_CANADA";
+
+type AdminShippingRate = {
+  rateCents: number;
+  zoneCode: string;
+  zoneName: string;
+  postalPrefix: string;
+  fallbackUsed: boolean;
+  overrideUsed: boolean;
+};
+
+let adminShippingPool: Pool | null = null;
+
+function stripSslModeFromUrl(rawUrl: string): string {
+  try {
+    const u = new URL(rawUrl);
+    u.searchParams.delete("sslmode");
+    const out = u.toString();
+    return out.endsWith("?") ? out.slice(0, -1) : out;
+  } catch {
+    return rawUrl.replace(/[?&]sslmode=[^&]*/gi, "").replace(/\?$/, "");
+  }
+}
+
+function adminDbSsl(): false | { rejectUnauthorized: boolean } {
+  if (process.env.DB_SSL === "false") return false;
+  return { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false" };
+}
+
+function resolveAdminDbConnectionString(): string | undefined {
+  const direct = process.env.LEADS_DATABASE_URL?.trim();
+  if (direct) return direct;
+
+  const host = process.env.DB_HOST?.trim();
+  const port = process.env.DB_PORT?.trim();
+  const user = process.env.DB_USER?.trim();
+  const password = process.env.DB_PASSWORD;
+  const dbName = process.env.LEADS_DATABASE_NAME?.trim() || "hungerhankeringsadmin";
+  if (host && port && user && password) {
+    return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${dbName}`;
+  }
+  return process.env.DATABASE_URL?.trim();
+}
+
+function getAdminShippingPool(): Pool | null {
+  if (adminShippingPool) return adminShippingPool;
+  const raw = resolveAdminDbConnectionString();
+  if (!raw) return null;
+  const ssl = adminDbSsl();
+  const cfg: PoolConfig = {
+    connectionString: ssl === false ? raw : stripSslModeFromUrl(raw),
+    max: 3,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 15_000,
+    keepAlive: true,
+  };
+  if (ssl !== false) cfg.ssl = ssl;
+  adminShippingPool = new Pool(cfg);
+  return adminShippingPool;
+}
 
 /**
  * Look up shipping rate (cents) by country and postal code.
@@ -8,6 +70,96 @@ import { PostalCodeZone } from "./entities/postal-code-zone.entity";
  */
 export class PostalCodeZoneService {
   constructor(private connection: TransactionalConnection) {}
+
+  async getAdminRateCentsByPostal(
+    countryCode: string,
+    postalCode: string,
+    orderSubtotalCents = 0
+  ): Promise<AdminShippingRate | null> {
+    const country = (countryCode ?? "").trim().toUpperCase().slice(0, 2);
+    const postal = (postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
+    const fsa = postal.slice(0, 3);
+    if (country !== "CA" || !fsa) return null;
+
+    const pool = getAdminShippingPool();
+    if (!pool) return null;
+
+    const result = await pool.query<{
+      source: string;
+      province: string | null;
+      urban_rural: string | null;
+      region_band: string | null;
+      zone_code: string;
+      zone_name: string;
+      flat_rate: string;
+      free_shipping_threshold: string;
+    }>(
+      `
+      WITH matched AS (
+        SELECT
+          1 AS priority,
+          'override' AS source,
+          r.province,
+          r.urban_rural,
+          r.region_band,
+          z.zone_code,
+          z.zone_name,
+          z.flat_rate,
+          z.free_shipping_threshold
+        FROM shipping_fsa_overrides o
+        JOIN shipping_zones z ON z.zone_code = o.override_zone_code
+        LEFT JOIN postal_fsa_regions r ON r.fsa = o.fsa
+        WHERE o.fsa = $1 AND o.active = true AND z.active = true
+
+        UNION ALL
+
+        SELECT
+          2 AS priority,
+          'region' AS source,
+          r.province,
+          r.urban_rural,
+          r.region_band,
+          z.zone_code,
+          z.zone_name,
+          z.flat_rate,
+          z.free_shipping_threshold
+        FROM postal_fsa_regions r
+        JOIN shipping_zones z ON z.zone_code = r.shipping_zone_code
+        WHERE r.fsa = $1 AND r.active = true AND z.active = true
+
+        UNION ALL
+
+        SELECT
+          3 AS priority,
+          'fallback' AS source,
+          NULL AS province,
+          'fallback' AS urban_rural,
+          'fallback' AS region_band,
+          z.zone_code,
+          z.zone_name,
+          z.flat_rate,
+          z.free_shipping_threshold
+        FROM shipping_zones z
+        WHERE z.zone_code = $2 AND z.active = true
+      )
+      SELECT * FROM matched ORDER BY priority LIMIT 1
+      `,
+      [fsa, FALLBACK_ZONE_CODE]
+    );
+
+    const row = result.rows[0];
+    if (!row) return null;
+    const flatCents = Math.round(Number(row.flat_rate) * 100);
+    const thresholdCents = Math.round(Number(row.free_shipping_threshold) * 100);
+    return {
+      rateCents: orderSubtotalCents >= thresholdCents ? 0 : flatCents,
+      zoneCode: row.zone_code,
+      zoneName: row.zone_name,
+      postalPrefix: fsa,
+      fallbackUsed: row.source === "fallback",
+      overrideUsed: row.source === "override",
+    };
+  }
 
   /** Lookup by exact prefix (used by Admin). */
   async getRateCents(

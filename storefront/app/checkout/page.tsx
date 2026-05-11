@@ -594,17 +594,21 @@ const CheckoutPage = () => {
     let cancelled = false
     Promise.all(
       addressKeysForShipping.map(async ({ destKey, country, postal_code }) => {
-        const dollars = await getShippingQuoteDollars(country, postal_code)
+        const dollars = await getShippingQuoteDollars(country, postal_code, cart?.subtotal ?? 0)
         return { destKey, dollars }
       })
-    ).then((results) => {
-      if (cancelled) return
-      const next: Record<string, number> = {}
-      for (const { destKey, dollars } of results) next[destKey] = dollars
-      setShippingByDestKey(next)
-    })
+    )
+      .then((results) => {
+        if (cancelled) return
+        const next: Record<string, number> = {}
+        for (const { destKey, dollars } of results) next[destKey] = dollars
+        setShippingByDestKey(next)
+      })
+      .catch(() => {
+        if (!cancelled) setShippingByDestKey({})
+      })
     return () => { cancelled = true }
-  }, [addressKeysForShipping])
+  }, [addressKeysForShipping, cart?.subtotal])
 
   const { shippingAmount, taxAmount, orderTotal, addressBreakdown } =
     useMemo(() => {

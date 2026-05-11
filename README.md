@@ -67,6 +67,14 @@ Only **`lib/db.ts`** (leads API + ops inbox) connects to Postgres; use **`LEADS_
 Email: **`RESEND_API_KEY`** + verified **`LEAD_EMAIL_FROM`** (recipient defaults to **hello@hungerhankerings.com**).
 The HTTP response succeeds after the DB insert; notification send runs afterward. See `storefront/docs/LEADS-SETUP.md`.
 
+## Shipping Rates
+
+Canadian flat-rate shipping is managed in the custom ops portal at `/ops/shipping-rates`.
+Configuration lives in the existing `hungerhankeringsadmin` database (`shipping_zones`,
+`postal_fsa_regions`, `shipping_fsa_overrides`, and audit log tables). Checkout reads live
+rates from `POST /api/shipping/rate`; Vendure's postal shipping calculator is aligned to the
+same admin database so displayed and charged shipping match. See `storefront/docs/SHIPPING-RATES.md`.
+
 ## Docker
 
 Start the full stack (with Vendure and optional local Postgres):
