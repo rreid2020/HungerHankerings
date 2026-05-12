@@ -57,7 +57,12 @@ postal code -> normalize -> FSA -> active override -> active FSA mapping -> acti
 
 If the order subtotal is greater than or equal to the selected zone's `free_shipping_threshold`, the final rate is `0`.
 
-Fallback is used for unknown or invalid FSAs. Checkout should only fail if `FALLBACK_CANADA` is missing or inactive, or if the database is unavailable.
+Fallback order:
+
+1. Province fallback zone (`FALLBACK_<PROVINCE>`, for example `FALLBACK_ON`) when an FSA can be inferred.
+2. Global fallback zone `FALLBACK_CANADA`.
+
+Checkout should only fail if fallback zones are missing/inactive or if the database is unavailable.
 
 ## Checkout Integration
 

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client"
 import { getAdminPrisma, runAdminDbQuery } from "./db"
 
 export const FALLBACK_ZONE_CODE = "FALLBACK_CANADA"
+export const PROVINCIAL_FALLBACK_ZONE_PREFIX = "FALLBACK_"
 
 export const CANADIAN_PROVINCES = new Set([
   "AB",
@@ -125,6 +126,33 @@ export function isValidFsa(input: unknown): boolean {
 
 export function normalizeFsa(input: unknown): string {
   return upperTrim(input).replace(/\s+/g, "").slice(0, 3)
+}
+
+export function inferProvinceFromFsa(input: unknown): string | null {
+  const fsa = normalizeFsa(input)
+  if (!isValidFsa(fsa)) return null
+  const c0 = fsa[0]
+  if (c0 === "A") return "NL"
+  if (c0 === "B") return "NS"
+  if (c0 === "C") return "PE"
+  if (c0 === "E") return "NB"
+  if (c0 === "G" || c0 === "H" || c0 === "J") return "QC"
+  if (c0 === "K" || c0 === "L" || c0 === "M" || c0 === "N" || c0 === "P") return "ON"
+  if (c0 === "R") return "SK"
+  if (c0 === "S") return "MB"
+  if (c0 === "T") return "AB"
+  if (c0 === "V") return "BC"
+  if (c0 === "Y") return "YT"
+  if (c0 === "X") {
+    if (fsa.startsWith("X0A") || fsa.startsWith("X0B") || fsa.startsWith("X0C")) return "NU"
+    return "NT"
+  }
+  return null
+}
+
+function provincialFallbackZoneCode(province: string | null): string | null {
+  if (!province || !CANADIAN_PROVINCES.has(province)) return null
+  return `${PROVINCIAL_FALLBACK_ZONE_PREFIX}${province}`
 }
 
 function normalizeProvince(input: unknown): string | null {
@@ -528,33 +556,45 @@ export async function resolveShippingRate(params: {
     const fsa = extractFsa(postalCode)
     const orderSubtotal = Math.max(0, Number(params.orderSubtotal ?? 0) || 0)
 
-    const fallback = async (reason: string): Promise<ShippingRateResponse> => {
-      const zone = await prisma.shippingZone.findUnique({ where: { zoneCode: FALLBACK_ZONE_CODE } })
+    const fallback = async (reason: string, inferredProvince: string | null): Promise<ShippingRateResponse> => {
+      const provincialFallbackCode = provincialFallbackZoneCode(inferredProvince)
+      const provinceZone =
+        provincialFallbackCode
+          ? await prisma.shippingZone.findUnique({ where: { zoneCode: provincialFallbackCode } })
+          : null
+      const zone = provinceZone?.active
+        ? provinceZone
+        : await prisma.shippingZone.findUnique({ where: { zoneCode: FALLBACK_ZONE_CODE } })
       if (!zone) return { success: false, error: "Fallback shipping zone is missing." }
       if (!zone.active) return { success: false, error: "Fallback shipping zone is inactive." }
       if (params.recordFallbackUsage) {
         await writeAudit({
           action: "fallback_used",
           entityType: "shipping_rate",
-          after: { fsa, reason },
+          after: { fsa, reason, inferredProvince, zoneCode: zone.zoneCode },
         })
       }
       return rateResult({
         postalCode,
         fsa,
         zone,
-        province: null,
-        urbanRural: "fallback",
-        regionBand: "fallback",
+        province: inferredProvince,
+        urbanRural: zone.urbanRural || "fallback",
+        regionBand: zone.regionBand || "fallback",
         orderSubtotal,
         overrideUsed: false,
         fallbackUsed: true,
-        fallbackReason: reason,
+        fallbackReason:
+          provinceZone?.active
+            ? `${reason} Using provincial fallback zone ${provinceZone.zoneCode}.`
+            : reason,
       })
     }
 
+    const inferredProvince = inferProvinceFromFsa(fsa)
+
     if (!isValidFsa(fsa)) {
-      return fallback("Postal code did not contain a valid Canadian FSA.")
+      return fallback("Postal code did not contain a valid Canadian FSA.", inferredProvince)
     }
 
     const override = await prisma.shippingFsaOverride.findFirst({
@@ -594,7 +634,7 @@ export async function resolveShippingRate(params: {
       })
     }
 
-    return fallback("No active FSA mapping was found for this postal code.")
+    return fallback("No active FSA mapping was found for this postal code.", inferredProvince)
   })
 }
 

@@ -3,6 +3,7 @@ import { Pool, type PoolConfig } from "pg";
 import { PostalCodeZone } from "./entities/postal-code-zone.entity";
 
 const FALLBACK_ZONE_CODE = "FALLBACK_CANADA";
+const PROVINCIAL_FALLBACK_ZONE_PREFIX = "FALLBACK_";
 
 type AdminShippingRate = {
   rateCents: number;
@@ -63,6 +64,28 @@ function getAdminShippingPool(): Pool | null {
   return adminShippingPool;
 }
 
+function inferProvinceFromFsa(fsa: string): string | null {
+  const normalized = (fsa ?? "").trim().toUpperCase().slice(0, 3);
+  if (!/^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z]$/i.test(normalized)) return null;
+  const c0 = normalized[0];
+  if (c0 === "A") return "NL";
+  if (c0 === "B") return "NS";
+  if (c0 === "C") return "PE";
+  if (c0 === "E") return "NB";
+  if (c0 === "G" || c0 === "H" || c0 === "J") return "QC";
+  if (c0 === "K" || c0 === "L" || c0 === "M" || c0 === "N" || c0 === "P") return "ON";
+  if (c0 === "R") return "SK";
+  if (c0 === "S") return "MB";
+  if (c0 === "T") return "AB";
+  if (c0 === "V") return "BC";
+  if (c0 === "Y") return "YT";
+  if (c0 === "X") {
+    if (normalized.startsWith("X0A") || normalized.startsWith("X0B") || normalized.startsWith("X0C")) return "NU";
+    return "NT";
+  }
+  return null;
+}
+
 /**
  * Look up shipping rate (cents) by country and postal code.
  * Canada: 3-character FSA only (e.g. K0K, M5V); if no row, use country default (prefix "").
@@ -80,6 +103,10 @@ export class PostalCodeZoneService {
     const postal = (postalCode ?? "").trim().toUpperCase().replace(/\s/g, "");
     const fsa = postal.slice(0, 3);
     if (country !== "CA" || !fsa) return null;
+    const inferredProvince = inferProvinceFromFsa(fsa);
+    const provincialFallbackCode = inferredProvince
+      ? `${PROVINCIAL_FALLBACK_ZONE_PREFIX}${inferredProvince}`
+      : null;
 
     const pool = getAdminShippingPool();
     if (!pool) return null;
@@ -131,6 +158,21 @@ export class PostalCodeZoneService {
 
         SELECT
           3 AS priority,
+          'province_fallback' AS source,
+          NULL AS province,
+          'fallback' AS urban_rural,
+          'fallback' AS region_band,
+          z.zone_code,
+          z.zone_name,
+          z.flat_rate,
+          z.free_shipping_threshold
+        FROM shipping_zones z
+        WHERE $2::VARCHAR IS NOT NULL AND z.zone_code = $2 AND z.active = true
+
+        UNION ALL
+
+        SELECT
+          4 AS priority,
           'fallback' AS source,
           NULL AS province,
           'fallback' AS urban_rural,
@@ -144,7 +186,7 @@ export class PostalCodeZoneService {
       )
       SELECT * FROM matched ORDER BY priority LIMIT 1
       `,
-      [fsa, FALLBACK_ZONE_CODE]
+      [fsa, provincialFallbackCode, FALLBACK_ZONE_CODE]
     );
 
     const row = result.rows[0];
