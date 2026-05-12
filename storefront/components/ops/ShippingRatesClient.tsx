@@ -36,6 +36,7 @@ type FsaOverride = {
 }
 
 type RateResult = Record<string, unknown> & { success?: boolean; error?: string }
+type SortDirection = "asc" | "desc"
 
 const inputClass =
   "w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-brand-400"
@@ -73,6 +74,9 @@ export default function ShippingRatesClient() {
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({ q: "", province: "", zone: "", urbanRural: "", active: "" })
   const [testResult, setTestResult] = useState<RateResult | null>(null)
+  const [zoneSort, setZoneSort] = useState<{ key: string; dir: SortDirection }>({ key: "zoneCode", dir: "asc" })
+  const [regionSort, setRegionSort] = useState<{ key: string; dir: SortDirection }>({ key: "fsa", dir: "asc" })
+  const [overrideSort, setOverrideSort] = useState<{ key: string; dir: SortDirection }>({ key: "fsa", dir: "asc" })
 
   const zoneCodes = useMemo(() => zones.map((z) => z.zoneCode), [zones])
 
@@ -201,6 +205,80 @@ export default function ShippingRatesClient() {
     }
   }
 
+  function compareValues(a: unknown, b: unknown, dir: SortDirection) {
+    const aNum = Number(a)
+    const bNum = Number(b)
+    let result = 0
+    if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+      result = aNum - bNum
+    } else if (typeof a === "boolean" || typeof b === "boolean") {
+      result = Number(Boolean(a)) - Number(Boolean(b))
+    } else {
+      result = String(a ?? "").localeCompare(String(b ?? ""), "en", { sensitivity: "base" })
+    }
+    return dir === "asc" ? result : -result
+  }
+
+  function sortZonesBy(key: keyof Zone) {
+    const dir: SortDirection = zoneSort.key === key ? (zoneSort.dir === "asc" ? "desc" : "asc") : "asc"
+    setZoneSort({ key, dir })
+    setZones((rows) => [...rows].sort((a, b) => compareValues(a[key], b[key], dir)))
+  }
+
+  function sortRegionsBy(key: keyof FsaRegion) {
+    const dir: SortDirection = regionSort.key === key ? (regionSort.dir === "asc" ? "desc" : "asc") : "asc"
+    setRegionSort({ key, dir })
+    setRegions((rows) => [...rows].sort((a, b) => compareValues(a[key], b[key], dir)))
+  }
+
+  function sortOverridesBy(key: keyof FsaOverride) {
+    const dir: SortDirection = overrideSort.key === key ? (overrideSort.dir === "asc" ? "desc" : "asc") : "asc"
+    setOverrideSort({ key, dir })
+    setOverrides((rows) => [...rows].sort((a, b) => compareValues(a[key], b[key], dir)))
+  }
+
+  async function downloadCsv(type: "zones" | "regions" | "overrides", fileName: string) {
+    setError(null)
+    try {
+      const res = await fetch(`/api/ops/shipping/export?type=${type}&${new URLSearchParams(filters).toString()}`)
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(data.error ?? "Export failed")
+      }
+      const text = await res.text()
+      const blob = new Blob([text], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed")
+    }
+  }
+
+  async function downloadTemplate() {
+    setError(null)
+    try {
+      const res = await fetch("/api/ops/shipping/import/template")
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(data.error ?? "Template download failed")
+      }
+      const text = await res.text()
+      const blob = new Blob([text], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "shipping-fsa-template.csv"
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Template download failed")
+    }
+  }
+
   const tabs = [
     ["zones", "Shipping Zones"],
     ["regions", "FSA Regions"],
@@ -239,6 +317,11 @@ export default function ShippingRatesClient() {
 
       {tab === "zones" ? (
         <section className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("zones", "shipping-zones.csv")}>
+              Export zones CSV
+            </button>
+          </div>
           <form onSubmit={createZone} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
             <input name="zoneCode" placeholder="ZONE_CODE" className={inputClass} required />
             <input name="zoneName" placeholder="Zone name" className={inputClass} required />
@@ -253,7 +336,18 @@ export default function ShippingRatesClient() {
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="bg-zinc-900 text-xs uppercase text-zinc-500">
-                <tr><th className="p-3">Code</th><th>Name</th><th>Province</th><th>Type</th><th>Band</th><th>Rate</th><th>Free over</th><th>Active</th><th>Sort</th><th /></tr>
+                <tr>
+                  <th className="p-3"><button type="button" onClick={() => sortZonesBy("zoneCode")}>Code</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("zoneName")}>Name</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("province")}>Province</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("urbanRural")}>Type</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("regionBand")}>Band</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("flatRate")}>Rate</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("freeShippingThreshold")}>Free over</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("active")}>Active</button></th>
+                  <th><button type="button" onClick={() => sortZonesBy("sortOrder")}>Sort</button></th>
+                  <th />
+                </tr>
               </thead>
               <tbody>
                 {zones.map((z, i) => (
@@ -298,12 +392,20 @@ export default function ShippingRatesClient() {
             </select>
             <button className={buttonClass} onClick={refresh}>Search</button>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("regions", "shipping-regions.csv")}>
+              Export regions CSV
+            </button>
+            <button type="button" className={ghostButtonClass} onClick={downloadTemplate}>
+              Download import template
+            </button>
+          </div>
           <form onSubmit={createRegion} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
             <input name="fsa" placeholder="FSA" className={inputClass} required />
             <input name="province" placeholder="Province" className={inputClass} required />
             <input name="city" placeholder="City" className={inputClass} />
             <input name="urbanRural" placeholder="urban/rural/north" className={inputClass} required />
-            <input name="regionBand" placeholder="region band" className={inputClass} />
+            <input name="regionBand" placeholder="region band (south|central|north|far_north|remote|fallback)" className={inputClass} required />
             <select name="shippingZoneCode" className={inputClass} required>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select>
             <input name="notes" placeholder="Notes" className={inputClass} />
             <button className={buttonClass}>Create FSA mapping</button>
@@ -316,7 +418,19 @@ export default function ShippingRatesClient() {
           </form>
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500"><tr><th className="p-3">FSA</th><th>Province</th><th>City</th><th>Type</th><th>Band</th><th>Zone</th><th>Active</th><th>Notes</th><th /></tr></thead>
+              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="p-3"><button type="button" onClick={() => sortRegionsBy("fsa")}>FSA</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("province")}>Province</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("city")}>City</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("urbanRural")}>Type</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("regionBand")}>Band</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("shippingZoneCode")}>Zone</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("active")}>Active</button></th>
+                  <th><button type="button" onClick={() => sortRegionsBy("notes")}>Notes</button></th>
+                  <th />
+                </tr>
+              </thead>
               <tbody>{regions.map((r, i) => (
                 <tr key={r.id} className="border-t border-zinc-800">
                   <td className="p-3 font-mono text-xs">{r.fsa}</td>
@@ -348,6 +462,11 @@ export default function ShippingRatesClient() {
 
       {tab === "overrides" ? (
         <section className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("overrides", "shipping-overrides.csv")}>
+              Export overrides CSV
+            </button>
+          </div>
           <form onSubmit={createOverride} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
             <input name="fsa" placeholder="FSA" className={inputClass} required />
             <select name="overrideZoneCode" className={inputClass} required>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select>
@@ -356,7 +475,15 @@ export default function ShippingRatesClient() {
           </form>
           <div className="overflow-x-auto rounded-lg border border-zinc-800">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500"><tr><th className="p-3">FSA</th><th>Zone</th><th>Reason</th><th>Active</th><th /></tr></thead>
+              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="p-3"><button type="button" onClick={() => sortOverridesBy("fsa")}>FSA</button></th>
+                  <th><button type="button" onClick={() => sortOverridesBy("overrideZoneCode")}>Zone</button></th>
+                  <th><button type="button" onClick={() => sortOverridesBy("reason")}>Reason</button></th>
+                  <th><button type="button" onClick={() => sortOverridesBy("active")}>Active</button></th>
+                  <th />
+                </tr>
+              </thead>
               <tbody>{overrides.map((o, i) => (
                 <tr key={o.id} className="border-t border-zinc-800">
                   <td className="p-3 font-mono text-xs">{o.fsa}</td>

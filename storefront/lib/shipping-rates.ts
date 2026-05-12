@@ -3,6 +3,24 @@ import { getAdminPrisma, runAdminDbQuery } from "./db"
 
 export const FALLBACK_ZONE_CODE = "FALLBACK_CANADA"
 export const PROVINCIAL_FALLBACK_ZONE_PREFIX = "FALLBACK_"
+export const REGION_BANDS = new Set([
+  "south",
+  "central",
+  "north",
+  "far_north",
+  "remote",
+  "interior",
+  "atlantic",
+  "fallback",
+])
+export const URBAN_RURAL_VALUES = new Set([
+  "urban",
+  "rural",
+  "north",
+  "far_north",
+  "remote",
+  "fallback",
+])
 
 export const CANADIAN_PROVINCES = new Set([
   "AB",
@@ -160,6 +178,24 @@ function normalizeProvince(input: unknown): string | null {
   return CANADIAN_PROVINCES.has(p) ? p : null
 }
 
+function normalizeRegionBand(input: unknown): string | null {
+  if (typeof input !== "string") return null
+  const v = input.trim().toLowerCase()
+  if (!v) return null
+  if (!REGION_BANDS.has(v)) {
+    throw new Error(`region_band must be one of: ${Array.from(REGION_BANDS).join(", ")}`)
+  }
+  return v
+}
+
+function normalizeUrbanRural(input: unknown): string {
+  const v = requireNonEmpty(input, "Urban/rural").toLowerCase()
+  if (!URBAN_RURAL_VALUES.has(v)) {
+    throw new Error(`urban_rural must be one of: ${Array.from(URBAN_RURAL_VALUES).join(", ")}`)
+  }
+  return v
+}
+
 function cleanNullable(input: unknown): string | null {
   if (typeof input !== "string") return null
   const s = input.trim()
@@ -223,8 +259,8 @@ export async function createShippingZone(input: ShippingZoneInput, changedBy?: s
         zoneCode,
         zoneName: requireNonEmpty(input.zoneName, "Zone name"),
         province,
-        urbanRural: requireNonEmpty(input.urbanRural, "Urban/rural"),
-        regionBand: cleanNullable(input.regionBand),
+        urbanRural: normalizeUrbanRural(input.urbanRural),
+        regionBand: normalizeRegionBand(input.regionBand),
         flatRate: moneyDecimal(input.flatRate),
         freeShippingThreshold: moneyDecimal(input.freeShippingThreshold, 150),
         active: input.active ?? true,
@@ -244,8 +280,8 @@ export async function updateShippingZone(id: string, input: ShippingZoneInput, c
     const data: Prisma.ShippingZoneUpdateInput = {}
     if (input.zoneName !== undefined) data.zoneName = requireNonEmpty(input.zoneName, "Zone name")
     if (input.province !== undefined) data.province = normalizeProvince(input.province)
-    if (input.urbanRural !== undefined) data.urbanRural = requireNonEmpty(input.urbanRural, "Urban/rural")
-    if (input.regionBand !== undefined) data.regionBand = cleanNullable(input.regionBand)
+    if (input.urbanRural !== undefined) data.urbanRural = normalizeUrbanRural(input.urbanRural)
+    if (input.regionBand !== undefined) data.regionBand = normalizeRegionBand(input.regionBand)
     if (input.flatRate !== undefined) data.flatRate = moneyDecimal(input.flatRate)
     if (input.freeShippingThreshold !== undefined) data.freeShippingThreshold = moneyDecimal(input.freeShippingThreshold, 150)
     if (input.active !== undefined) data.active = input.active
@@ -332,6 +368,8 @@ export async function createFsaRegion(input: FsaRegionInput, changedBy?: string 
     if (!isValidFsa(fsa)) throw new Error("FSA must be a valid Canadian FSA")
     const province = normalizeProvince(input.province)
     if (!province) throw new Error("Province must be a valid Canadian province code")
+    const regionBand = normalizeRegionBand(input.regionBand)
+    if (!regionBand) throw new Error("Region band is required")
     const zoneCode = requireNonEmpty(input.shippingZoneCode, "Shipping zone").toUpperCase()
     await assertZoneExists(zoneCode)
     const row = await prisma.postalFsaRegion.create({
@@ -339,8 +377,8 @@ export async function createFsaRegion(input: FsaRegionInput, changedBy?: string 
         fsa,
         province,
         city: cleanNullable(input.city),
-        urbanRural: requireNonEmpty(input.urbanRural, "Urban/rural"),
-        regionBand: cleanNullable(input.regionBand),
+        urbanRural: normalizeUrbanRural(input.urbanRural),
+        regionBand,
         shippingZoneCode: zoneCode,
         active: input.active ?? true,
         notes: cleanNullable(input.notes),
@@ -363,8 +401,8 @@ export async function updateFsaRegion(id: string, input: FsaRegionInput, changed
       data.province = province
     }
     if (input.city !== undefined) data.city = cleanNullable(input.city)
-    if (input.urbanRural !== undefined) data.urbanRural = requireNonEmpty(input.urbanRural, "Urban/rural")
-    if (input.regionBand !== undefined) data.regionBand = cleanNullable(input.regionBand)
+    if (input.urbanRural !== undefined) data.urbanRural = normalizeUrbanRural(input.urbanRural)
+    if (input.regionBand !== undefined) data.regionBand = normalizeRegionBand(input.regionBand)
     if (input.shippingZoneCode !== undefined) {
       const zoneCode = requireNonEmpty(input.shippingZoneCode, "Shipping zone").toUpperCase()
       await assertZoneExists(zoneCode)
@@ -492,12 +530,31 @@ export type CsvImportSummary = {
   errors: Array<{ row: number; error: string }>
 }
 
+export function buildFsaImportTemplateCsv(): string {
+  const header = [
+    "fsa",
+    "province",
+    "city",
+    "urban_rural",
+    "region_band",
+    "shipping_zone_code",
+    "active",
+    "notes",
+  ]
+  const sampleRows = [
+    ["M5V", "ON", "Toronto", "urban", "south", "ON_SOUTH_URBAN", "true", "Downtown core"],
+    ["P7B", "ON", "Thunder Bay", "urban", "north", "ON_NORTH_URBAN", "true", "Northern ON"],
+    ["V0A", "BC", "Kootenay Region", "rural", "central", "BC_CENTRAL_RURAL", "true", ""],
+  ]
+  return [header.join(","), ...sampleRows.map((row) => row.map(csvCell).join(","))].join("\n")
+}
+
 export async function importFsaRegionsCsv(csv: string, changedBy?: string | null): Promise<CsvImportSummary> {
   const lines = csv.split(/\r?\n/).filter((l) => l.trim())
   const summary: CsvImportSummary = { inserted: 0, updated: 0, skipped: 0, errors: [] }
   if (lines.length === 0) return summary
   const headers = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase())
-  const required = ["fsa", "province", "urban_rural", "shipping_zone_code"]
+  const required = ["fsa", "province", "urban_rural", "region_band", "shipping_zone_code"]
   for (const h of required) {
     if (!headers.includes(h)) {
       return { inserted: 0, updated: 0, skipped: lines.length - 1, errors: [{ row: 1, error: `Missing required column: ${h}` }] }
@@ -522,6 +579,9 @@ export async function importFsaRegionsCsv(csv: string, changedBy?: string | null
       if (!isValidFsa(fsa)) throw new Error("Invalid FSA")
       const province = normalizeProvince(input.province)
       if (!province) throw new Error("Invalid province")
+      const regionBand = normalizeRegionBand(input.regionBand)
+      if (!regionBand) throw new Error("Invalid region band")
+      const urbanRural = normalizeUrbanRural(input.urbanRural)
       const zoneCode = requireNonEmpty(input.shippingZoneCode, "Shipping zone").toUpperCase()
       await assertZoneExists(zoneCode)
       const prisma = prismaOrThrow()
@@ -532,8 +592,8 @@ export async function importFsaRegionsCsv(csv: string, changedBy?: string | null
           fsa,
           province,
           city: cleanNullable(input.city),
-          urbanRural: requireNonEmpty(input.urbanRural, "Urban/rural"),
-          regionBand: cleanNullable(input.regionBand),
+          urbanRural,
+          regionBand,
           shippingZoneCode: zoneCode,
           active: input.active ?? true,
           notes: cleanNullable(input.notes),
@@ -541,8 +601,8 @@ export async function importFsaRegionsCsv(csv: string, changedBy?: string | null
         update: {
           province,
           city: cleanNullable(input.city),
-          urbanRural: requireNonEmpty(input.urbanRural, "Urban/rural"),
-          regionBand: cleanNullable(input.regionBand),
+          urbanRural,
+          regionBand,
           shippingZoneCode: zoneCode,
           active: input.active ?? true,
           notes: cleanNullable(input.notes),
@@ -712,4 +772,82 @@ export async function getFallbackSettings() {
     })
     return { zone, fallbackUsageCount }
   })
+}
+
+function csvCell(value: unknown): string {
+  if (value == null) return ""
+  const s = String(value)
+  if (/[",\r\n]/.test(s)) {
+    return `"${s.replace(/"/g, "\"\"")}"`
+  }
+  return s
+}
+
+export async function exportShippingCsv(
+  type: "zones" | "regions" | "overrides",
+  params?: URLSearchParams,
+): Promise<string> {
+  if (type === "zones") {
+    const zones = await listShippingZones()
+    const header = [
+      "zone_code",
+      "zone_name",
+      "province",
+      "urban_rural",
+      "region_band",
+      "flat_rate",
+      "free_shipping_threshold",
+      "active",
+      "sort_order",
+    ]
+    const rows = zones.map((z) =>
+      [
+        z.zoneCode,
+        z.zoneName,
+        z.province ?? "",
+        z.urbanRural,
+        z.regionBand ?? "",
+        moneyNumber(z.flatRate),
+        moneyNumber(z.freeShippingThreshold),
+        z.active,
+        z.sortOrder,
+      ].map(csvCell).join(","),
+    )
+    return [header.join(","), ...rows].join("\n")
+  }
+
+  if (type === "regions") {
+    const search = params ?? new URLSearchParams()
+    const regions = await listFsaRegions(search)
+    const header = [
+      "fsa",
+      "province",
+      "city",
+      "urban_rural",
+      "region_band",
+      "shipping_zone_code",
+      "active",
+      "notes",
+    ]
+    const rows = regions.map((r) =>
+      [
+        r.fsa,
+        r.province,
+        r.city ?? "",
+        r.urbanRural,
+        r.regionBand ?? "",
+        r.shippingZoneCode,
+        r.active,
+        r.notes ?? "",
+      ].map(csvCell).join(","),
+    )
+    return [header.join(","), ...rows].join("\n")
+  }
+
+  const overrides = await listFsaOverrides()
+  const header = ["fsa", "override_zone_code", "reason", "active"]
+  const rows = overrides.map((o) =>
+    [o.fsa, o.overrideZoneCode, o.reason ?? "", o.active].map(csvCell).join(","),
+  )
+  return [header.join(","), ...rows].join("\n")
 }

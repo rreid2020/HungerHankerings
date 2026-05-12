@@ -1,0 +1,175 @@
+-- Province band templates: south/central/north with urban/rural splits.
+-- Additive + idempotent seed to keep existing data safe.
+
+INSERT INTO "shipping_zones" (
+  "zone_code",
+  "zone_name",
+  "province",
+  "urban_rural",
+  "region_band",
+  "flat_rate",
+  "free_shipping_threshold",
+  "active",
+  "sort_order"
+) VALUES
+  ('AB_SOUTH_URBAN', 'Alberta South Urban', 'AB', 'urban', 'south', 10.99, 150.00, true, 201),
+  ('AB_SOUTH_RURAL', 'Alberta South Rural', 'AB', 'rural', 'south', 14.99, 150.00, true, 202),
+  ('AB_CENTRAL_URBAN', 'Alberta Central Urban', 'AB', 'urban', 'central', 13.99, 150.00, true, 203),
+  ('AB_CENTRAL_RURAL', 'Alberta Central Rural', 'AB', 'rural', 'central', 17.99, 150.00, true, 204),
+  ('AB_NORTH_URBAN', 'Alberta North Urban', 'AB', 'urban', 'north', 16.99, 150.00, true, 205),
+  ('AB_NORTH_RURAL', 'Alberta North Rural', 'AB', 'rural', 'north', 20.99, 150.00, true, 206),
+
+  ('BC_SOUTH_URBAN', 'British Columbia South Urban', 'BC', 'urban', 'south', 11.99, 150.00, true, 211),
+  ('BC_SOUTH_RURAL', 'British Columbia South Rural', 'BC', 'rural', 'south', 15.99, 150.00, true, 212),
+  ('BC_CENTRAL_URBAN', 'British Columbia Central Urban', 'BC', 'urban', 'central', 14.99, 150.00, true, 213),
+  ('BC_CENTRAL_RURAL', 'British Columbia Central Rural', 'BC', 'rural', 'central', 18.99, 150.00, true, 214),
+  ('BC_NORTH_URBAN', 'British Columbia North Urban', 'BC', 'urban', 'north', 17.99, 150.00, true, 215),
+  ('BC_NORTH_RURAL', 'British Columbia North Rural', 'BC', 'rural', 'north', 21.99, 150.00, true, 216),
+
+  ('MB_SOUTH_URBAN', 'Manitoba South Urban', 'MB', 'urban', 'south', 11.99, 150.00, true, 221),
+  ('MB_SOUTH_RURAL', 'Manitoba South Rural', 'MB', 'rural', 'south', 15.99, 150.00, true, 222),
+  ('MB_CENTRAL_URBAN', 'Manitoba Central Urban', 'MB', 'urban', 'central', 14.99, 150.00, true, 223),
+  ('MB_CENTRAL_RURAL', 'Manitoba Central Rural', 'MB', 'rural', 'central', 18.99, 150.00, true, 224),
+  ('MB_NORTH_URBAN', 'Manitoba North Urban', 'MB', 'urban', 'north', 18.99, 150.00, true, 225),
+  ('MB_NORTH_RURAL', 'Manitoba North Rural', 'MB', 'rural', 'north', 22.99, 150.00, true, 226),
+
+  ('NB_SOUTH_URBAN', 'New Brunswick South Urban', 'NB', 'urban', 'south', 14.99, 150.00, true, 231),
+  ('NB_SOUTH_RURAL', 'New Brunswick South Rural', 'NB', 'rural', 'south', 18.99, 150.00, true, 232),
+  ('NB_CENTRAL_URBAN', 'New Brunswick Central Urban', 'NB', 'urban', 'central', 16.99, 150.00, true, 233),
+  ('NB_CENTRAL_RURAL', 'New Brunswick Central Rural', 'NB', 'rural', 'central', 20.99, 150.00, true, 234),
+  ('NB_NORTH_URBAN', 'New Brunswick North Urban', 'NB', 'urban', 'north', 18.99, 150.00, true, 235),
+  ('NB_NORTH_RURAL', 'New Brunswick North Rural', 'NB', 'rural', 'north', 22.99, 150.00, true, 236),
+
+  ('NL_SOUTH_URBAN', 'Newfoundland South Urban', 'NL', 'urban', 'south', 16.99, 150.00, true, 241),
+  ('NL_SOUTH_RURAL', 'Newfoundland South Rural', 'NL', 'rural', 'south', 20.99, 150.00, true, 242),
+  ('NL_CENTRAL_URBAN', 'Newfoundland Central Urban', 'NL', 'urban', 'central', 18.99, 150.00, true, 243),
+  ('NL_CENTRAL_RURAL', 'Newfoundland Central Rural', 'NL', 'rural', 'central', 22.99, 150.00, true, 244),
+  ('NL_NORTH_URBAN', 'Newfoundland North Urban', 'NL', 'urban', 'north', 20.99, 150.00, true, 245),
+  ('NL_NORTH_RURAL', 'Newfoundland North Rural', 'NL', 'rural', 'north', 24.99, 150.00, true, 246),
+
+  ('NS_SOUTH_URBAN', 'Nova Scotia South Urban', 'NS', 'urban', 'south', 14.99, 150.00, true, 251),
+  ('NS_SOUTH_RURAL', 'Nova Scotia South Rural', 'NS', 'rural', 'south', 18.99, 150.00, true, 252),
+  ('NS_CENTRAL_URBAN', 'Nova Scotia Central Urban', 'NS', 'urban', 'central', 16.99, 150.00, true, 253),
+  ('NS_CENTRAL_RURAL', 'Nova Scotia Central Rural', 'NS', 'rural', 'central', 20.99, 150.00, true, 254),
+  ('NS_NORTH_URBAN', 'Nova Scotia North Urban', 'NS', 'urban', 'north', 18.99, 150.00, true, 255),
+  ('NS_NORTH_RURAL', 'Nova Scotia North Rural', 'NS', 'rural', 'north', 22.99, 150.00, true, 256),
+
+  ('ON_SOUTH_URBAN', 'Ontario South Urban', 'ON', 'urban', 'south', 9.99, 150.00, true, 261),
+  ('ON_SOUTH_RURAL', 'Ontario South Rural', 'ON', 'rural', 'south', 13.99, 150.00, true, 262),
+  ('ON_CENTRAL_URBAN', 'Ontario Central Urban', 'ON', 'urban', 'central', 12.99, 150.00, true, 263),
+  ('ON_CENTRAL_RURAL', 'Ontario Central Rural', 'ON', 'rural', 'central', 16.99, 150.00, true, 264),
+  ('ON_NORTH_URBAN', 'Ontario North Urban', 'ON', 'urban', 'north', 15.99, 150.00, true, 265),
+  ('ON_NORTH_RURAL', 'Ontario North Rural', 'ON', 'rural', 'north', 19.99, 150.00, true, 266),
+
+  ('PE_SOUTH_URBAN', 'Prince Edward Island South Urban', 'PE', 'urban', 'south', 15.99, 150.00, true, 271),
+  ('PE_SOUTH_RURAL', 'Prince Edward Island South Rural', 'PE', 'rural', 'south', 19.99, 150.00, true, 272),
+  ('PE_CENTRAL_URBAN', 'Prince Edward Island Central Urban', 'PE', 'urban', 'central', 16.99, 150.00, true, 273),
+  ('PE_CENTRAL_RURAL', 'Prince Edward Island Central Rural', 'PE', 'rural', 'central', 20.99, 150.00, true, 274),
+  ('PE_NORTH_URBAN', 'Prince Edward Island North Urban', 'PE', 'urban', 'north', 17.99, 150.00, true, 275),
+  ('PE_NORTH_RURAL', 'Prince Edward Island North Rural', 'PE', 'rural', 'north', 21.99, 150.00, true, 276),
+
+  ('QC_SOUTH_URBAN', 'Quebec South Urban', 'QC', 'urban', 'south', 10.99, 150.00, true, 281),
+  ('QC_SOUTH_RURAL', 'Quebec South Rural', 'QC', 'rural', 'south', 14.99, 150.00, true, 282),
+  ('QC_CENTRAL_URBAN', 'Quebec Central Urban', 'QC', 'urban', 'central', 13.99, 150.00, true, 283),
+  ('QC_CENTRAL_RURAL', 'Quebec Central Rural', 'QC', 'rural', 'central', 17.99, 150.00, true, 284),
+  ('QC_NORTH_URBAN', 'Quebec North Urban', 'QC', 'urban', 'north', 16.99, 150.00, true, 285),
+  ('QC_NORTH_RURAL', 'Quebec North Rural', 'QC', 'rural', 'north', 20.99, 150.00, true, 286),
+
+  ('SK_SOUTH_URBAN', 'Saskatchewan South Urban', 'SK', 'urban', 'south', 12.99, 150.00, true, 291),
+  ('SK_SOUTH_RURAL', 'Saskatchewan South Rural', 'SK', 'rural', 'south', 16.99, 150.00, true, 292),
+  ('SK_CENTRAL_URBAN', 'Saskatchewan Central Urban', 'SK', 'urban', 'central', 15.99, 150.00, true, 293),
+  ('SK_CENTRAL_RURAL', 'Saskatchewan Central Rural', 'SK', 'rural', 'central', 19.99, 150.00, true, 294),
+  ('SK_NORTH_URBAN', 'Saskatchewan North Urban', 'SK', 'urban', 'north', 19.99, 150.00, true, 295),
+  ('SK_NORTH_RURAL', 'Saskatchewan North Rural', 'SK', 'rural', 'north', 23.99, 150.00, true, 296)
+ON CONFLICT ("zone_code") DO NOTHING;
+
+INSERT INTO "postal_fsa_regions" (
+  "fsa",
+  "province",
+  "city",
+  "urban_rural",
+  "region_band",
+  "shipping_zone_code",
+  "active",
+  "notes"
+) VALUES
+  ('M5V', 'ON', 'Toronto', 'urban', 'south', 'ON_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('K1A', 'ON', 'Ottawa', 'urban', 'south', 'ON_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('K0A', 'ON', 'Eastern Ontario Rural', 'rural', 'south', 'ON_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('P7B', 'ON', 'Thunder Bay', 'urban', 'north', 'ON_NORTH_URBAN', true, 'Seeded north urban'),
+  ('P0A', 'ON', 'Northern Ontario Rural', 'rural', 'north', 'ON_NORTH_RURAL', true, 'Seeded north rural'),
+  ('N2J', 'ON', 'Waterloo Region', 'urban', 'central', 'ON_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('N0B', 'ON', 'Southwestern Ontario Rural', 'rural', 'central', 'ON_CENTRAL_RURAL', true, 'Seeded central rural'),
+
+  ('V5K', 'BC', 'Vancouver', 'urban', 'south', 'BC_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('V0N', 'BC', 'Coastal BC Rural', 'rural', 'south', 'BC_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('V1Y', 'BC', 'Kelowna', 'urban', 'central', 'BC_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('V0A', 'BC', 'Kootenay', 'rural', 'central', 'BC_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('V2L', 'BC', 'Prince George', 'urban', 'north', 'BC_NORTH_URBAN', true, 'Seeded north urban'),
+  ('V0J', 'BC', 'Northern BC Rural', 'rural', 'north', 'BC_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('T2P', 'AB', 'Calgary', 'urban', 'south', 'AB_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('T0L', 'AB', 'Foothills County', 'rural', 'south', 'AB_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('T5J', 'AB', 'Edmonton', 'urban', 'central', 'AB_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('T0B', 'AB', 'Central Alberta Rural', 'rural', 'central', 'AB_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('T9H', 'AB', 'Fort McMurray', 'urban', 'north', 'AB_NORTH_URBAN', true, 'Seeded north urban'),
+  ('T0H', 'AB', 'Northern Alberta Rural', 'rural', 'north', 'AB_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('S4P', 'SK', 'Regina', 'urban', 'south', 'SK_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('S0G', 'SK', 'South Saskatchewan Rural', 'rural', 'south', 'SK_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('S7K', 'SK', 'Saskatoon', 'urban', 'central', 'SK_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('S0K', 'SK', 'Central Saskatchewan Rural', 'rural', 'central', 'SK_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('S6V', 'SK', 'Prince Albert', 'urban', 'north', 'SK_NORTH_URBAN', true, 'Seeded north urban'),
+  ('S0J', 'SK', 'Northern Saskatchewan Rural', 'rural', 'north', 'SK_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('R3C', 'MB', 'Winnipeg', 'urban', 'south', 'MB_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('R0C', 'MB', 'Southern Manitoba Rural', 'rural', 'south', 'MB_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('R2C', 'MB', 'Winnipeg East', 'urban', 'central', 'MB_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('R0E', 'MB', 'Central Manitoba Rural', 'rural', 'central', 'MB_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('R8N', 'MB', 'Thompson', 'urban', 'north', 'MB_NORTH_URBAN', true, 'Seeded north urban'),
+  ('R0B', 'MB', 'Northern Manitoba Rural', 'rural', 'north', 'MB_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('H2X', 'QC', 'Montreal', 'urban', 'south', 'QC_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('J0L', 'QC', 'Montreal South Shore Rural', 'rural', 'south', 'QC_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('G1A', 'QC', 'Quebec City', 'urban', 'central', 'QC_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('G0A', 'QC', 'Capitale-Nationale Rural', 'rural', 'central', 'QC_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('G8T', 'QC', 'Saguenay', 'urban', 'north', 'QC_NORTH_URBAN', true, 'Seeded north urban'),
+  ('G0W', 'QC', 'Northern Quebec Rural', 'rural', 'north', 'QC_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('E2L', 'NB', 'Saint John', 'urban', 'south', 'NB_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('E5N', 'NB', 'Sussex Rural', 'rural', 'south', 'NB_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('E3B', 'NB', 'Fredericton', 'urban', 'central', 'NB_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('E4C', 'NB', 'Central NB Rural', 'rural', 'central', 'NB_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('E3N', 'NB', 'Bathurst', 'urban', 'north', 'NB_NORTH_URBAN', true, 'Seeded north urban'),
+  ('E8K', 'NB', 'Northern NB Rural', 'rural', 'north', 'NB_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('B3H', 'NS', 'Halifax', 'urban', 'south', 'NS_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('B0J', 'NS', 'South Shore Rural', 'rural', 'south', 'NS_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('B2N', 'NS', 'Truro', 'urban', 'central', 'NS_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('B0N', 'NS', 'Central NS Rural', 'rural', 'central', 'NS_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('B1P', 'NS', 'Sydney', 'urban', 'north', 'NS_NORTH_URBAN', true, 'Seeded north urban'),
+  ('B0W', 'NS', 'Northern NS Rural', 'rural', 'north', 'NS_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('A1C', 'NL', 'St. John''s', 'urban', 'south', 'NL_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('A0A', 'NL', 'Avalon Rural', 'rural', 'south', 'NL_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('A2H', 'NL', 'Corner Brook', 'urban', 'central', 'NL_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('A0K', 'NL', 'Central NL Rural', 'rural', 'central', 'NL_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('A2V', 'NL', 'Labrador City', 'urban', 'north', 'NL_NORTH_URBAN', true, 'Seeded north urban'),
+  ('A0P', 'NL', 'Northern NL Rural', 'rural', 'north', 'NL_NORTH_RURAL', true, 'Seeded north rural'),
+
+  ('C1A', 'PE', 'Charlottetown', 'urban', 'south', 'PE_SOUTH_URBAN', true, 'Seeded south urban'),
+  ('C0A', 'PE', 'Eastern PEI Rural', 'rural', 'south', 'PE_SOUTH_RURAL', true, 'Seeded south rural'),
+  ('C1B', 'PE', 'Stratford', 'urban', 'central', 'PE_CENTRAL_URBAN', true, 'Seeded central urban'),
+  ('C0B', 'PE', 'Western PEI Rural', 'rural', 'central', 'PE_CENTRAL_RURAL', true, 'Seeded central rural'),
+  ('C1N', 'PE', 'Summerside', 'urban', 'north', 'PE_NORTH_URBAN', true, 'Seeded north urban'),
+  ('C0C', 'PE', 'North Shore PEI Rural', 'rural', 'north', 'PE_NORTH_RURAL', true, 'Seeded north rural')
+ON CONFLICT ("fsa") DO UPDATE
+SET
+  "province" = EXCLUDED."province",
+  "city" = EXCLUDED."city",
+  "urban_rural" = EXCLUDED."urban_rural",
+  "region_band" = EXCLUDED."region_band",
+  "shipping_zone_code" = EXCLUDED."shipping_zone_code",
+  "active" = EXCLUDED."active",
+  "notes" = EXCLUDED."notes",
+  "updated_at" = CURRENT_TIMESTAMP;
