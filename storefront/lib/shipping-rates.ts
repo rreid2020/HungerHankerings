@@ -530,6 +530,26 @@ export type CsvImportSummary = {
   errors: Array<{ row: number; error: string }>
 }
 
+export function buildZoneImportTemplateCsv(): string {
+  const header = [
+    "zone_code",
+    "zone_name",
+    "province",
+    "urban_rural",
+    "region_band",
+    "flat_rate",
+    "free_shipping_threshold",
+    "active",
+    "sort_order",
+  ]
+  const sampleRows = [
+    ["ON_SOUTH_URBAN", "Ontario South Urban", "ON", "urban", "south", "9.99", "150.00", "true", "261"],
+    ["ON_CENTRAL_RURAL", "Ontario Central Rural", "ON", "rural", "central", "16.99", "150.00", "true", "264"],
+    ["FALLBACK_CANADA", "Canada Fallback", "", "fallback", "fallback", "24.99", "150.00", "true", "999"],
+  ]
+  return [header.join(","), ...sampleRows.map((row) => row.map(csvCell).join(","))].join("\n")
+}
+
 export function buildFsaImportTemplateCsv(): string {
   const header = [
     "fsa",
@@ -547,6 +567,98 @@ export function buildFsaImportTemplateCsv(): string {
     ["V0A", "BC", "Kootenay Region", "rural", "central", "BC_CENTRAL_RURAL", "true", ""],
   ]
   return [header.join(","), ...sampleRows.map((row) => row.map(csvCell).join(","))].join("\n")
+}
+
+export async function importShippingZonesCsv(csv: string, changedBy?: string | null): Promise<CsvImportSummary> {
+  const lines = csv.split(/\r?\n/).filter((l) => l.trim())
+  const summary: CsvImportSummary = { inserted: 0, updated: 0, skipped: 0, errors: [] }
+  if (lines.length === 0) return summary
+
+  const headers = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase())
+  const required = ["zone_code", "zone_name", "urban_rural", "flat_rate"]
+  for (const h of required) {
+    if (!headers.includes(h)) {
+      return {
+        inserted: 0,
+        updated: 0,
+        skipped: Math.max(lines.length - 1, 0),
+        errors: [{ row: 1, error: `Missing required column: ${h}` }],
+      }
+    }
+  }
+
+  for (let i = 1; i < lines.length; i++) {
+    const rowNo = i + 1
+    const cells = parseCsvLine(lines[i])
+    if (cells.every((c) => !c.trim())) {
+      summary.skipped++
+      continue
+    }
+
+    const record: Record<string, string> = {}
+    headers.forEach((h, idx) => {
+      record[h] = (cells[idx] ?? "").trim()
+    })
+
+    try {
+      const zoneCode = requireNonEmpty(record.zone_code, "Zone code").toUpperCase()
+      const zoneName = requireNonEmpty(record.zone_name, "Zone name")
+      const province = normalizeProvince(record.province) ?? null
+      const urbanRural = normalizeUrbanRural(record.urban_rural)
+      const regionBand = normalizeRegionBand(record.region_band)
+      const flatRate = moneyDecimal(record.flat_rate)
+      const freeShippingThreshold = moneyDecimal(record.free_shipping_threshold, 150)
+      const active = boolFromUnknown(record.active, true)
+      const sortOrder = Number(record.sort_order)
+      const normalizedSort = Number.isFinite(sortOrder) ? Math.trunc(sortOrder) : 0
+
+      const prisma = prismaOrThrow()
+      const before = await prisma.shippingZone.findUnique({ where: { zoneCode } })
+      const after = await prisma.shippingZone.upsert({
+        where: { zoneCode },
+        create: {
+          zoneCode,
+          zoneName,
+          province,
+          urbanRural,
+          regionBand,
+          flatRate,
+          freeShippingThreshold,
+          active,
+          sortOrder: normalizedSort,
+        },
+        update: {
+          zoneName,
+          province,
+          urbanRural,
+          regionBand,
+          flatRate,
+          freeShippingThreshold,
+          active,
+          sortOrder: normalizedSort,
+        },
+      })
+
+      await writeAudit({
+        action: before ? "update" : "create",
+        entityType: "shipping_zone",
+        entityId: after.id,
+        before,
+        after,
+        changedBy,
+      })
+      if (before) summary.updated++
+      else summary.inserted++
+    } catch (err) {
+      summary.errors.push({
+        row: rowNo,
+        error: err instanceof Error ? err.message : "Unknown row error",
+      })
+      summary.skipped++
+    }
+  }
+
+  return summary
 }
 
 export async function importFsaRegionsCsv(csv: string, changedBy?: string | null): Promise<CsvImportSummary> {

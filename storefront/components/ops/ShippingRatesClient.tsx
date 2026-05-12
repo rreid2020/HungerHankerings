@@ -45,6 +45,10 @@ const buttonClass =
 const ghostButtonClass =
   "rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800"
 
+const provinceOptions = ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"] as const
+const urbanRuralOptions = ["urban", "rural", "north", "far_north", "remote", "fallback"] as const
+const regionBandOptions = ["south", "central", "north", "far_north", "remote", "interior", "atlantic", "fallback"] as const
+
 function money(v: unknown): string {
   const n = Number(v)
   return Number.isFinite(n) ? n.toFixed(2) : "0.00"
@@ -168,9 +172,10 @@ export default function ShippingRatesClient() {
     await submitJson(`/api/ops/shipping/overrides/${override.id}`, override, "PATCH")
   }
 
-  async function importCsv(event: FormEvent<HTMLFormElement>) {
+  async function importCsv(event: FormEvent<HTMLFormElement>, type: "regions" | "zones") {
     event.preventDefault()
     const f = new FormData(event.currentTarget)
+    f.set("type", type)
     setError(null)
     try {
       const result = await api<{ summary: { inserted: number; updated: number; skipped: number; errors: Array<{ row: number; error: string }> } }>(
@@ -258,10 +263,10 @@ export default function ShippingRatesClient() {
     }
   }
 
-  async function downloadTemplate() {
+  async function downloadTemplate(type: "regions" | "zones") {
     setError(null)
     try {
-      const res = await fetch("/api/ops/shipping/import/template")
+      const res = await fetch(`/api/ops/shipping/import/template?type=${type}`)
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string }
         throw new Error(data.error ?? "Template download failed")
@@ -271,7 +276,7 @@ export default function ShippingRatesClient() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = "shipping-fsa-template.csv"
+      a.download = type === "zones" ? "shipping-zones-template.csv" : "shipping-fsa-template.csv"
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
@@ -321,13 +326,30 @@ export default function ShippingRatesClient() {
             <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("zones", "shipping-zones.csv")}>
               Export zones CSV
             </button>
+            <button type="button" className={ghostButtonClass} onClick={() => downloadTemplate("zones")}>
+              Download zone template
+            </button>
           </div>
+          <form onSubmit={(e) => importCsv(e, "zones")} className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
+            <label className="block text-sm font-medium text-zinc-300">Zone CSV import</label>
+            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-zinc-300" />
+            <p className="mt-2 text-xs text-zinc-500">Columns: zone_code, zone_name, province, urban_rural, region_band, flat_rate, free_shipping_threshold, active, sort_order</p>
+            <button className={`${buttonClass} mt-3`}>Import zones CSV</button>
+          </form>
           <form onSubmit={createZone} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
             <input name="zoneCode" placeholder="ZONE_CODE" className={inputClass} required />
             <input name="zoneName" placeholder="Zone name" className={inputClass} required />
-            <input name="province" placeholder="Province (optional)" className={inputClass} />
-            <input name="urbanRural" placeholder="urban/rural/north" className={inputClass} required />
-            <input name="regionBand" placeholder="region band" className={inputClass} />
+            <select name="province" className={inputClass} defaultValue="">
+              <option value="">Province (optional)</option>
+              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select name="urbanRural" className={inputClass} defaultValue="urban" required>
+              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <select name="regionBand" className={inputClass} defaultValue="">
+              <option value="">Region band (optional)</option>
+              {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
             <input name="flatRate" placeholder="Flat rate" className={inputClass} required />
             <input name="freeShippingThreshold" placeholder="Free threshold" defaultValue="150.00" className={inputClass} />
             <input name="sortOrder" placeholder="Sort" defaultValue="0" className={inputClass} />
@@ -354,9 +376,23 @@ export default function ShippingRatesClient() {
                   <tr key={z.id} className="border-t border-zinc-800">
                     <td className="p-3 font-mono text-xs text-zinc-300">{z.zoneCode}</td>
                     <td><input className={inputClass} value={z.zoneName} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, zoneName: e.target.value } : r))} /></td>
-                    <td><input className={inputClass} value={z.province ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, province: e.target.value } : r))} /></td>
-                    <td><input className={inputClass} value={z.urbanRural} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, urbanRural: e.target.value } : r))} /></td>
-                    <td><input className={inputClass} value={z.regionBand ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, regionBand: e.target.value } : r))} /></td>
+                    <td>
+                      <select className={inputClass} value={z.province ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, province: e.target.value || null } : r))}>
+                        <option value="">None</option>
+                        {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select className={inputClass} value={z.urbanRural} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, urbanRural: e.target.value } : r))}>
+                        {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select className={inputClass} value={z.regionBand ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, regionBand: e.target.value || null } : r))}>
+                        <option value="">None</option>
+                        {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </td>
                     <td><input className={inputClass} value={String(z.flatRate ?? "")} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, flatRate: e.target.value } : r))} /></td>
                     <td><input className={inputClass} value={String(z.freeShippingThreshold ?? "")} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, freeShippingThreshold: e.target.value } : r))} /></td>
                     <td className="text-center"><input type="checkbox" checked={z.active} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, active: e.target.checked } : r))} /></td>
@@ -384,9 +420,16 @@ export default function ShippingRatesClient() {
       {tab === "regions" ? (
         <section className="space-y-4">
           <div className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-6">
-            {(["q", "province", "zone", "urbanRural"] as const).map((k) => (
-              <input key={k} className={inputClass} placeholder={k} value={filters[k]} onChange={(e) => setFilters((f) => ({ ...f, [k]: e.target.value }))} />
-            ))}
+            <input className={inputClass} placeholder="q" value={filters.q} onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))} />
+            <select className={inputClass} value={filters.province} onChange={(e) => setFilters((f) => ({ ...f, province: e.target.value }))}>
+              <option value="">Any province</option>
+              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <input className={inputClass} placeholder="zone" value={filters.zone} onChange={(e) => setFilters((f) => ({ ...f, zone: e.target.value }))} />
+            <select className={inputClass} value={filters.urbanRural} onChange={(e) => setFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
+              <option value="">Any type</option>
+              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
             <select className={inputClass} value={filters.active} onChange={(e) => setFilters((f) => ({ ...f, active: e.target.value }))}>
               <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
             </select>
@@ -396,21 +439,27 @@ export default function ShippingRatesClient() {
             <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("regions", "shipping-regions.csv")}>
               Export regions CSV
             </button>
-            <button type="button" className={ghostButtonClass} onClick={downloadTemplate}>
+            <button type="button" className={ghostButtonClass} onClick={() => downloadTemplate("regions")}>
               Download import template
             </button>
           </div>
           <form onSubmit={createRegion} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
             <input name="fsa" placeholder="FSA" className={inputClass} required />
-            <input name="province" placeholder="Province" className={inputClass} required />
+            <select name="province" className={inputClass} defaultValue="ON" required>
+              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
             <input name="city" placeholder="City" className={inputClass} />
-            <input name="urbanRural" placeholder="urban/rural/north" className={inputClass} required />
-            <input name="regionBand" placeholder="region band (south|central|north|far_north|remote|fallback)" className={inputClass} required />
+            <select name="urbanRural" className={inputClass} defaultValue="urban" required>
+              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <select name="regionBand" className={inputClass} defaultValue="south" required>
+              {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
             <select name="shippingZoneCode" className={inputClass} required>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select>
             <input name="notes" placeholder="Notes" className={inputClass} />
             <button className={buttonClass}>Create FSA mapping</button>
           </form>
-          <form onSubmit={importCsv} className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
+          <form onSubmit={(e) => importCsv(e, "regions")} className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
             <label className="block text-sm font-medium text-zinc-300">CSV import</label>
             <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-zinc-300" />
             <p className="mt-2 text-xs text-zinc-500">Columns: fsa, province, city, urban_rural, region_band, shipping_zone_code, active, notes</p>
@@ -434,10 +483,23 @@ export default function ShippingRatesClient() {
               <tbody>{regions.map((r, i) => (
                 <tr key={r.id} className="border-t border-zinc-800">
                   <td className="p-3 font-mono text-xs">{r.fsa}</td>
-                  <td><input className={inputClass} value={r.province} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, province: e.target.value } : x))} /></td>
+                  <td>
+                    <select className={inputClass} value={r.province} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, province: e.target.value } : x))}>
+                      {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </td>
                   <td><input className={inputClass} value={r.city ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, city: e.target.value } : x))} /></td>
-                  <td><input className={inputClass} value={r.urbanRural} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, urbanRural: e.target.value } : x))} /></td>
-                  <td><input className={inputClass} value={r.regionBand ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, regionBand: e.target.value } : x))} /></td>
+                  <td>
+                    <select className={inputClass} value={r.urbanRural} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, urbanRural: e.target.value } : x))}>
+                      {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <select className={inputClass} value={r.regionBand ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, regionBand: e.target.value || null } : x))}>
+                      <option value="">None</option>
+                      {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </td>
                   <td><select className={inputClass} value={r.shippingZoneCode} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, shippingZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
                   <td className="text-center"><input type="checkbox" checked={r.active} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, active: e.target.checked } : x))} /></td>
                   <td><input className={inputClass} value={r.notes ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, notes: e.target.value } : x))} /></td>
