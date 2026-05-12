@@ -45,7 +45,8 @@ const ghostButtonClass =
   "rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800"
 
 function money(v: unknown): string {
-  return Number(v ?? 0).toFixed(2)
+  const n = Number(v)
+  return Number.isFinite(n) ? n.toFixed(2) : "0.00"
 }
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -262,18 +263,21 @@ export default function ShippingRatesClient() {
                     <td><input className={inputClass} value={z.province ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, province: e.target.value } : r))} /></td>
                     <td><input className={inputClass} value={z.urbanRural} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, urbanRural: e.target.value } : r))} /></td>
                     <td><input className={inputClass} value={z.regionBand ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, regionBand: e.target.value } : r))} /></td>
-                    <td><input className={inputClass} value={money(z.flatRate)} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, flatRate: e.target.value } : r))} /></td>
-                    <td><input className={inputClass} value={money(z.freeShippingThreshold)} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, freeShippingThreshold: e.target.value } : r))} /></td>
+                    <td><input className={inputClass} value={String(z.flatRate ?? "")} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, flatRate: e.target.value } : r))} /></td>
+                    <td><input className={inputClass} value={String(z.freeShippingThreshold ?? "")} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, freeShippingThreshold: e.target.value } : r))} /></td>
                     <td className="text-center"><input type="checkbox" checked={z.active} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, active: e.target.checked } : r))} /></td>
                     <td><input className={inputClass} value={z.sortOrder} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, sortOrder: Number(e.target.value) || 0 } : r))} /></td>
-                    <td className="p-3 space-x-2">
-                      <button className={ghostButtonClass} onClick={() => saveZone(z)}>Save</button>
-                      <button
-                        className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
-                        onClick={() => removeItem(`/api/ops/shipping/zones/${z.id}`, `zone ${z.zoneCode}`)}
-                      >
-                        Delete
-                      </button>
+                    <td className="p-3">
+                      <div className="flex flex-nowrap items-center justify-end gap-2">
+                        <button type="button" className={ghostButtonClass} onClick={() => saveZone(z)}>Save</button>
+                        <button
+                          type="button"
+                          className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                          onClick={() => removeItem(`/api/ops/shipping/zones/${z.id}`, `zone ${z.zoneCode}`)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -323,14 +327,17 @@ export default function ShippingRatesClient() {
                   <td><select className={inputClass} value={r.shippingZoneCode} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, shippingZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
                   <td className="text-center"><input type="checkbox" checked={r.active} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, active: e.target.checked } : x))} /></td>
                   <td><input className={inputClass} value={r.notes ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, notes: e.target.value } : x))} /></td>
-                  <td className="p-3 space-x-2">
-                    <button className={ghostButtonClass} onClick={() => saveRegion(r)}>Save</button>
-                    <button
-                      className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
-                      onClick={() => removeItem(`/api/ops/shipping/fsa-regions/${r.id}`, `FSA mapping ${r.fsa}`)}
-                    >
-                      Delete
-                    </button>
+                  <td className="p-3">
+                    <div className="flex flex-nowrap items-center justify-end gap-2">
+                      <button type="button" className={ghostButtonClass} onClick={() => saveRegion(r)}>Save</button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                        onClick={() => removeItem(`/api/ops/shipping/fsa-regions/${r.id}`, `FSA mapping ${r.fsa}`)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}</tbody>
@@ -356,14 +363,17 @@ export default function ShippingRatesClient() {
                   <td><select className={inputClass} value={o.overrideZoneCode} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, overrideZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
                   <td><input className={inputClass} value={o.reason ?? ""} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, reason: e.target.value } : x))} /></td>
                   <td className="text-center"><input type="checkbox" checked={o.active} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, active: e.target.checked } : x))} /></td>
-                  <td className="p-3 space-x-2">
-                    <button className={ghostButtonClass} onClick={() => saveOverride(o)}>Save</button>
-                    <button
-                      className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
-                      onClick={() => removeItem(`/api/ops/shipping/overrides/${o.id}`, `FSA override ${o.fsa}`)}
-                    >
-                      Delete
-                    </button>
+                  <td className="p-3">
+                    <div className="flex flex-nowrap items-center justify-end gap-2">
+                      <button type="button" className={ghostButtonClass} onClick={() => saveOverride(o)}>Save</button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                        onClick={() => removeItem(`/api/ops/shipping/overrides/${o.id}`, `FSA override ${o.fsa}`)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}</tbody>
@@ -397,11 +407,11 @@ export default function ShippingRatesClient() {
               <p className="text-sm text-zinc-400">Fallback usage count: <span className="font-mono text-zinc-200">{fallback.fallbackUsageCount}</span></p>
               <div className="mt-4 grid gap-3 md:grid-cols-4">
                 <input className={inputClass} value={fallback.zone.zoneName} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, zoneName: e.target.value } } : f)} />
-                <input className={inputClass} value={money(fallback.zone.flatRate)} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, flatRate: e.target.value } } : f)} />
-                <input className={inputClass} value={money(fallback.zone.freeShippingThreshold)} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, freeShippingThreshold: e.target.value } } : f)} />
+                <input className={inputClass} value={String(fallback.zone.flatRate ?? "")} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, flatRate: e.target.value } } : f)} />
+                <input className={inputClass} value={String(fallback.zone.freeShippingThreshold ?? "")} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, freeShippingThreshold: e.target.value } } : f)} />
                 <label className="flex items-center gap-2 text-sm text-zinc-300"><input type="checkbox" checked={fallback.zone.active} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, active: e.target.checked } } : f)} /> Active</label>
               </div>
-              <button className={`${buttonClass} mt-4`} onClick={() => fallback.zone && submitJson("/api/ops/shipping/fallback", fallback.zone, "PATCH")}>Save fallback</button>
+              <button type="button" className={`${buttonClass} mt-4`} onClick={() => fallback.zone && submitJson("/api/ops/shipping/fallback", fallback.zone, "PATCH")}>Save fallback</button>
             </div>
           )}
         </section>
