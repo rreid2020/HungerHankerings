@@ -10,6 +10,16 @@ import {
   normalizeInquiryReason
 } from "../lib/contact-inquiry"
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (el: string | HTMLElement, opts: { sitekey: string; callback?: (token: string) => void }) => unknown
+      remove?: (widgetId: unknown) => void
+      reset?: (widgetId: unknown) => void
+    }
+  }
+}
+
 type ContactQuoteFormProps = {
   /** Server-rendered default when `?reason=` is missing or invalid */
   initialReason?: InquiryReason
@@ -20,11 +30,31 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
   const [reason, setReason] = useState<InquiryReason>(initialReason)
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle")
   const [errorDetail, setErrorDetail] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState("")
+  const [turnstileWidgetId, setTurnstileWidgetId] = useState<unknown>(null)
+  const [formStartedAt] = useState<number>(() => Date.now())
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? ""
 
   useEffect(() => {
     const fromUrl = normalizeInquiryReason(searchParams.get("reason"))
     setReason(fromUrl)
   }, [searchParams])
+
+  useEffect(() => {
+    if (!turnstileSiteKey || !window.turnstile) return
+    const el = document.getElementById("contact-turnstile")
+    if (!el) return
+    const widgetId = window.turnstile.render(el, {
+      sitekey: turnstileSiteKey,
+      callback: (token: string) => setTurnstileToken(token),
+    })
+    setTurnstileWidgetId(widgetId)
+    return () => {
+      if (window.turnstile?.remove && widgetId != null) {
+        window.turnstile.remove(widgetId)
+      }
+    }
+  }, [turnstileSiteKey])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -54,7 +84,10 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         email,
         company,
         phone,
-        message
+        message,
+        website: String(formData.get("website") ?? ""),
+        formStartedAt,
+        turnstileToken,
       })
     })
 
@@ -73,6 +106,10 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
 
     form.reset()
     setReason(resolvedReason)
+    setTurnstileToken("")
+    if (turnstileWidgetId != null && window.turnstile?.reset) {
+      window.turnstile.reset(turnstileWidgetId)
+    }
     setStatus("sent")
   }
 
@@ -125,6 +162,18 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         Message
         <textarea name="message" rows={5} className={inputClass} />
       </label>
+      {/* Honeypot for bots: real users never see/fill this field */}
+      <div className="hidden" aria-hidden>
+        <label>
+          Website
+          <input tabIndex={-1} autoComplete="off" name="website" />
+        </label>
+      </div>
+      {turnstileSiteKey ? (
+        <div>
+          <div id="contact-turnstile" />
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" variant="secondary">
           Send message
