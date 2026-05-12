@@ -256,6 +256,37 @@ export async function updateShippingZone(id: string, input: ShippingZoneInput, c
   })
 }
 
+export async function deleteShippingZone(id: string, changedBy?: string | null) {
+  return runAdminDbQuery(async () => {
+    const prisma = prismaOrThrow()
+    const before = await prisma.shippingZone.findUnique({ where: { id } })
+    if (!before) throw new Error("Shipping zone not found")
+    if (before.zoneCode === FALLBACK_ZONE_CODE) {
+      throw new Error("Cannot delete FALLBACK_CANADA. Update or deactivate it instead.")
+    }
+
+    const [regionCount, overrideCount] = await Promise.all([
+      prisma.postalFsaRegion.count({ where: { shippingZoneCode: before.zoneCode } }),
+      prisma.shippingFsaOverride.count({ where: { overrideZoneCode: before.zoneCode } }),
+    ])
+    if (regionCount > 0 || overrideCount > 0) {
+      throw new Error(
+        `Zone ${before.zoneCode} is in use (${regionCount} FSA regions, ${overrideCount} overrides). Reassign them before deleting.`,
+      )
+    }
+
+    await prisma.shippingZone.delete({ where: { id } })
+    await writeAudit({
+      action: "delete",
+      entityType: "shipping_zone",
+      entityId: id,
+      before,
+      changedBy,
+    })
+    return { id, deleted: true }
+  })
+}
+
 export async function listFsaRegions(params: URLSearchParams) {
   return runAdminDbQuery(async () => {
     const prisma = prismaOrThrow()
@@ -347,6 +378,23 @@ export async function updateFsaRegion(id: string, input: FsaRegionInput, changed
   })
 }
 
+export async function deleteFsaRegion(id: string, changedBy?: string | null) {
+  return runAdminDbQuery(async () => {
+    const prisma = prismaOrThrow()
+    const before = await prisma.postalFsaRegion.findUnique({ where: { id } })
+    if (!before) throw new Error("FSA region not found")
+    await prisma.postalFsaRegion.delete({ where: { id } })
+    await writeAudit({
+      action: "delete",
+      entityType: "postal_fsa_region",
+      entityId: id,
+      before,
+      changedBy,
+    })
+    return { id, deleted: true }
+  })
+}
+
 export async function listFsaOverrides() {
   return runAdminDbQuery(async () => {
     const prisma = prismaOrThrow()
@@ -394,6 +442,23 @@ export async function updateFsaOverride(id: string, input: FsaOverrideInput, cha
     const after = await prisma.shippingFsaOverride.update({ where: { id }, data })
     await writeAudit({ action: "update", entityType: "shipping_fsa_override", entityId: id, before, after, changedBy })
     return after
+  })
+}
+
+export async function deleteFsaOverride(id: string, changedBy?: string | null) {
+  return runAdminDbQuery(async () => {
+    const prisma = prismaOrThrow()
+    const before = await prisma.shippingFsaOverride.findUnique({ where: { id } })
+    if (!before) throw new Error("FSA override not found")
+    await prisma.shippingFsaOverride.delete({ where: { id } })
+    await writeAudit({
+      action: "delete",
+      entityType: "shipping_fsa_override",
+      entityId: id,
+      before,
+      changedBy,
+    })
+    return { id, deleted: true }
   })
 }
 

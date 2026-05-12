@@ -117,6 +117,19 @@ export default function ShippingRatesClient() {
     }
   }
 
+  async function removeItem(url: string, label: string) {
+    if (!confirm(`Delete ${label}? This cannot be undone.`)) return
+    setMessage(null)
+    setError(null)
+    try {
+      await api(url, { method: "DELETE" })
+      setMessage("Deleted.")
+      await refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed")
+    }
+  }
+
   async function createZone(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const f = new FormData(event.currentTarget)
@@ -253,7 +266,15 @@ export default function ShippingRatesClient() {
                     <td><input className={inputClass} value={money(z.freeShippingThreshold)} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, freeShippingThreshold: e.target.value } : r))} /></td>
                     <td className="text-center"><input type="checkbox" checked={z.active} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, active: e.target.checked } : r))} /></td>
                     <td><input className={inputClass} value={z.sortOrder} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, sortOrder: Number(e.target.value) || 0 } : r))} /></td>
-                    <td className="p-3"><button className={ghostButtonClass} onClick={() => saveZone(z)}>Save</button></td>
+                    <td className="p-3 space-x-2">
+                      <button className={ghostButtonClass} onClick={() => saveZone(z)}>Save</button>
+                      <button
+                        className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                        onClick={() => removeItem(`/api/ops/shipping/zones/${z.id}`, `zone ${z.zoneCode}`)}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -302,7 +323,15 @@ export default function ShippingRatesClient() {
                   <td><select className={inputClass} value={r.shippingZoneCode} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, shippingZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
                   <td className="text-center"><input type="checkbox" checked={r.active} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, active: e.target.checked } : x))} /></td>
                   <td><input className={inputClass} value={r.notes ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, notes: e.target.value } : x))} /></td>
-                  <td className="p-3"><button className={ghostButtonClass} onClick={() => saveRegion(r)}>Save</button></td>
+                  <td className="p-3 space-x-2">
+                    <button className={ghostButtonClass} onClick={() => saveRegion(r)}>Save</button>
+                    <button
+                      className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                      onClick={() => removeItem(`/api/ops/shipping/fsa-regions/${r.id}`, `FSA mapping ${r.fsa}`)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
@@ -327,7 +356,15 @@ export default function ShippingRatesClient() {
                   <td><select className={inputClass} value={o.overrideZoneCode} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, overrideZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
                   <td><input className={inputClass} value={o.reason ?? ""} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, reason: e.target.value } : x))} /></td>
                   <td className="text-center"><input type="checkbox" checked={o.active} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, active: e.target.checked } : x))} /></td>
-                  <td className="p-3"><button className={ghostButtonClass} onClick={() => saveOverride(o)}>Save</button></td>
+                  <td className="p-3 space-x-2">
+                    <button className={ghostButtonClass} onClick={() => saveOverride(o)}>Save</button>
+                    <button
+                      className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                      onClick={() => removeItem(`/api/ops/shipping/overrides/${o.id}`, `FSA override ${o.fsa}`)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
