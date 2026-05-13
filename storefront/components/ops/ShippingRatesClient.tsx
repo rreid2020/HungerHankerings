@@ -88,23 +88,56 @@ export default function ShippingRatesClient() {
 
   const zoneCodes = useMemo(() => zones.map((z) => z.zoneCode), [zones])
 
-  async function refresh() {
+  function buildZoneQueryString() {
+    const zoneQs = new URLSearchParams()
+    Object.entries(zoneFilters).forEach(([k, v]) => {
+      if (v) zoneQs.set(k, v)
+    })
+    return zoneQs.toString()
+  }
+
+  function buildRegionQueryString() {
+    const regionQs = new URLSearchParams()
+    Object.entries(regionFilters).forEach(([k, v]) => {
+      if (v) regionQs.set(k, v)
+    })
+    regionQs.set("limit", "5000")
+    return regionQs.toString()
+  }
+
+  async function refreshZones() {
     setLoading(true)
     setError(null)
     try {
-      const zoneQs = new URLSearchParams()
-      Object.entries(zoneFilters).forEach(([k, v]) => {
-        if (v) zoneQs.set(k, v)
-      })
+      const z = await api<{ zones: Zone[] }>(`/api/ops/shipping/zones?${buildZoneQueryString()}`)
+      setZones(z.zones)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load shipping zones")
+    } finally {
+      setLoading(false)
+    }
+  }
 
-      const regionQs = new URLSearchParams()
-      Object.entries(regionFilters).forEach(([k, v]) => {
-        if (v) regionQs.set(k, v)
-      })
-      regionQs.set("limit", "5000")
+  async function refreshRegions() {
+    setLoading(true)
+    setError(null)
+    try {
+      const r = await api<{ regions: FsaRegion[] }>(`/api/ops/shipping/fsa-regions?${buildRegionQueryString()}`)
+      setRegions(r.regions)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load FSA regions")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function refreshAll() {
+    setLoading(true)
+    setError(null)
+    try {
       const [z, r, o, f] = await Promise.all([
-        api<{ zones: Zone[] }>(`/api/ops/shipping/zones?${zoneQs.toString()}`),
-        api<{ regions: FsaRegion[] }>(`/api/ops/shipping/fsa-regions?${regionQs.toString()}`),
+        api<{ zones: Zone[] }>(`/api/ops/shipping/zones?${buildZoneQueryString()}`),
+        api<{ regions: FsaRegion[] }>(`/api/ops/shipping/fsa-regions?${buildRegionQueryString()}`),
         api<{ overrides: FsaOverride[] }>("/api/ops/shipping/overrides"),
         api<{ zone: Zone | null; fallbackUsageCount: number }>("/api/ops/shipping/fallback"),
       ])
@@ -120,7 +153,7 @@ export default function ShippingRatesClient() {
   }
 
   useEffect(() => {
-    void refresh()
+    void refreshAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -130,7 +163,7 @@ export default function ShippingRatesClient() {
     try {
       await api(url, { method, body: JSON.stringify(body) })
       setMessage("Saved.")
-      await refresh()
+      await refreshAll()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed")
     }
@@ -143,7 +176,7 @@ export default function ShippingRatesClient() {
     try {
       await api(url, { method: "DELETE" })
       setMessage("Deleted.")
-      await refresh()
+      await refreshAll()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed")
     }
@@ -173,7 +206,7 @@ export default function ShippingRatesClient() {
         body: JSON.stringify(payload),
       })
       setMessage(`Bulk update complete: ${result.summary.updated} zones updated (${result.summary.matched} matched).`)
-      await refresh()
+      await refreshAll()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bulk update failed")
     }
@@ -221,7 +254,7 @@ export default function ShippingRatesClient() {
       if (result.summary.errors.length) {
         setError(result.summary.errors.slice(0, 8).map((e) => `Row ${e.row}: ${e.error}`).join(" | "))
       }
-      await refresh()
+      await refreshAll()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed")
     }
@@ -382,7 +415,7 @@ export default function ShippingRatesClient() {
                 <select className={inputClass} value={zoneFilters.active} onChange={(e) => setZoneFilters((f) => ({ ...f, active: e.target.value }))}>
                   <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
                 </select>
-                <button className={buttonClass} onClick={refresh}>Search</button>
+                <button className={buttonClass} onClick={refreshZones}>Search</button>
               </div>
             ) : null}
 
@@ -535,7 +568,7 @@ export default function ShippingRatesClient() {
                 <select className={inputClass} value={regionFilters.active} onChange={(e) => setRegionFilters((f) => ({ ...f, active: e.target.value }))}>
                   <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
                 </select>
-                <button className={buttonClass} onClick={refresh}>Search</button>
+                <button className={buttonClass} onClick={refreshRegions}>Search</button>
               </div>
             ) : null}
 
