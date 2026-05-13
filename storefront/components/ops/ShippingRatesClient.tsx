@@ -78,6 +78,7 @@ export default function ShippingRatesClient() {
   const [loading, setLoading] = useState(false)
   const [zoneFilters, setZoneFilters] = useState({ q: "", province: "", urbanRural: "", regionBand: "", active: "" })
   const [regionFilters, setRegionFilters] = useState({ q: "", province: "", zone: "", urbanRural: "", active: "" })
+  const [zoneBulk, setZoneBulk] = useState({ flatRate: "", freeShippingThreshold: "" })
   const [testResult, setTestResult] = useState<RateResult | null>(null)
   const [zoneSort, setZoneSort] = useState<{ key: string; dir: SortDirection }>({ key: "zoneCode", dir: "asc" })
   const [regionSort, setRegionSort] = useState<{ key: string; dir: SortDirection }>({ key: "fsa", dir: "asc" })
@@ -151,6 +152,29 @@ export default function ShippingRatesClient() {
     const f = new FormData(event.currentTarget)
     await submitJson("/api/ops/shipping/zones", Object.fromEntries(f.entries()))
     event.currentTarget.reset()
+  }
+
+  async function applyBulkZoneRates(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setMessage(null)
+    setError(null)
+    const payload: Record<string, unknown> = { filters: zoneFilters }
+    if (zoneBulk.flatRate.trim()) payload.flatRate = zoneBulk.flatRate
+    if (zoneBulk.freeShippingThreshold.trim()) payload.freeShippingThreshold = zoneBulk.freeShippingThreshold
+    if (!("flatRate" in payload) && !("freeShippingThreshold" in payload)) {
+      setError("Enter at least one rate value for mass update.")
+      return
+    }
+    try {
+      const result = await api<{ summary: { matched: number; updated: number } }>("/api/ops/shipping/zones/bulk", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+      setMessage(`Bulk update complete: ${result.summary.updated} zones updated (${result.summary.matched} matched).`)
+      await refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk update failed")
+    }
   }
 
   async function saveZone(zone: Zone) {
@@ -357,6 +381,24 @@ export default function ShippingRatesClient() {
               Download zone template
             </button>
           </div>
+          <form onSubmit={applyBulkZoneRates} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
+            <input
+              className={inputClass}
+              placeholder="Set flat rate (optional)"
+              value={zoneBulk.flatRate}
+              onChange={(e) => setZoneBulk((v) => ({ ...v, flatRate: e.target.value }))}
+            />
+            <input
+              className={inputClass}
+              placeholder="Set free threshold (optional)"
+              value={zoneBulk.freeShippingThreshold}
+              onChange={(e) => setZoneBulk((v) => ({ ...v, freeShippingThreshold: e.target.value }))}
+            />
+            <p className="self-center text-sm text-slate-600 md:col-span-1">
+              Applies to current zone filters.
+            </p>
+            <button className={buttonClass}>Apply to matched zones</button>
+          </form>
           <form onSubmit={(e) => importCsv(e, "zones")} className="rounded-lg border border-slate-200 bg-white p-4">
             <label className="block text-sm font-medium text-slate-700">Zone CSV import</label>
             <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-slate-700" />

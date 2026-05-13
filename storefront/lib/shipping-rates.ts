@@ -75,6 +75,14 @@ export type ShippingZoneInput = {
   sortOrder?: number
 }
 
+export type ShippingZoneFilterInput = {
+  q?: string
+  province?: string
+  urbanRural?: string
+  regionBand?: string
+  active?: string
+}
+
 export type FsaRegionInput = {
   fsa?: string
   province?: string
@@ -91,6 +99,12 @@ export type FsaOverrideInput = {
   overrideZoneCode?: string
   reason?: string | null
   active?: boolean
+}
+
+export type ShippingZoneBulkRateUpdateInput = {
+  filters?: ShippingZoneFilterInput
+  flatRate?: number | string
+  freeShippingThreshold?: number | string
 }
 
 function prismaOrThrow() {
@@ -235,27 +249,30 @@ async function writeAudit(params: {
   })
 }
 
+function buildShippingZoneWhere(search: URLSearchParams): Prisma.ShippingZoneWhereInput {
+  const q = search.get("q")?.trim()
+  const province = normalizeProvince(search.get("province"))
+  const urbanRural = search.get("urbanRural")?.trim().toLowerCase()
+  const regionBand = search.get("regionBand")?.trim().toLowerCase()
+  const activeRaw = search.get("active")
+  const where: Prisma.ShippingZoneWhereInput = {}
+  if (province) where.province = province
+  if (urbanRural) where.urbanRural = urbanRural
+  if (regionBand) where.regionBand = regionBand
+  if (activeRaw === "true" || activeRaw === "false") where.active = activeRaw === "true"
+  if (q) {
+    where.OR = [
+      { zoneCode: { contains: q, mode: "insensitive" } },
+      { zoneName: { contains: q, mode: "insensitive" } },
+    ]
+  }
+  return where
+}
+
 export async function listShippingZones(params?: URLSearchParams) {
   return runAdminDbQuery(async () => {
     const prisma = prismaOrThrow()
-    const search = params ?? new URLSearchParams()
-    const q = search.get("q")?.trim()
-    const province = normalizeProvince(search.get("province"))
-    const urbanRural = search.get("urbanRural")?.trim().toLowerCase()
-    const regionBand = search.get("regionBand")?.trim().toLowerCase()
-    const activeRaw = search.get("active")
-    const where: Prisma.ShippingZoneWhereInput = {}
-    if (province) where.province = province
-    if (urbanRural) where.urbanRural = urbanRural
-    if (regionBand) where.regionBand = regionBand
-    if (activeRaw === "true" || activeRaw === "false") where.active = activeRaw === "true"
-    if (q) {
-      where.OR = [
-        { zoneCode: { contains: q, mode: "insensitive" } },
-        { zoneName: { contains: q, mode: "insensitive" } },
-      ]
-    }
-
+    const where = buildShippingZoneWhere(params ?? new URLSearchParams())
     return prisma.shippingZone.findMany({
       where,
       orderBy: [{ sortOrder: "asc" }, { zoneCode: "asc" }],
@@ -308,6 +325,58 @@ export async function updateShippingZone(id: string, input: ShippingZoneInput, c
     const after = await prisma.shippingZone.update({ where: { id }, data })
     await writeAudit({ action: "update", entityType: "shipping_zone", entityId: id, before, after, changedBy })
     return after
+  })
+}
+
+export async function bulkUpdateShippingZoneRates(
+  input: ShippingZoneBulkRateUpdateInput,
+  changedBy?: string | null,
+) {
+  return runAdminDbQuery(async () => {
+    const prisma = prismaOrThrow()
+    const filters = new URLSearchParams()
+    const rawFilters = input.filters ?? {}
+    Object.entries(rawFilters).forEach(([k, v]) => {
+      if (typeof v === "string" && v.trim()) filters.set(k, v.trim())
+    })
+    const where = buildShippingZoneWhere(filters)
+    const data: Prisma.ShippingZoneUpdateManyMutationInput = {}
+    if (input.flatRate !== undefined) data.flatRate = moneyDecimal(input.flatRate)
+    if (input.freeShippingThreshold !== undefined) {
+      data.freeShippingThreshold = moneyDecimal(input.freeShippingThreshold, 150)
+    }
+    if (Object.keys(data).length === 0) {
+      throw new Error("At least one rate field is required for bulk update")
+    }
+
+    const beforeRows = await prisma.shippingZone.findMany({
+      where,
+      select: { id: true, zoneCode: true, flatRate: true, freeShippingThreshold: true },
+    })
+    if (beforeRows.length === 0) {
+      return { matched: 0, updated: 0 }
+    }
+
+    const result = await prisma.shippingZone.updateMany({ where, data })
+    const afterRows = await prisma.shippingZone.findMany({
+      where: { id: { in: beforeRows.map((r) => r.id) } },
+      select: { id: true, zoneCode: true, flatRate: true, freeShippingThreshold: true },
+    })
+    const afterById = new Map(afterRows.map((r) => [r.id, r]))
+    await Promise.all(
+      beforeRows.map((before) =>
+        writeAudit({
+          action: "bulk_update",
+          entityType: "shipping_zone",
+          entityId: before.id,
+          before,
+          after: afterById.get(before.id),
+          changedBy,
+        }),
+      ),
+    )
+
+    return { matched: beforeRows.length, updated: result.count }
   })
 }
 
