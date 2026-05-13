@@ -4,10 +4,10 @@ import { createShippingZone, listShippingZones } from "../../../../../lib/shippi
 
 export const runtime = "nodejs"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireOpsUserId()
-    return NextResponse.json({ zones: await listShippingZones() })
+    return NextResponse.json({ zones: await listShippingZones(request.nextUrl.searchParams) })
   } catch (err) {
     return jsonError(err instanceof Error ? err.message : "Could not load zones", 401)
   }

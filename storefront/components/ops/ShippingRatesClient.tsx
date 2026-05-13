@@ -76,7 +76,8 @@ export default function ShippingRatesClient() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [filters, setFilters] = useState({ q: "", province: "", zone: "", urbanRural: "", active: "" })
+  const [zoneFilters, setZoneFilters] = useState({ q: "", province: "", urbanRural: "", regionBand: "", active: "" })
+  const [regionFilters, setRegionFilters] = useState({ q: "", province: "", zone: "", urbanRural: "", active: "" })
   const [testResult, setTestResult] = useState<RateResult | null>(null)
   const [zoneSort, setZoneSort] = useState<{ key: string; dir: SortDirection }>({ key: "zoneCode", dir: "asc" })
   const [regionSort, setRegionSort] = useState<{ key: string; dir: SortDirection }>({ key: "fsa", dir: "asc" })
@@ -88,14 +89,19 @@ export default function ShippingRatesClient() {
     setLoading(true)
     setError(null)
     try {
-      const qs = new URLSearchParams()
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v) qs.set(k, v)
+      const zoneQs = new URLSearchParams()
+      Object.entries(zoneFilters).forEach(([k, v]) => {
+        if (v) zoneQs.set(k, v)
       })
-      qs.set("limit", "5000")
+
+      const regionQs = new URLSearchParams()
+      Object.entries(regionFilters).forEach(([k, v]) => {
+        if (v) regionQs.set(k, v)
+      })
+      regionQs.set("limit", "5000")
       const [z, r, o, f] = await Promise.all([
-        api<{ zones: Zone[] }>("/api/ops/shipping/zones"),
-        api<{ regions: FsaRegion[] }>(`/api/ops/shipping/fsa-regions?${qs.toString()}`),
+        api<{ zones: Zone[] }>(`/api/ops/shipping/zones?${zoneQs.toString()}`),
+        api<{ regions: FsaRegion[] }>(`/api/ops/shipping/fsa-regions?${regionQs.toString()}`),
         api<{ overrides: FsaOverride[] }>("/api/ops/shipping/overrides"),
         api<{ zone: Zone | null; fallbackUsageCount: number }>("/api/ops/shipping/fallback"),
       ])
@@ -246,7 +252,8 @@ export default function ShippingRatesClient() {
   async function downloadCsv(type: "zones" | "regions" | "overrides", fileName: string) {
     setError(null)
     try {
-      const res = await fetch(`/api/ops/shipping/export?type=${type}&${new URLSearchParams(filters).toString()}`)
+      const params = type === "zones" ? zoneFilters : regionFilters
+      const res = await fetch(`/api/ops/shipping/export?type=${type}&${new URLSearchParams(params).toString()}`)
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string }
         throw new Error(data.error ?? "Export failed")
@@ -323,6 +330,25 @@ export default function ShippingRatesClient() {
 
       {tab === "zones" ? (
         <section className="space-y-4">
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-6">
+            <input className={inputClass} placeholder="q" value={zoneFilters.q} onChange={(e) => setZoneFilters((f) => ({ ...f, q: e.target.value }))} />
+            <select className={inputClass} value={zoneFilters.province} onChange={(e) => setZoneFilters((f) => ({ ...f, province: e.target.value }))}>
+              <option value="">Any province</option>
+              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select className={inputClass} value={zoneFilters.urbanRural} onChange={(e) => setZoneFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
+              <option value="">Any type</option>
+              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <select className={inputClass} value={zoneFilters.regionBand} onChange={(e) => setZoneFilters((f) => ({ ...f, regionBand: e.target.value }))}>
+              <option value="">Any band</option>
+              {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <select className={inputClass} value={zoneFilters.active} onChange={(e) => setZoneFilters((f) => ({ ...f, active: e.target.value }))}>
+              <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
+            </select>
+            <button className={buttonClass} onClick={refresh}>Search</button>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("zones", "shipping-zones.csv")}>
               Export zones CSV
@@ -421,17 +447,17 @@ export default function ShippingRatesClient() {
       {tab === "regions" ? (
         <section className="space-y-4">
           <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-6">
-            <input className={inputClass} placeholder="q" value={filters.q} onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))} />
-            <select className={inputClass} value={filters.province} onChange={(e) => setFilters((f) => ({ ...f, province: e.target.value }))}>
+            <input className={inputClass} placeholder="q" value={regionFilters.q} onChange={(e) => setRegionFilters((f) => ({ ...f, q: e.target.value }))} />
+            <select className={inputClass} value={regionFilters.province} onChange={(e) => setRegionFilters((f) => ({ ...f, province: e.target.value }))}>
               <option value="">Any province</option>
               {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
-            <input className={inputClass} placeholder="zone" value={filters.zone} onChange={(e) => setFilters((f) => ({ ...f, zone: e.target.value }))} />
-            <select className={inputClass} value={filters.urbanRural} onChange={(e) => setFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
+            <input className={inputClass} placeholder="zone" value={regionFilters.zone} onChange={(e) => setRegionFilters((f) => ({ ...f, zone: e.target.value }))} />
+            <select className={inputClass} value={regionFilters.urbanRural} onChange={(e) => setRegionFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
               <option value="">Any type</option>
               {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
             </select>
-            <select className={inputClass} value={filters.active} onChange={(e) => setFilters((f) => ({ ...f, active: e.target.value }))}>
+            <select className={inputClass} value={regionFilters.active} onChange={(e) => setRegionFilters((f) => ({ ...f, active: e.target.value }))}>
               <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
             </select>
             <button className={buttonClass} onClick={refresh}>Search</button>

@@ -235,10 +235,29 @@ async function writeAudit(params: {
   })
 }
 
-export async function listShippingZones() {
+export async function listShippingZones(params?: URLSearchParams) {
   return runAdminDbQuery(async () => {
     const prisma = prismaOrThrow()
+    const search = params ?? new URLSearchParams()
+    const q = search.get("q")?.trim()
+    const province = normalizeProvince(search.get("province"))
+    const urbanRural = search.get("urbanRural")?.trim().toLowerCase()
+    const regionBand = search.get("regionBand")?.trim().toLowerCase()
+    const activeRaw = search.get("active")
+    const where: Prisma.ShippingZoneWhereInput = {}
+    if (province) where.province = province
+    if (urbanRural) where.urbanRural = urbanRural
+    if (regionBand) where.regionBand = regionBand
+    if (activeRaw === "true" || activeRaw === "false") where.active = activeRaw === "true"
+    if (q) {
+      where.OR = [
+        { zoneCode: { contains: q, mode: "insensitive" } },
+        { zoneName: { contains: q, mode: "insensitive" } },
+      ]
+    }
+
     return prisma.shippingZone.findMany({
+      where,
       orderBy: [{ sortOrder: "asc" }, { zoneCode: "asc" }],
     })
   })
@@ -900,7 +919,7 @@ export async function exportShippingCsv(
   params?: URLSearchParams,
 ): Promise<string> {
   if (type === "zones") {
-    const zones = await listShippingZones()
+    const zones = await listShippingZones(params)
     const header = [
       "zone_code",
       "zone_name",
