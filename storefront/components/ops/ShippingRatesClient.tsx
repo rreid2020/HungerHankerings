@@ -79,6 +79,8 @@ export default function ShippingRatesClient() {
   const [zoneFilters, setZoneFilters] = useState({ q: "", province: "", urbanRural: "", regionBand: "", active: "" })
   const [regionFilters, setRegionFilters] = useState({ q: "", province: "", zone: "", urbanRural: "", active: "" })
   const [zoneBulk, setZoneBulk] = useState({ flatRate: "", freeShippingThreshold: "" })
+  const [zoneTopTab, setZoneTopTab] = useState<"filters" | "bulk" | "importExport" | "create">("filters")
+  const [regionTopTab, setRegionTopTab] = useState<"filters" | "importExport" | "import" | "create">("filters")
   const [testResult, setTestResult] = useState<RateResult | null>(null)
   const [zoneSort, setZoneSort] = useState<{ key: string; dir: SortDirection }>({ key: "zoneCode", dir: "asc" })
   const [regionSort, setRegionSort] = useState<{ key: string; dir: SortDirection }>({ key: "fsa", dir: "asc" })
@@ -354,76 +356,98 @@ export default function ShippingRatesClient() {
 
       {tab === "zones" ? (
         <section className="space-y-4">
-          <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-6">
-            <input className={inputClass} placeholder="q" value={zoneFilters.q} onChange={(e) => setZoneFilters((f) => ({ ...f, q: e.target.value }))} />
-            <select className={inputClass} value={zoneFilters.province} onChange={(e) => setZoneFilters((f) => ({ ...f, province: e.target.value }))}>
-              <option value="">Any province</option>
-              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select className={inputClass} value={zoneFilters.urbanRural} onChange={(e) => setZoneFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
-              <option value="">Any type</option>
-              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className={inputClass} value={zoneFilters.regionBand} onChange={(e) => setZoneFilters((f) => ({ ...f, regionBand: e.target.value }))}>
-              <option value="">Any band</option>
-              {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className={inputClass} value={zoneFilters.active} onChange={(e) => setZoneFilters((f) => ({ ...f, active: e.target.value }))}>
-              <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
-            </select>
-            <button className={buttonClass} onClick={refresh}>Search</button>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button type="button" className={zoneTopTab === "filters" ? buttonClass : ghostButtonClass} onClick={() => setZoneTopTab("filters")}>Filters</button>
+              <button type="button" className={zoneTopTab === "bulk" ? buttonClass : ghostButtonClass} onClick={() => setZoneTopTab("bulk")}>Bulk Update</button>
+              <button type="button" className={zoneTopTab === "importExport" ? buttonClass : ghostButtonClass} onClick={() => setZoneTopTab("importExport")}>Import / Export</button>
+              <button type="button" className={zoneTopTab === "create" ? buttonClass : ghostButtonClass} onClick={() => setZoneTopTab("create")}>Create Zone</button>
+            </div>
+
+            {zoneTopTab === "filters" ? (
+              <div className="grid gap-3 md:grid-cols-6">
+                <input className={inputClass} placeholder="q" value={zoneFilters.q} onChange={(e) => setZoneFilters((f) => ({ ...f, q: e.target.value }))} />
+                <select className={inputClass} value={zoneFilters.province} onChange={(e) => setZoneFilters((f) => ({ ...f, province: e.target.value }))}>
+                  <option value="">Any province</option>
+                  {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <select className={inputClass} value={zoneFilters.urbanRural} onChange={(e) => setZoneFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
+                  <option value="">Any type</option>
+                  {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <select className={inputClass} value={zoneFilters.regionBand} onChange={(e) => setZoneFilters((f) => ({ ...f, regionBand: e.target.value }))}>
+                  <option value="">Any band</option>
+                  {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <select className={inputClass} value={zoneFilters.active} onChange={(e) => setZoneFilters((f) => ({ ...f, active: e.target.value }))}>
+                  <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
+                </select>
+                <button className={buttonClass} onClick={refresh}>Search</button>
+              </div>
+            ) : null}
+
+            {zoneTopTab === "bulk" ? (
+              <form onSubmit={applyBulkZoneRates} className="grid gap-3 md:grid-cols-4">
+                <input
+                  className={inputClass}
+                  placeholder="Set flat rate (optional)"
+                  value={zoneBulk.flatRate}
+                  onChange={(e) => setZoneBulk((v) => ({ ...v, flatRate: e.target.value }))}
+                />
+                <input
+                  className={inputClass}
+                  placeholder="Set free threshold (optional)"
+                  value={zoneBulk.freeShippingThreshold}
+                  onChange={(e) => setZoneBulk((v) => ({ ...v, freeShippingThreshold: e.target.value }))}
+                />
+                <p className="self-center text-sm text-slate-600 md:col-span-1">
+                  Applies to current zone filters.
+                </p>
+                <button className={buttonClass}>Apply to matched zones</button>
+              </form>
+            ) : null}
+
+            {zoneTopTab === "importExport" ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("zones", "shipping-zones.csv")}>
+                    Export zones CSV
+                  </button>
+                  <button type="button" className={ghostButtonClass} onClick={() => downloadTemplate("zones")}>
+                    Download zone template
+                  </button>
+                </div>
+                <form onSubmit={(e) => importCsv(e, "zones")} className="space-y-2">
+                  <label className="block text-sm font-medium text-slate-700">Zone CSV import</label>
+                  <input name="file" type="file" accept=".csv,text/csv" className="text-sm text-slate-700" />
+                  <p className="text-xs text-slate-500">Columns: zone_code, zone_name, province, urban_rural, region_band, flat_rate, free_shipping_threshold, active, sort_order</p>
+                  <button className={buttonClass}>Import zones CSV</button>
+                </form>
+              </div>
+            ) : null}
+
+            {zoneTopTab === "create" ? (
+              <form onSubmit={createZone} className="grid gap-3 md:grid-cols-4">
+                <input name="zoneCode" placeholder="ZONE_CODE" className={inputClass} required />
+                <input name="zoneName" placeholder="Zone name" className={inputClass} required />
+                <select name="province" className={inputClass} defaultValue="">
+                  <option value="">Province (optional)</option>
+                  {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <select name="urbanRural" className={inputClass} defaultValue="urban" required>
+                  {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <select name="regionBand" className={inputClass} defaultValue="">
+                  <option value="">Region band (optional)</option>
+                  {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <input name="flatRate" placeholder="Flat rate" className={inputClass} required />
+                <input name="freeShippingThreshold" placeholder="Free threshold" defaultValue="150.00" className={inputClass} />
+                <input name="sortOrder" placeholder="Sort" defaultValue="0" className={inputClass} />
+                <button className={buttonClass}>Create zone</button>
+              </form>
+            ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("zones", "shipping-zones.csv")}>
-              Export zones CSV
-            </button>
-            <button type="button" className={ghostButtonClass} onClick={() => downloadTemplate("zones")}>
-              Download zone template
-            </button>
-          </div>
-          <form onSubmit={applyBulkZoneRates} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
-            <input
-              className={inputClass}
-              placeholder="Set flat rate (optional)"
-              value={zoneBulk.flatRate}
-              onChange={(e) => setZoneBulk((v) => ({ ...v, flatRate: e.target.value }))}
-            />
-            <input
-              className={inputClass}
-              placeholder="Set free threshold (optional)"
-              value={zoneBulk.freeShippingThreshold}
-              onChange={(e) => setZoneBulk((v) => ({ ...v, freeShippingThreshold: e.target.value }))}
-            />
-            <p className="self-center text-sm text-slate-600 md:col-span-1">
-              Applies to current zone filters.
-            </p>
-            <button className={buttonClass}>Apply to matched zones</button>
-          </form>
-          <form onSubmit={(e) => importCsv(e, "zones")} className="rounded-lg border border-slate-200 bg-white p-4">
-            <label className="block text-sm font-medium text-slate-700">Zone CSV import</label>
-            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-slate-700" />
-            <p className="mt-2 text-xs text-slate-500">Columns: zone_code, zone_name, province, urban_rural, region_band, flat_rate, free_shipping_threshold, active, sort_order</p>
-            <button className={`${buttonClass} mt-3`}>Import zones CSV</button>
-          </form>
-          <form onSubmit={createZone} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
-            <input name="zoneCode" placeholder="ZONE_CODE" className={inputClass} required />
-            <input name="zoneName" placeholder="Zone name" className={inputClass} required />
-            <select name="province" className={inputClass} defaultValue="">
-              <option value="">Province (optional)</option>
-              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select name="urbanRural" className={inputClass} defaultValue="urban" required>
-              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select name="regionBand" className={inputClass} defaultValue="">
-              <option value="">Region band (optional)</option>
-              {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <input name="flatRate" placeholder="Flat rate" className={inputClass} required />
-            <input name="freeShippingThreshold" placeholder="Free threshold" defaultValue="150.00" className={inputClass} />
-            <input name="sortOrder" placeholder="Sort" defaultValue="0" className={inputClass} />
-            <button className={buttonClass}>Create zone</button>
-          </form>
           <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="bg-slate-100 text-xs uppercase text-slate-600">
@@ -488,52 +512,72 @@ export default function ShippingRatesClient() {
 
       {tab === "regions" ? (
         <section className="space-y-4">
-          <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-6">
-            <input className={inputClass} placeholder="q" value={regionFilters.q} onChange={(e) => setRegionFilters((f) => ({ ...f, q: e.target.value }))} />
-            <select className={inputClass} value={regionFilters.province} onChange={(e) => setRegionFilters((f) => ({ ...f, province: e.target.value }))}>
-              <option value="">Any province</option>
-              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <input className={inputClass} placeholder="zone" value={regionFilters.zone} onChange={(e) => setRegionFilters((f) => ({ ...f, zone: e.target.value }))} />
-            <select className={inputClass} value={regionFilters.urbanRural} onChange={(e) => setRegionFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
-              <option value="">Any type</option>
-              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className={inputClass} value={regionFilters.active} onChange={(e) => setRegionFilters((f) => ({ ...f, active: e.target.value }))}>
-              <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
-            </select>
-            <button className={buttonClass} onClick={refresh}>Search</button>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button type="button" className={regionTopTab === "filters" ? buttonClass : ghostButtonClass} onClick={() => setRegionTopTab("filters")}>Filters</button>
+              <button type="button" className={regionTopTab === "importExport" ? buttonClass : ghostButtonClass} onClick={() => setRegionTopTab("importExport")}>Import / Export</button>
+              <button type="button" className={regionTopTab === "import" ? buttonClass : ghostButtonClass} onClick={() => setRegionTopTab("import")}>Import CSV</button>
+              <button type="button" className={regionTopTab === "create" ? buttonClass : ghostButtonClass} onClick={() => setRegionTopTab("create")}>Create Mapping</button>
+            </div>
+
+            {regionTopTab === "filters" ? (
+              <div className="grid gap-3 md:grid-cols-6">
+                <input className={inputClass} placeholder="q" value={regionFilters.q} onChange={(e) => setRegionFilters((f) => ({ ...f, q: e.target.value }))} />
+                <select className={inputClass} value={regionFilters.province} onChange={(e) => setRegionFilters((f) => ({ ...f, province: e.target.value }))}>
+                  <option value="">Any province</option>
+                  {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <input className={inputClass} placeholder="zone" value={regionFilters.zone} onChange={(e) => setRegionFilters((f) => ({ ...f, zone: e.target.value }))} />
+                <select className={inputClass} value={regionFilters.urbanRural} onChange={(e) => setRegionFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
+                  <option value="">Any type</option>
+                  {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <select className={inputClass} value={regionFilters.active} onChange={(e) => setRegionFilters((f) => ({ ...f, active: e.target.value }))}>
+                  <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
+                </select>
+                <button className={buttonClass} onClick={refresh}>Search</button>
+              </div>
+            ) : null}
+
+            {regionTopTab === "importExport" ? (
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("regions", "shipping-regions.csv")}>
+                  Export regions CSV
+                </button>
+                <button type="button" className={ghostButtonClass} onClick={() => downloadTemplate("regions")}>
+                  Download import template
+                </button>
+              </div>
+            ) : null}
+
+            {regionTopTab === "import" ? (
+              <form onSubmit={(e) => importCsv(e, "regions")} className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">CSV import</label>
+                <input name="file" type="file" accept=".csv,text/csv" className="text-sm text-slate-700" />
+                <p className="text-xs text-slate-500">Columns: fsa, province, city, urban_rural, region_band, shipping_zone_code, active, notes</p>
+                <button className={buttonClass}>Import CSV</button>
+              </form>
+            ) : null}
+
+            {regionTopTab === "create" ? (
+              <form onSubmit={createRegion} className="grid gap-3 md:grid-cols-4">
+                <input name="fsa" placeholder="FSA" className={inputClass} required />
+                <select name="province" className={inputClass} defaultValue="ON" required>
+                  {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <input name="city" placeholder="City" className={inputClass} />
+                <select name="urbanRural" className={inputClass} defaultValue="urban" required>
+                  {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <select name="regionBand" className={inputClass} defaultValue="south" required>
+                  {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+                <select name="shippingZoneCode" className={inputClass} required>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select>
+                <input name="notes" placeholder="Notes" className={inputClass} />
+                <button className={buttonClass}>Create FSA mapping</button>
+              </form>
+            ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={ghostButtonClass} onClick={() => downloadCsv("regions", "shipping-regions.csv")}>
-              Export regions CSV
-            </button>
-            <button type="button" className={ghostButtonClass} onClick={() => downloadTemplate("regions")}>
-              Download import template
-            </button>
-          </div>
-          <form onSubmit={createRegion} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
-            <input name="fsa" placeholder="FSA" className={inputClass} required />
-            <select name="province" className={inputClass} defaultValue="ON" required>
-              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <input name="city" placeholder="City" className={inputClass} />
-            <select name="urbanRural" className={inputClass} defaultValue="urban" required>
-              {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select name="regionBand" className={inputClass} defaultValue="south" required>
-              {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select name="shippingZoneCode" className={inputClass} required>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select>
-            <input name="notes" placeholder="Notes" className={inputClass} />
-            <button className={buttonClass}>Create FSA mapping</button>
-          </form>
-          <form onSubmit={(e) => importCsv(e, "regions")} className="rounded-lg border border-slate-200 bg-white p-4">
-            <label className="block text-sm font-medium text-slate-700">CSV import</label>
-            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-slate-700" />
-            <p className="mt-2 text-xs text-slate-500">Columns: fsa, province, city, urban_rural, region_band, shipping_zone_code, active, notes</p>
-            <button className={`${buttonClass} mt-3`}>Import CSV</button>
-          </form>
           <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="bg-slate-100 text-xs uppercase text-slate-600">
