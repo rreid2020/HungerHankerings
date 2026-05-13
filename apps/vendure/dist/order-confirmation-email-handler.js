@@ -4,6 +4,8 @@ exports.orderConfirmationEmailHandler = void 0;
 const email_plugin_1 = require("@vendure/email-plugin");
 const core_1 = require("@vendure/core");
 const mock_events_1 = require("@vendure/email-plugin/lib/src/handler/mock-events");
+const email_hydrate_order_1 = require("./email-hydrate-order");
+const email_order_gift_data_1 = require("./email-order-gift-data");
 const email_plain_order_for_email_1 = require("./email-plain-order-for-email");
 const email_shipping_lines_1 = require("./email-shipping-lines");
 const loggerCtx = "OrderConfirmationEmail";
@@ -29,16 +31,23 @@ exports.orderConfirmationEmailHandler = new email_plugin_1.EmailEventListener("o
     event.fromState !== "Modifying" &&
     !!event.order.customer)
     .loadData(async ({ event, injector }) => {
+    await (0, email_hydrate_order_1.hydrateOrderForEmail)(event.ctx, event.order, injector);
     (0, email_plugin_1.transformOrderLineAssetUrls)(event.ctx, event.order, injector);
     try {
         const shippingLines = await (0, email_shipping_lines_1.loadShippingLinesForEmailPlain)(event.ctx, event.order, injector);
-        return { shippingLines };
+        const giftFeeMinor = (0, email_order_gift_data_1.giftFeeCents)(event.order);
+        const giftLines = (0, email_order_gift_data_1.buildGiftLinesForEmail)(event.order);
+        const grandTotalChargedMinor = (event.order.totalWithTax ?? 0) + giftFeeMinor;
+        return { shippingLines, giftFeeMinor, giftLines, grandTotalChargedMinor };
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         core_1.Logger.warn(`Shipping lines for email failed for order ${event.order.code}; sending confirmation without shipping breakdown. ${msg}`, loggerCtx);
-        return { shippingLines: [] };
     }
+    const giftFeeMinor = (0, email_order_gift_data_1.giftFeeCents)(event.order);
+    const giftLines = (0, email_order_gift_data_1.buildGiftLinesForEmail)(event.order);
+    const grandTotalChargedMinor = (event.order.totalWithTax ?? 0) + giftFeeMinor;
+    return { shippingLines: [], giftFeeMinor, giftLines, grandTotalChargedMinor };
 })
     .setRecipient((event) => event.order.customer.emailAddress)
     .setOptionalAddressFields((event) => {
@@ -57,5 +66,8 @@ exports.orderConfirmationEmailHandler = new email_plugin_1.EmailEventListener("o
     .setTemplateVars((event) => ({
     order: (0, email_plain_order_for_email_1.toPlainOrderForEmail)(event.order),
     shippingLines: event.data.shippingLines,
+    giftLines: event.data.giftLines,
+    giftFeeMinor: event.data.giftFeeMinor,
+    grandTotalChargedMinor: event.data.grandTotalChargedMinor,
 }))
     .setMockEvent(mock_events_1.mockOrderStateTransitionEvent);

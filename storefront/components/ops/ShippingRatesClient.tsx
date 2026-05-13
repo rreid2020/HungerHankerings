@@ -78,6 +78,7 @@ export default function ShippingRatesClient() {
   const [loading, setLoading] = useState(false)
   const [zoneFilters, setZoneFilters] = useState({ q: "", province: "", urbanRural: "", regionBand: "", active: "" })
   const [regionFilters, setRegionFilters] = useState({ q: "", province: "", zone: "", urbanRural: "", active: "" })
+  const [regionLimit, setRegionLimit] = useState("250")
   const [zoneBulk, setZoneBulk] = useState({ flatRate: "", freeShippingThreshold: "" })
   const [zoneTopTab, setZoneTopTab] = useState<"filters" | "bulk" | "importExport" | "create">("filters")
   const [regionTopTab, setRegionTopTab] = useState<"filters" | "importExport" | "import" | "create">("filters")
@@ -101,7 +102,7 @@ export default function ShippingRatesClient() {
     Object.entries(regionFilters).forEach(([k, v]) => {
       if (v) regionQs.set(k, v)
     })
-    regionQs.set("limit", "5000")
+    regionQs.set("limit", regionLimit)
     return regionQs.toString()
   }
 
@@ -399,7 +400,7 @@ export default function ShippingRatesClient() {
 
             {zoneTopTab === "filters" ? (
               <div className="grid gap-3 md:grid-cols-6">
-                <input className={inputClass} placeholder="q" value={zoneFilters.q} onChange={(e) => setZoneFilters((f) => ({ ...f, q: e.target.value }))} />
+                <input className={inputClass} placeholder="Postal Code" value={zoneFilters.q} onChange={(e) => setZoneFilters((f) => ({ ...f, q: e.target.value }))} />
                 <select className={inputClass} value={zoneFilters.province} onChange={(e) => setZoneFilters((f) => ({ ...f, province: e.target.value }))}>
                   <option value="">Any province</option>
                   {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -555,18 +556,27 @@ export default function ShippingRatesClient() {
 
             {regionTopTab === "filters" ? (
               <div className="grid gap-3 md:grid-cols-6">
-                <input className={inputClass} placeholder="q" value={regionFilters.q} onChange={(e) => setRegionFilters((f) => ({ ...f, q: e.target.value }))} />
+                <input className={inputClass} placeholder="Postal Code" value={regionFilters.q} onChange={(e) => setRegionFilters((f) => ({ ...f, q: e.target.value }))} />
                 <select className={inputClass} value={regionFilters.province} onChange={(e) => setRegionFilters((f) => ({ ...f, province: e.target.value }))}>
                   <option value="">Any province</option>
                   {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
-                <input className={inputClass} placeholder="zone" value={regionFilters.zone} onChange={(e) => setRegionFilters((f) => ({ ...f, zone: e.target.value }))} />
+                <select className={inputClass} value={regionFilters.zone} onChange={(e) => setRegionFilters((f) => ({ ...f, zone: e.target.value }))}>
+                  <option value="">Any zone</option>
+                  {zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}
+                </select>
                 <select className={inputClass} value={regionFilters.urbanRural} onChange={(e) => setRegionFilters((f) => ({ ...f, urbanRural: e.target.value }))}>
                   <option value="">Any type</option>
                   {urbanRuralOptions.map((v) => <option key={v} value={v}>{v}</option>)}
                 </select>
                 <select className={inputClass} value={regionFilters.active} onChange={(e) => setRegionFilters((f) => ({ ...f, active: e.target.value }))}>
                   <option value="">Any active</option><option value="true">Active</option><option value="false">Inactive</option>
+                </select>
+                <select className={inputClass} value={regionLimit} onChange={(e) => setRegionLimit(e.target.value)}>
+                  <option value="100">100 rows</option>
+                  <option value="250">250 rows</option>
+                  <option value="500">500 rows</option>
+                  <option value="1000">1000 rows</option>
                 </select>
                 <button className={buttonClass} onClick={refreshRegions}>Search</button>
               </div>
@@ -646,7 +656,14 @@ export default function ShippingRatesClient() {
                       {regionBandOptions.map((v) => <option key={v} value={v}>{v}</option>)}
                     </select>
                   </td>
-                  <td><select className={inputClass} value={r.shippingZoneCode} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, shippingZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
+                  <td>
+                    <input
+                      className={inputClass}
+                      list="zone-code-list"
+                      value={r.shippingZoneCode}
+                      onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, shippingZoneCode: e.target.value } : x))}
+                    />
+                  </td>
                   <td className="text-center"><input type="checkbox" checked={r.active} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, active: e.target.checked } : x))} /></td>
                   <td><input className={inputClass} value={r.notes ?? ""} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, notes: e.target.value } : x))} /></td>
                   <td className="p-3">
@@ -716,6 +733,10 @@ export default function ShippingRatesClient() {
           </div>
         </section>
       ) : null}
+
+      <datalist id="zone-code-list">
+        {zoneCodes.map((z) => <option key={z} value={z} />)}
+      </datalist>
 
       {tab === "tester" ? (
         <section className="space-y-4">

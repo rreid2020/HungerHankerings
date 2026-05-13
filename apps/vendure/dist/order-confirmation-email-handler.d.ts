@@ -11,5 +11,8 @@ import type { PlainShippingLineForEmail } from "./email-plain-shipping-lines";
  */
 export declare const orderConfirmationEmailHandler: import("@vendure/email-plugin").EmailEventHandler<"order-confirmation", EventWithAsyncData<OrderStateTransitionEvent, {
     shippingLines: PlainShippingLineForEmail[];
+    giftFeeMinor: number;
+    giftLines: import("./email-order-gift-data").GiftLineForEmail[];
+    grandTotalChargedMinor: number;
 }>>;
 //# sourceMappingURL=order-confirmation-email-handler.d.ts.map
