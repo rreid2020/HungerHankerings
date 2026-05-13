@@ -349,7 +349,7 @@ export async function listFsaRegions(params: URLSearchParams) {
       where,
       include: { shippingZone: true },
       orderBy: [{ province: "asc" }, { fsa: "asc" }],
-      take: Math.min(Number(params.get("limit")) || 200, 500),
+      take: Math.min(Number(params.get("limit")) || 5000, 5000),
     })
   })
 }

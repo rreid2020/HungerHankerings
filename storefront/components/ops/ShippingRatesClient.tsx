@@ -39,11 +39,11 @@ type RateResult = Record<string, unknown> & { success?: boolean; error?: string 
 type SortDirection = "asc" | "desc"
 
 const inputClass =
-  "w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-brand-400"
+  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
 const buttonClass =
-  "rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-zinc-950 transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-60"
+  "rounded-md bg-brand-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
 const ghostButtonClass =
-  "rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition hover:bg-zinc-800"
+  "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
 
 const provinceOptions = ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"] as const
 const urbanRuralOptions = ["urban", "rural", "north", "far_north", "remote", "fallback"] as const
@@ -92,6 +92,7 @@ export default function ShippingRatesClient() {
       Object.entries(filters).forEach(([k, v]) => {
         if (v) qs.set(k, v)
       })
+      qs.set("limit", "5000")
       const [z, r, o, f] = await Promise.all([
         api<{ zones: Zone[] }>("/api/ops/shipping/zones"),
         api<{ regions: FsaRegion[] }>(`/api/ops/shipping/fsa-regions?${qs.toString()}`),
@@ -295,8 +296,8 @@ export default function ShippingRatesClient() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Shipping Rates</h1>
-        <p className="mt-2 max-w-3xl text-sm text-zinc-400">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Shipping Rates</h1>
+        <p className="mt-2 max-w-3xl text-sm text-slate-600">
           Canadian postal-code/FSA flat-rate shipping backed by the ops database. Rates are live once saved.
         </p>
       </div>
@@ -308,7 +309,7 @@ export default function ShippingRatesClient() {
             type="button"
             onClick={() => setTab(id)}
             className={`rounded-md px-3 py-2 text-sm transition ${
-              tab === id ? "bg-brand-500 text-zinc-950" : "border border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+              tab === id ? "bg-brand-500 text-white" : "border border-slate-300 text-slate-700 hover:bg-slate-100"
             }`}
           >
             {label}
@@ -316,9 +317,9 @@ export default function ShippingRatesClient() {
         ))}
       </div>
 
-      {message ? <div className="rounded-md border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-100">{message}</div> : null}
-      {error ? <div className="rounded-md border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-100">{error}</div> : null}
-      {loading ? <p className="text-sm text-zinc-500">Loading shipping settings...</p> : null}
+      {message ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</div> : null}
+      {error ? <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+      {loading ? <p className="text-sm text-slate-500">Loading shipping settings...</p> : null}
 
       {tab === "zones" ? (
         <section className="space-y-4">
@@ -330,13 +331,13 @@ export default function ShippingRatesClient() {
               Download zone template
             </button>
           </div>
-          <form onSubmit={(e) => importCsv(e, "zones")} className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
-            <label className="block text-sm font-medium text-zinc-300">Zone CSV import</label>
-            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-zinc-300" />
-            <p className="mt-2 text-xs text-zinc-500">Columns: zone_code, zone_name, province, urban_rural, region_band, flat_rate, free_shipping_threshold, active, sort_order</p>
+          <form onSubmit={(e) => importCsv(e, "zones")} className="rounded-lg border border-slate-200 bg-white p-4">
+            <label className="block text-sm font-medium text-slate-700">Zone CSV import</label>
+            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-slate-700" />
+            <p className="mt-2 text-xs text-slate-500">Columns: zone_code, zone_name, province, urban_rural, region_band, flat_rate, free_shipping_threshold, active, sort_order</p>
             <button className={`${buttonClass} mt-3`}>Import zones CSV</button>
           </form>
-          <form onSubmit={createZone} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
+          <form onSubmit={createZone} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
             <input name="zoneCode" placeholder="ZONE_CODE" className={inputClass} required />
             <input name="zoneName" placeholder="Zone name" className={inputClass} required />
             <select name="province" className={inputClass} defaultValue="">
@@ -355,9 +356,9 @@ export default function ShippingRatesClient() {
             <input name="sortOrder" placeholder="Sort" defaultValue="0" className={inputClass} />
             <button className={buttonClass}>Create zone</button>
           </form>
-          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500">
+              <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                 <tr>
                   <th className="p-3"><button type="button" onClick={() => sortZonesBy("zoneCode")}>Code</button></th>
                   <th><button type="button" onClick={() => sortZonesBy("zoneName")}>Name</button></th>
@@ -373,8 +374,8 @@ export default function ShippingRatesClient() {
               </thead>
               <tbody>
                 {zones.map((z, i) => (
-                  <tr key={z.id} className="border-t border-zinc-800">
-                    <td className="p-3 font-mono text-xs text-zinc-300">{z.zoneCode}</td>
+                  <tr key={z.id} className="border-t border-slate-200">
+                    <td className="p-3 font-mono text-xs text-slate-700">{z.zoneCode}</td>
                     <td><input className={inputClass} value={z.zoneName} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, zoneName: e.target.value } : r))} /></td>
                     <td>
                       <select className={inputClass} value={z.province ?? ""} onChange={(e) => setZones((rows) => rows.map((r, idx) => idx === i ? { ...r, province: e.target.value || null } : r))}>
@@ -402,7 +403,7 @@ export default function ShippingRatesClient() {
                         <button type="button" className={ghostButtonClass} onClick={() => saveZone(z)}>Save</button>
                         <button
                           type="button"
-                          className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                          className="rounded-md border border-red-300 px-3 py-2 text-sm text-red-700 transition hover:bg-red-50"
                           onClick={() => removeItem(`/api/ops/shipping/zones/${z.id}`, `zone ${z.zoneCode}`)}
                         >
                           Delete
@@ -419,7 +420,7 @@ export default function ShippingRatesClient() {
 
       {tab === "regions" ? (
         <section className="space-y-4">
-          <div className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-6">
+          <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-6">
             <input className={inputClass} placeholder="q" value={filters.q} onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))} />
             <select className={inputClass} value={filters.province} onChange={(e) => setFilters((f) => ({ ...f, province: e.target.value }))}>
               <option value="">Any province</option>
@@ -443,7 +444,7 @@ export default function ShippingRatesClient() {
               Download import template
             </button>
           </div>
-          <form onSubmit={createRegion} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
+          <form onSubmit={createRegion} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
             <input name="fsa" placeholder="FSA" className={inputClass} required />
             <select name="province" className={inputClass} defaultValue="ON" required>
               {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -459,15 +460,15 @@ export default function ShippingRatesClient() {
             <input name="notes" placeholder="Notes" className={inputClass} />
             <button className={buttonClass}>Create FSA mapping</button>
           </form>
-          <form onSubmit={(e) => importCsv(e, "regions")} className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
-            <label className="block text-sm font-medium text-zinc-300">CSV import</label>
-            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-zinc-300" />
-            <p className="mt-2 text-xs text-zinc-500">Columns: fsa, province, city, urban_rural, region_band, shipping_zone_code, active, notes</p>
+          <form onSubmit={(e) => importCsv(e, "regions")} className="rounded-lg border border-slate-200 bg-white p-4">
+            <label className="block text-sm font-medium text-slate-700">CSV import</label>
+            <input name="file" type="file" accept=".csv,text/csv" className="mt-2 text-sm text-slate-700" />
+            <p className="mt-2 text-xs text-slate-500">Columns: fsa, province, city, urban_rural, region_band, shipping_zone_code, active, notes</p>
             <button className={`${buttonClass} mt-3`}>Import CSV</button>
           </form>
-          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500">
+              <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                 <tr>
                   <th className="p-3"><button type="button" onClick={() => sortRegionsBy("fsa")}>FSA</button></th>
                   <th><button type="button" onClick={() => sortRegionsBy("province")}>Province</button></th>
@@ -481,7 +482,7 @@ export default function ShippingRatesClient() {
                 </tr>
               </thead>
               <tbody>{regions.map((r, i) => (
-                <tr key={r.id} className="border-t border-zinc-800">
+                <tr key={r.id} className="border-t border-slate-200">
                   <td className="p-3 font-mono text-xs">{r.fsa}</td>
                   <td>
                     <select className={inputClass} value={r.province} onChange={(e) => setRegions((rows) => rows.map((x, idx) => idx === i ? { ...x, province: e.target.value } : x))}>
@@ -508,7 +509,7 @@ export default function ShippingRatesClient() {
                       <button type="button" className={ghostButtonClass} onClick={() => saveRegion(r)}>Save</button>
                       <button
                         type="button"
-                        className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                        className="rounded-md border border-red-300 px-3 py-2 text-sm text-red-700 transition hover:bg-red-50"
                         onClick={() => removeItem(`/api/ops/shipping/fsa-regions/${r.id}`, `FSA mapping ${r.fsa}`)}
                       >
                         Delete
@@ -529,15 +530,15 @@ export default function ShippingRatesClient() {
               Export overrides CSV
             </button>
           </div>
-          <form onSubmit={createOverride} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-4">
+          <form onSubmit={createOverride} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
             <input name="fsa" placeholder="FSA" className={inputClass} required />
             <select name="overrideZoneCode" className={inputClass} required>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select>
             <input name="reason" placeholder="Reason" className={inputClass} />
             <button className={buttonClass}>Create override</button>
           </form>
-          <div className="overflow-x-auto rounded-lg border border-zinc-800">
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-zinc-900 text-xs uppercase text-zinc-500">
+              <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                 <tr>
                   <th className="p-3"><button type="button" onClick={() => sortOverridesBy("fsa")}>FSA</button></th>
                   <th><button type="button" onClick={() => sortOverridesBy("overrideZoneCode")}>Zone</button></th>
@@ -547,7 +548,7 @@ export default function ShippingRatesClient() {
                 </tr>
               </thead>
               <tbody>{overrides.map((o, i) => (
-                <tr key={o.id} className="border-t border-zinc-800">
+                <tr key={o.id} className="border-t border-slate-200">
                   <td className="p-3 font-mono text-xs">{o.fsa}</td>
                   <td><select className={inputClass} value={o.overrideZoneCode} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, overrideZoneCode: e.target.value } : x))}>{zoneCodes.map((z) => <option key={z} value={z}>{z}</option>)}</select></td>
                   <td><input className={inputClass} value={o.reason ?? ""} onChange={(e) => setOverrides((rows) => rows.map((x, idx) => idx === i ? { ...x, reason: e.target.value } : x))} /></td>
@@ -557,7 +558,7 @@ export default function ShippingRatesClient() {
                       <button type="button" className={ghostButtonClass} onClick={() => saveOverride(o)}>Save</button>
                       <button
                         type="button"
-                        className="rounded-md border border-red-900 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950/40"
+                        className="rounded-md border border-red-300 px-3 py-2 text-sm text-red-700 transition hover:bg-red-50"
                         onClick={() => removeItem(`/api/ops/shipping/overrides/${o.id}`, `FSA override ${o.fsa}`)}
                       >
                         Delete
@@ -573,13 +574,13 @@ export default function ShippingRatesClient() {
 
       {tab === "tester" ? (
         <section className="space-y-4">
-          <form onSubmit={testRate} className="grid gap-3 rounded-lg border border-zinc-800 bg-zinc-950/80 p-4 md:grid-cols-3">
+          <form onSubmit={testRate} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
             <input name="postalCode" placeholder="Postal code (N6G 1A1)" className={inputClass} required />
             <input name="orderSubtotal" placeholder="Order subtotal" defaultValue="75.00" className={inputClass} />
             <button className={buttonClass}>Test rate</button>
           </form>
           {testResult ? (
-            <pre className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4 text-xs text-zinc-200">
+            <pre className="overflow-x-auto rounded-lg border border-slate-200 bg-white p-4 text-xs text-slate-800">
               {JSON.stringify(testResult, null, 2)}
             </pre>
           ) : null}
@@ -589,16 +590,16 @@ export default function ShippingRatesClient() {
       {tab === "fallback" ? (
         <section className="space-y-4">
           {!fallback?.zone ? (
-            <div className="rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-100">Fallback zone is missing. Checkout fallback will fail until FALLBACK_CANADA exists.</div>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">Fallback zone is missing. Checkout fallback will fail until FALLBACK_CANADA exists.</div>
           ) : (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
-              {!fallback.zone.active ? <div className="mb-4 rounded-md border border-amber-900 bg-amber-950/40 p-3 text-sm text-amber-100">Warning: fallback zone is disabled.</div> : null}
-              <p className="text-sm text-zinc-400">Fallback usage count: <span className="font-mono text-zinc-200">{fallback.fallbackUsageCount}</span></p>
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              {!fallback.zone.active ? <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Warning: fallback zone is disabled.</div> : null}
+              <p className="text-sm text-slate-600">Fallback usage count: <span className="font-mono text-slate-800">{fallback.fallbackUsageCount}</span></p>
               <div className="mt-4 grid gap-3 md:grid-cols-4">
                 <input className={inputClass} value={fallback.zone.zoneName} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, zoneName: e.target.value } } : f)} />
                 <input className={inputClass} value={String(fallback.zone.flatRate ?? "")} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, flatRate: e.target.value } } : f)} />
                 <input className={inputClass} value={String(fallback.zone.freeShippingThreshold ?? "")} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, freeShippingThreshold: e.target.value } } : f)} />
-                <label className="flex items-center gap-2 text-sm text-zinc-300"><input type="checkbox" checked={fallback.zone.active} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, active: e.target.checked } } : f)} /> Active</label>
+                <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={fallback.zone.active} onChange={(e) => setFallback((f) => f ? { ...f, zone: { ...fallback.zone!, active: e.target.checked } } : f)} /> Active</label>
               </div>
               <button type="button" className={`${buttonClass} mt-4`} onClick={() => fallback.zone && submitJson("/api/ops/shipping/fallback", fallback.zone, "PATCH")}>Save fallback</button>
             </div>

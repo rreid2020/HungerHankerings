@@ -1,0 +1,57 @@
+zone_code,zone_name,province,urban_rural,region_band,flat_rate,free_shipping_threshold,active,sort_order
+AB_CENTRAL_RURAL,Alberta Central Rural,AB,rural,central,17.99,150.00,true,10
+AB_CENTRAL_URBAN,Alberta Central Urban,AB,urban,central,13.99,150.00,true,20
+AB_SOUTH_RURAL,Alberta South Rural,AB,rural,south,14.99,150.00,true,30
+AB_SOUTH_URBAN,Alberta South Urban,AB,urban,south,10.99,150.00,true,40
+BC_CENTRAL_RURAL,British Columbia Central Rural,BC,rural,central,17.99,150.00,true,50
+BC_CENTRAL_URBAN,British Columbia Central Urban,BC,urban,central,13.99,150.00,true,60
+BC_NORTH_RURAL,British Columbia North Rural,BC,rural,north,20.99,150.00,true,70
+BC_NORTH_URBAN,British Columbia North Urban,BC,urban,north,16.99,150.00,true,80
+BC_SOUTH_RURAL,British Columbia South Rural,BC,rural,south,14.99,150.00,true,90
+BC_SOUTH_URBAN,British Columbia South Urban,BC,urban,south,10.99,150.00,true,100
+MB_CENTRAL_RURAL,Manitoba Central Rural,MB,rural,central,17.99,150.00,true,110
+MB_CENTRAL_URBAN,Manitoba Central Urban,MB,urban,central,13.99,150.00,true,120
+MB_SOUTH_RURAL,Manitoba South Rural,MB,rural,south,14.99,150.00,true,130
+MB_SOUTH_URBAN,Manitoba South Urban,MB,urban,south,10.99,150.00,true,140
+NB_SOUTH_RURAL,New Brunswick South Rural,NB,rural,south,14.99,150.00,true,150
+NB_SOUTH_URBAN,New Brunswick South Urban,NB,urban,south,10.99,150.00,true,160
+NL_CENTRAL_RURAL,Newfoundland and Labrador Central Rural,NL,rural,central,17.99,150.00,true,170
+NL_CENTRAL_URBAN,Newfoundland and Labrador Central Urban,NL,urban,central,13.99,150.00,true,180
+NL_SOUTH_RURAL,Newfoundland and Labrador South Rural,NL,rural,south,14.99,150.00,true,190
+NL_SOUTH_URBAN,Newfoundland and Labrador South Urban,NL,urban,south,10.99,150.00,true,200
+NS_SOUTH_RURAL,Nova Scotia South Rural,NS,rural,south,14.99,150.00,true,210
+NS_SOUTH_URBAN,Nova Scotia South Urban,NS,urban,south,10.99,150.00,true,220
+NT_REMOTE,Northwest Territories Remote,NT,remote,remote,34.99,150.00,true,230
+NT_STANDARD,Northwest Territories Standard,NT,far_north,far_north,29.99,150.00,true,240
+NU_REMOTE,Nunavut Remote,NU,remote,remote,34.99,150.00,true,250
+ON_CENTRAL_RURAL,Ontario Central Rural,ON,rural,central,17.99,150.00,true,260
+ON_CENTRAL_URBAN,Ontario Central Urban,ON,urban,central,13.99,150.00,true,270
+ON_SOUTH_RURAL,Ontario South Rural,ON,rural,south,14.99,150.00,true,280
+ON_SOUTH_URBAN,Ontario South Urban,ON,urban,south,10.99,150.00,true,290
+PE_SOUTH_RURAL,Prince Edward Island South Rural,PE,rural,south,14.99,150.00,true,300
+PE_SOUTH_URBAN,Prince Edward Island South Urban,PE,urban,south,10.99,150.00,true,310
+QC_CENTRAL_RURAL,Quebec Central Rural,QC,rural,central,17.99,150.00,true,320
+QC_CENTRAL_URBAN,Quebec Central Urban,QC,urban,central,13.99,150.00,true,330
+QC_NORTH_RURAL,Quebec North Rural,QC,rural,north,20.99,150.00,true,340
+QC_SOUTH_RURAL,Quebec South Rural,QC,rural,south,14.99,150.00,true,350
+QC_SOUTH_URBAN,Quebec South Urban,QC,urban,south,10.99,150.00,true,360
+SK_CENTRAL_RURAL,Saskatchewan Central Rural,SK,rural,central,17.99,150.00,true,370
+SK_CENTRAL_URBAN,Saskatchewan Central Urban,SK,urban,central,13.99,150.00,true,380
+SK_SOUTH_RURAL,Saskatchewan South Rural,SK,rural,south,14.99,150.00,true,390
+SK_SOUTH_URBAN,Saskatchewan South Urban,SK,urban,south,10.99,150.00,true,400
+YT_REMOTE,Yukon Remote,YT,remote,remote,34.99,150.00,true,410
+YT_STANDARD,Yukon Standard,YT,far_north,far_north,29.99,150.00,true,420
+FALLBACK_AB,Fallback Alberta Shipping,AB,fallback,fallback,16.99,150.00,true,901
+FALLBACK_BC,Fallback British Columbia Shipping,BC,fallback,fallback,17.99,150.00,true,902
+FALLBACK_MB,Fallback Manitoba Shipping,MB,fallback,fallback,17.99,150.00,true,903
+FALLBACK_NB,Fallback New Brunswick Shipping,NB,fallback,fallback,19.99,150.00,true,904
+FALLBACK_NL,Fallback Newfoundland and Labrador Shipping,NL,fallback,fallback,21.99,150.00,true,905
+FALLBACK_NS,Fallback Nova Scotia Shipping,NS,fallback,fallback,19.99,150.00,true,906
+FALLBACK_NT,Fallback Northwest Territories Shipping,NT,fallback,fallback,29.99,150.00,true,907
+FALLBACK_NU,Fallback Nunavut Shipping,NU,fallback,fallback,39.99,150.00,true,908
+FALLBACK_ON,Fallback Ontario Shipping,ON,fallback,fallback,14.99,150.00,true,909
+FALLBACK_PE,Fallback Prince Edward Island Shipping,PE,fallback,fallback,19.99,150.00,true,910
+FALLBACK_QC,Fallback Quebec Shipping,QC,fallback,fallback,17.99,150.00,true,911
+FALLBACK_SK,Fallback Saskatchewan Shipping,SK,fallback,fallback,17.99,150.00,true,912
+FALLBACK_YT,Fallback Yukon Shipping,YT,fallback,fallback,29.99,150.00,true,913
+FALLBACK_CANADA,Canada Fallback,,fallback,fallback,24.99,150.00,true,9990

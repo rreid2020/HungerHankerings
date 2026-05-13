@@ -1,0 +1,1411 @@
+fsa,province,city,urban_rural,region_band,shipping_zone_code,active,notes
+A0A,NL,Long Pond,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=96
+A0B,NL,Come By Chance,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=59
+A0C,NL,Bonavista,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=42
+A0E,NL,Hillview,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=68
+A0G,NL,Lewisporte,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=86
+A0H,NL,Bishops Falls,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=31
+A0J,NL,Little Bay Islands,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=20
+A0K,NL,Seal Cove Wb,rural,central,NL_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=102
+A0L,NL,Coxs Cove,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=9
+A0M,NL,Channel-port-aux-basques,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=15
+A0N,NL,Port Au Port,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=25
+A0P,NL,Happy Valley-goose Bay,rural,central,NL_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=13
+A0R,NL,Wabush,rural,central,NL_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=3
+A0T,NL,Beaumont,rural,south,NL_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=1
+A1A,NL,St. Johns,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=76
+A1B,NL,St. Johns,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=105
+A1C,NL,St. Johns,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+A1E,NL,St. Johns,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+A1G,NL,St. Johns,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+A1K,NL,Torbay,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+A1L,NL,Paradise,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=30
+A1N,NL,Mount Pearl,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+A1S,NL,Goulds,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+A1V,NL,Gander,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+A1W,NL,Long Pond,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+A1X,NL,Long Pond,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+A1Y,NL,Carbonear,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+A2A,NL,Grand Falls-windsor,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+A2B,NL,Grand Falls-windsor,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+A2H,NL,Corner Brook,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=130
+A2N,NL,Stephenville,urban,south,NL_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+A2V,NL,Labrador City,urban,central,NL_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=26
+B0A,NS,Glace Bay,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=26
+B0C,NS,Newcastle,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=19
+B0E,NS,Mabou,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=67
+B0H,NS,Larrys River,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=33
+B0J,NS,Brooklyn,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=96
+B0K,NS,Stellarton,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=42
+B0L,NS,Nappan,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=10
+B0M,NS,Oxford,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=38
+B0N,NS,Windsor,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=92
+B0P,NS,Centreville,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=49
+B0R,NS,La Have,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=11
+B0S,NS,Lawrencetown.,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=45
+B0T,NS,Greenfield.,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=36
+B0V,NS,Digby,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=16
+B0W,NS,Arcadia,rural,south,NS_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=85
+B1A,NS,Glace Bay,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+B1H,NS,New Waterford,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+B1L,NS,Sydney,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+B1M,NS,Sydney,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+B1P,NS,Sydney,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=59
+B1R,NS,Sydney,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+B1S,NS,Sydney,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+B1V,NS,Sydney Mines,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+B2A,NS,North Sydney,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+B2G,NS,Antigonish,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+B2H,NS,New Glasgow,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=69
+B2N,NS,Truro,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=65
+B2T,NS,Fall River,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+B2V,NS,Dartmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+B2W,NS,Dartmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+B2X,NS,Dartmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+B2Y,NS,Dartmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=72
+B2Z,NS,Mineville,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+B3A,NS,Dartmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+B3B,NS,Dartmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=61
+B3E,NS,Porters Lake,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+B3G,NS,Eastern Passage,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+B3H,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=112
+B3J,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=113
+B3K,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+B3L,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=74
+B3M,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=64
+B3N,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+B3P,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+B3R,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+B3S,NS,Halifax,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+B3T,NS,Timberlea,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+B3V,NS,Williamswood,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+B3Z,NS,Upper Tantallon,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+B4A,NS,Bedford,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+B4B,NS,Bedford,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+B4C,NS,Lower Sackville,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+B4E,NS,Lower Sackville,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+B4G,NS,Beaver Bank,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+B4H,NS,Amherst,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+B4N,NS,Kentville,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+B4R,NS,Coldbrook,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=11
+B4V,NS,Bridgewater,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+B5A,NS,Yarmouth,urban,south,NS_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=37
+C0A,PE,Cornwall,rural,south,PE_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=61
+C0B,PE,Kensington,rural,south,PE_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=42
+C0W,QC,Metabetchouan,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=1
+C1A,PE,Charlottetown,urban,south,PE_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=129
+C1B,PE,Stratford,urban,south,PE_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+C1C,PE,Charlottetown,urban,south,PE_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+C1E,PE,Charlottetown,urban,south,PE_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+C1N,PE,Summerside,urban,south,PE_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+D0A,NB,Salisbury,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=4
+E0A,NB,Shediac,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=100
+E0B,NB,Petit Rocher,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=57
+E0C,NB,Newcastle,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=42
+E0E,NB,Sussex,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=27
+E0G,NB,Saint Stephen,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=91
+E0H,NB,Meductic,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=25
+E0J,NB,Florenceville,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=50
+E0K,NB,Campbellton,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=18
+E0L,NB,Edmundston,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=16
+E0Y,NB,Port Elgin,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=1
+E1A,NB,Dieppe,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=150
+E1B,NB,Riverview,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+E1C,NB,Moncton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=200
+E1E,NB,Moncton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+E1G,NB,Moncton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+E1N,NB,Miramichi,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+E1V,NB,Miramichi,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+E1W,NB,Caraquet,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+E1X,NB,Tracadie-sheila,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+E2A,NB,Bathurst,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=82
+E2E,NB,Quispamsis,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+E2G,NB,Quispamsis,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+E2H,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+E2J,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=105
+E2K,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+E2L,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=96
+E2M,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=78
+E2N,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+E2P,NB,Saint John,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+E2V,NB,Oromocto,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+E3A,NB,Fredericton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=119
+E3B,NB,Fredericton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=151
+E3C,NB,Fredericton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+E3E,NB,Upper Kingsclear,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+E3L,NB,St Stephen,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+E3N,NB,Campbellton,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+E3V,NB,Edmundston,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=72
+E3Y,NB,Grand Falls,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+E3Z,NB,Grand Falls,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+E4L,NB,Sackville,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+E5H,NB,Blacks Harbour,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+E5N,NB,Kingston,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+E5S,NB,Summerville,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+E6C,NB,Nashwaak Bridge,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+E7A,NB,Baker Brook,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+E7B,NB,Saint-jacques,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+E7C,NB,Saint-basile,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+E7E,NB,Saint-leonard,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+E7M,NB,Woodstock,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+E7N,NB,Debec,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+E8A,NB,Saint-quentin,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+E8B,NB,Kedgwick,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+E9E,NB,Red Bank,urban,south,NB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+G0A,QC,Donnacona,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=98
+G0B,QC,Cap Aux Meules,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=16
+G0C,QC,Newport,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=68
+G0E,QC,Cap Des Rosiers,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=26
+G0G,QC,Harrington Harbour,rural,central,QC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=36
+G0H,QC,Ragueneau,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=12
+G0J,QC,Saint-leon-le-grand,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=55
+G0K,QC,Saint-marcellin,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=20
+G0L,QC,Mont-carmel,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=109
+G0M,QC,Lambton,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=33
+G0N,QC,Thetford Mines,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=27
+G0P,QC,Chesterville,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=11
+G0R,QC,Lac-etchemin,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=91
+G0S,QC,Saint-joseph-de-beauce,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=72
+G0T,QC,Sacre-coeur-saguenay,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=30
+G0V,QC,Chicoutimi,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=29
+G0W,QC,Chambord,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=61
+G0X,QC,Sainte-genevieve-de-batiscan,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=90
+G0Y,QC,Beaulac-garthby,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=24
+G0Z,QC,Saint-samuel,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=13
+G1A,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+G1B,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+G1C,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+G1E,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=89
+G1G,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=30
+G1H,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+G1J,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=57
+G1K,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=92
+G1L,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=80
+G1M,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=68
+G1N,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+G1P,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+G1R,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=209
+G1S,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=102
+G1T,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+G1V,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=78
+G1W,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+G1X,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+G1Y,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+G2A,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+G2B,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+G2C,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+G2E,QC,Lancienne-lorette,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+G2G,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+G2J,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=11
+G2K,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+G2L,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+G2M,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+G2N,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+G3A,QC,Saint-augustin-de-desmaures,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+G3E,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+G3G,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+G3J,QC,Quebec,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+G3K,QC,Loretteville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+G4A,QC,Clermont,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+G4R,QC,Sept-iles,urban,central,QC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=54
+G4W,QC,Matane,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=43
+G4Z,QC,Baie-comeau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+G5A,QC,La Malbaie,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+G5B,QC,Port-cartier,urban,central,QC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=20
+G5C,QC,Baie-comeau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+G5H,QC,Mont-joli,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+G5L,QC,Rimouski,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=125
+G5M,QC,Rimouski,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+G5R,QC,Riviere-du-loup,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=127
+G5T,QC,Degelis,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+G5V,QC,Montmagny,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+G5Y,QC,Saint-georges,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+G5Z,QC,Saint-georges,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+G6A,QC,Saint-georges,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+G6B,QC,Lac-megantic,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+G6C,QC,Pintendre,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+G6E,QC,Sainte-marie,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+G6G,QC,Thetford Mines,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+G6H,QC,Thetford Mines,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+G6J,QC,Saint-etienne-de-lauzon,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+G6K,QC,Saint-redempteur,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+G6L,QC,Plessisville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+G6P,QC,Victoriaville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=82
+G6S,QC,Victoriaville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+G6T,QC,Victoriaville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+G6V,QC,Levis,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=79
+G6W,QC,Saint-romuald,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+G6X,QC,Charny,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+G6Z,QC,Saint-jean-chrysostome,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+G7A,QC,Saint-nicolas,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+G7B,QC,La Baie,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+G7G,QC,Chicoutimi,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+G7H,QC,Chicoutimi,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=115
+G7J,QC,Chicoutimi,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+G7P,QC,Saint-ambroise,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+G7S,QC,Jonquiere,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+G7X,QC,Jonquiere,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+G7Z,QC,Jonquiere,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+G8A,QC,Jonquiere,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+G8B,QC,Alma,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=96
+G8H,QC,Roberval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+G8J,QC,Saint-prime,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+G8K,QC,Saint-felicien,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+G8L,QC,Dolbeau-mistassini,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+G8M,QC,Albanel,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+G8N,QC,Hebertville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+G8P,QC,Chibougamau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+G8T,QC,Trois-rivieres,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+G8W,QC,Trois-rivieres,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+G8Y,QC,Trois-rivieres,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+G8Z,QC,Trois-rivieres,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=57
+G9A,QC,Trois-rivieres,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=118
+G9B,QC,Trois-rivieres,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+G9N,QC,Shawinigan,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=59
+G9P,QC,Shawinigan-sud,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+G9T,QC,Grand-mere,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+G9X,QC,La Tuque,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+H0M,QC,Akwesasne,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=2
+H1A,QC,Pointe-aux-trembles,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+H1B,QC,Pointe-aux-trembles,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+H1C,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+H1E,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=91
+H1G,QC,Montreal-nord,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=117
+H1H,QC,Montreal-nord,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+H1J,QC,Anjou,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+H1K,QC,Anjou,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+H1L,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+H1M,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+H1N,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+H1P,QC,Saint-leonard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+H1R,QC,Saint-leonard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+H1S,QC,Saint-leonard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=30
+H1T,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+H1V,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+H1W,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+H1X,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+H1Y,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+H1Z,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+H2A,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+H2B,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+H2C,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+H2E,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=91
+H2G,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=92
+H2H,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+H2J,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=91
+H2K,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=93
+H2L,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+H2M,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+H2N,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+H2P,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+H2R,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+H2S,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+H2T,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+H2V,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+H2W,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+H2X,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=243
+H2Y,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=88
+H2Z,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+H3A,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=92
+H3B,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=168
+H3C,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+H3E,QC,Verdun,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+H3G,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=79
+H3H,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=123
+H3J,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+H3K,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+H3L,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+H3M,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+H3N,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+H3P,QC,Mont-royal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+H3R,QC,Mont-royal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+H3S,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=110
+H3T,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+H3V,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+H3W,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+H3X,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+H3Y,QC,Westmount,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+H3Z,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+H4A,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+H4B,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=102
+H4C,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+H4E,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=86
+H4G,QC,Verdun,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+H4H,QC,Verdun,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+H4J,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=123
+H4K,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=11
+H4L,QC,Saint-laurent,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=67
+H4M,QC,Saint-laurent,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+H4N,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+H4P,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+H4R,QC,Saint-laurent,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+H4S,QC,Saint-laurent,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+H4T,QC,Saint-laurent,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+H4V,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+H4W,QC,Cote Saint-luc,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+H4X,QC,Montreal-ouest,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+H4Y,QC,Dorval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+H4Z,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+H5B,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+H7A,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+H7B,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+H7E,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+H7G,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+H7H,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+H7K,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+H7L,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+H7M,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+H7N,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+H7P,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+H7R,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+H7S,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+H7T,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+H7V,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+H7W,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+H7X,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+H7Y,QC,Laval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+H8N,QC,Lasalle,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=82
+H8P,QC,Lasalle,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+H8R,QC,Lasalle,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+H8S,QC,Lachine,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=43
+H8T,QC,Lachine,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+H8Y,QC,Pierrefonds,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+H8Z,QC,Pierrefonds,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+H9A,QC,Pierrefonds,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+H9B,QC,Dollard-des-ormeaux,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+H9C,QC,Lile-bizard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+H9G,QC,Dollard-des-ormeaux,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+H9H,QC,Kirkland,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+H9J,QC,Kirkland,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+H9K,QC,Pierrefonds,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+H9P,QC,Dorval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+H9R,QC,Pointe-claire,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=65
+H9S,QC,Dorval,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=88
+H9W,QC,Beaconsfield,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+H9X,QC,Senneville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+J0A,QC,Kingsey Falls,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=21
+J0B,QC,Sherbrooke,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=86
+J0C,QC,Drummondville,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=31
+J0E,QC,Stukely-sud,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=36
+J0G,QC,Saint-aime,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=13
+J0H,QC,Saint-nazaire-dacton,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=27
+J0J,QC,Napierville,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=47
+J0K,QC,Saint-jean-de-matha,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=71
+J0L,QC,Montreal,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=31
+J0M,QC,Puvirnituq,rural,north,QC_NORTH_RURAL,true,source=postal-codes-canada.csv;records=28
+J0N,QC,Montreal,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=10
+J0P,QC,Rigaud,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=3
+J0R,QC,Montreal,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=53
+J0S,QC,Franklin,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=17
+J0T,QC,Val-david,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=76
+J0V,QC,Saint-andre-dargenteuil,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=41
+J0W,QC,Ferme-neuve,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=35
+J0X,QC,Wakefield,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=62
+J0Y,QC,Val D Or,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=42
+J0Z,QC,Temiscaming,rural,south,QC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=65
+J1A,QC,Coaticook,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+J1E,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+J1G,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+J1H,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=86
+J1J,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+J1K,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+J1L,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+J1M,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+J1N,QC,Sherbrooke,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+J1S,QC,Windsor,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+J1T,QC,Asbestos,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+J1X,QC,Magog,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+J1Z,QC,Saint-cyrille-de-wendover,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+J2A,QC,Saint-nicephore,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+J2B,QC,Drummondville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=83
+J2C,QC,Drummondville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+J2E,QC,Drummondville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J2G,QC,Montreal,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+J2J,QC,Granby,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J2K,QC,Cowansville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J2L,QC,Bromont,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J2S,QC,Saint-hyacinthe,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+J2T,QC,Saint-hyacinthe,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J2W,QC,Saint-jean-sur-richelieu,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J2X,QC,Saint-jean-sur-richelieu,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J3A,QC,Saint-jean-sur-richelieu,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J3B,QC,Saint-jean-sur-richelieu,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+J3E,QC,Sainte-julie,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+J3G,QC,Beloeil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+J3H,QC,Mont-saint-hilaire,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J3L,QC,Chambly,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J3N,QC,Saint-basile-le-grand,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+J3P,QC,Sorel-tracy,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+J3R,QC,Sorel-tracy,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=11
+J3T,QC,Nicolet,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+J3V,QC,Saint-bruno,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J3X,QC,Varennes,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+J3Y,QC,Saint-hubert,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+J4B,QC,Boucherville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J4G,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+J4H,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+J4J,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+J4K,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+J4L,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+J4M,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J4N,QC,Longueuil,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+J4P,QC,Saint-lambert,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J4R,QC,Saint-lambert,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J4S,QC,Saint-lambert,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+J4T,QC,Saint-hubert,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+J4V,QC,Greenfield Park,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+J4W,QC,Brossard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+J4X,QC,Brossard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J4Y,QC,Brossard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J4Z,QC,Brossard,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+J5A,QC,Saint-constant,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+J5R,QC,Candiac,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J5V,QC,Louiseville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+J5W,QC,Saint-sulpice,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J5X,QC,Lepiphanie,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J5Y,QC,Repentigny,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+J5Z,QC,Le Gardeur,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+J6A,QC,Repentigny,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+J6E,QC,Joliette,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J6J,QC,Chateauguay,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J6K,QC,Chateauguay,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+J6N,QC,Beauharnois,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+J6V,QC,Terrebonne,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J6W,QC,Terrebonne,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+J6X,QC,Terrebonne,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+J6Y,QC,Terrebonne,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+J6Z,QC,Bois-des-filion,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J7A,QC,Rosemere,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+J7B,QC,Blainville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+J7C,QC,Blainville,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J7E,QC,Sainte-therese,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+J7G,QC,Boisbriand,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+J7H,QC,Boisbriand,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+J7K,QC,Mascouche,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J7L,QC,Mascouche,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+J7M,QC,Terrebonne,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+J7N,QC,Mirabel,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+J7P,QC,Saint-eustache,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+J7R,QC,Saint-eustache,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+J7T,QC,Saint-lazare,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J7V,QC,Pincourt,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+J7Y,QC,Saint-jerome,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+J7Z,QC,Saint-jerome,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+J8C,QC,Sainte-agathe-des-monts,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+J8G,QC,Harrington,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+J8H,QC,Lachute,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+J8L,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+J8M,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+J8N,QC,Val-des-monts,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+J8P,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+J8R,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+J8T,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+J8V,QC,Cantley,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+J8X,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+J8Y,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+J8Z,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+J9A,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+J9E,QC,Maniwaki,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+J9H,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+J9J,QC,Gatineau,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+J9L,QC,Mont-laurier,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+J9P,QC,Val-dor,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+J9T,QC,Amos,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+J9X,QC,Rouyn-noranda,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+J9Y,QC,Rouyn-noranda,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+J9Z,QC,La Sarre,urban,south,QC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+K0A,ON,Carp,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=97
+K0B,ON,Alfred,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=39
+K0C,ON,St Andrews West,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=99
+K0E,ON,Prescott,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=71
+K0G,ON,Elgin,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=58
+K0H,ON,Elginburg,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=105
+K0J,ON,Eganville,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=72
+K0K,ON,Wellington,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=193
+K0L,ON,Lakefield,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=120
+K0M,ON,Haliburton,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=91
+K1A,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+K1B,ON,Gloucester,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=65
+K1C,ON,Orleans,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+K1E,ON,Orleans,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+K1G,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=123
+K1H,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+K1J,ON,Gloucester,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=72
+K1K,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=59
+K1L,ON,Vanier,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+K1M,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+K1N,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=124
+K1P,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=102
+K1R,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=133
+K1S,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=83
+K1T,ON,Gloucester,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+K1V,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+K1W,ON,Orleans,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+K1X,ON,Gloucester,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+K1Y,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+K1Z,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=69
+K2A,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+K2B,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=99
+K2C,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+K2E,ON,Nepean,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+K2G,ON,Nepean,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+K2H,ON,Nepean,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+K2J,ON,Nepean,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+K2K,ON,Kanata,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+K2L,ON,Kanata,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+K2M,ON,Kanata,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+K2P,ON,Ottawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=112
+K2R,ON,Nepean,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+K2S,ON,Stittsville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+K2T,ON,Kanata,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+K2W,ON,Kanata,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+K4A,ON,Orleans,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+K4B,ON,Navan,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+K4C,ON,Cumberland,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+K4K,ON,Rockland,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+K4M,ON,Manotick,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+K4P,ON,Greely,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+K4R,ON,Russell,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+K6A,ON,Hawkesbury,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+K6H,ON,Cornwall,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=89
+K6J,ON,Cornwall,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+K6V,ON,Brockville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+K7A,ON,Smiths Falls,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+K7C,ON,Carleton Place,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+K7G,ON,Gananoque,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+K7H,ON,Perth,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+K7K,ON,Kingston,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+K7L,ON,Kingston,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=103
+K7M,ON,Kingston,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=82
+K7N,ON,Amherstview,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+K7P,ON,Kingston,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+K7R,ON,Napanee,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+K7S,ON,Arnprior,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+K7V,ON,Renfrew,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+K8A,ON,Pembroke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+K8H,ON,Petawawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+K8N,ON,Belleville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+K8P,ON,Belleville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+K8V,ON,Trenton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+K9A,ON,Cobourg,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=77
+K9H,ON,Peterborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+K9J,ON,Peterborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=168
+K9L,ON,Peterborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+K9V,ON,Lindsay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=75
+L0A,ON,Cavan,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=31
+L0B,ON,Janetville,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=19
+L0C,ON,Sunderland,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=13
+L0E,ON,Pefferlaw,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=17
+L0G,ON,Queensville,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=71
+L0H,ON,Gormley,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=10
+L0J,ON,Kleinburg,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=3
+L0K,ON,Victoria Harbour,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=73
+L0L,ON,Churchill,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=104
+L0M,ON,Utopia,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=46
+L0N,ON,Shelburne,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=61
+L0P,ON,Campbellville,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=30
+L0R,ON,Waterdown,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=106
+L0S,ON,Niagara On The Lake,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=54
+L1A,ON,Port Hope,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+L1B,ON,Newcastle,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+L1C,ON,Bowmanville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+L1E,ON,Courtice,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+L1G,ON,Oshawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=122
+L1H,ON,Oshawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+L1J,ON,Oshawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+L1K,ON,Oshawa,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+L1N,ON,Whitby,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+L1P,ON,Whitby,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+L1R,ON,Whitby,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+L1S,ON,Ajax,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=83
+L1T,ON,Ajax,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+L1V,ON,Pickering,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=86
+L1W,ON,Pickering,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+L1X,ON,Pickering,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+L1Y,ON,Claremont,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+L2A,ON,Fort Erie,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+L2E,ON,Niagara Falls,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+L2G,ON,Niagara Falls,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+L2H,ON,Niagara Falls,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+L2J,ON,Niagara Falls,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+L2M,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+L2N,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+L2P,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+L2R,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=123
+L2S,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+L2T,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+L2V,ON,Thorold,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+L2W,ON,St Catharines,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+L3B,ON,Welland,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+L3C,ON,Welland,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+L3K,ON,Port Colborne,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+L3M,ON,Grimsby,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+L3P,ON,Markham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+L3R,ON,Markham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=301
+L3S,ON,Markham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+L3T,ON,Thornhill,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+L3V,ON,Orillia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=93
+L3X,ON,Newmarket,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+L3Y,ON,Newmarket,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=109
+L3Z,ON,Bradford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+L4A,ON,Stouffville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+L4B,ON,Richmond Hill,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+L4C,ON,Richmond Hill,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=123
+L4E,ON,Richmond Hill,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+L4G,ON,Aurora,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=57
+L4H,ON,Woodbridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+L4J,ON,Thornhill,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=147
+L4K,ON,Concord,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=75
+L4L,ON,Woodbridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=103
+L4M,ON,Barrie,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=111
+L4N,ON,Barrie,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+L4P,ON,Keswick,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+L4R,ON,Midland,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+L4S,ON,Richmond Hill,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+L4T,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=166
+L4V,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+L4W,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=94
+L4X,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=59
+L4Y,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+L4Z,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+L5A,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=153
+L5B,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=139
+L5C,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+L5E,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+L5G,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+L5H,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+L5J,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+L5K,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+L5L,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=89
+L5M,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+L5N,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=181
+L5R,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+L5S,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+L5T,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+L5V,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+L5W,ON,Mississauga,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+L6A,ON,Maple,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+L6B,ON,Markham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+L6C,ON,Markham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+L6G,ON,Markham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+L6H,ON,Oakville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=99
+L6J,ON,Oakville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+L6K,ON,Oakville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+L6L,ON,Oakville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=61
+L6M,ON,Oakville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+L6R,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+L6S,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+L6T,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=182
+L6V,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+L6W,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+L6X,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+L6Y,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=87
+L6Z,ON,Brampton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+L7B,ON,King City,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+L7C,ON,Caledon,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+L7E,ON,Bolton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+L7G,ON,Georgetown,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+L7J,ON,Acton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=30
+L7L,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+L7M,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+L7N,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+L7P,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=59
+L7R,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+L7S,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+L7T,ON,Burlington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+L8E,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+L8G,ON,Stoney Creek,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+L8H,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=67
+L8J,ON,Stoney Creek,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+L8K,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=75
+L8L,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+L8M,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+L8N,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+L8P,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=123
+L8R,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+L8S,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+L8T,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+L8V,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+L8W,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+L9A,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+L9B,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+L9C,ON,Hamilton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+L9G,ON,Ancaster,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+L9H,ON,Dundas,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+L9K,ON,Ancaster,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+L9L,ON,Port Perry,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+L9M,ON,Penetanguishene,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+L9N,ON,Holland Landing,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+L9P,ON,Uxbridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+L9R,ON,Alliston,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+L9T,ON,Milton,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+L9W,ON,Orangeville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+L9Y,ON,Collingwood,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+M0A,NB,Cap Pele,rural,south,NB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=1
+M1B,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=81
+M1C,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+M1E,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=117
+M1G,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+M1H,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+M1J,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=61
+M1K,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=68
+M1L,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=69
+M1M,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+M1N,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+M1P,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=109
+M1R,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+M1S,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+M1T,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=99
+M1V,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+M1W,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+M1X,ON,Scarborough,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+M2H,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+M2J,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=142
+M2K,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+M2L,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+M2M,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+M2N,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=135
+M2P,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+M2R,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=110
+M3A,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=90
+M3B,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+M3C,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=137
+M3H,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+M3J,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=100
+M3K,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+M3L,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+M3M,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+M3N,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=86
+M4A,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+M4B,ON,East York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+M4C,ON,East York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+M4E,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+M4G,ON,East York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+M4H,ON,East York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+M4J,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+M4K,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=113
+M4L,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+M4M,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+M4N,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+M4P,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=105
+M4R,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+M4S,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=120
+M4T,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=43
+M4V,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+M4W,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+M4X,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=176
+M4Y,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=194
+M5A,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=292
+M5B,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=194
+M5C,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+M5E,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=109
+M5G,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=126
+M5H,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=98
+M5J,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=153
+M5K,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+M5L,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+M5M,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+M5N,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+M5P,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+M5R,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+M5S,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=150
+M5T,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=80
+M5V,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=81
+M5X,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+M6A,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+M6B,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=96
+M6C,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+M6E,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=43
+M6G,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+M6H,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=96
+M6J,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+M6K,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=90
+M6L,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+M6M,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+M6N,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+M6P,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=137
+M6R,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+M6S,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+M7A,ON,Toronto,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+M8V,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=110
+M8W,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+M8X,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+M8Y,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+M8Z,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+M9A,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=115
+M9B,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+M9C,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=89
+M9L,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+M9M,ON,North York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+M9N,ON,York,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+M9P,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+M9R,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+M9V,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=112
+M9W,ON,Etobicoke,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=153
+N0A,ON,Port Dover,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=54
+N0B,ON,Puslinch,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=152
+N0C,ON,Markdale,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=35
+N0E,ON,Scotland,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=66
+N0G,ON,Elmwood,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=159
+N0H,ON,Port Elgin,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=102
+N0J,ON,Beachville,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=97
+N0K,ON,Mitchell,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=68
+N0L,ON,Union,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=101
+N0M,ON,Exeter,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=152
+N0N,ON,Forest,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=47
+N0P,ON,Kent Bridge,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=92
+N0R,ON,Maidstone,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=33
+N1A,ON,Dunnville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+N1E,ON,Guelph,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+N1G,ON,Guelph,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+N1H,ON,Guelph,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+N1K,ON,Guelph,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+N1M,ON,Fergus,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=37
+N1P,ON,Cambridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+N1R,ON,Cambridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=75
+N1S,ON,Cambridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+N1T,ON,Cambridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+N2A,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+N2B,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+N2C,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+N2E,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+N2G,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+N2H,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+N2J,ON,Waterloo,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=78
+N2K,ON,Waterloo,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+N2L,ON,Waterloo,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+N2M,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=67
+N2N,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+N2P,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+N2R,ON,Kitchener,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+N2T,ON,Waterloo,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+N2V,ON,Waterloo,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+N2Z,ON,Kincardine,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+N3B,ON,Elmira,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+N3C,ON,Cambridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+N3H,ON,Cambridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+N3L,ON,Paris,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+N3P,ON,Brantford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+N3R,ON,Brantford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+N3S,ON,Brantford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+N3T,ON,Brantford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=80
+N3W,ON,Caledonia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+N3Y,ON,Simcoe,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+N4B,ON,Delhi,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+N4G,ON,Tillsonburg,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+N4K,ON,Owen Sound,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+N4L,ON,Meaford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+N4N,ON,Hanover,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+N4S,ON,Woodstock,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=72
+N4T,ON,Woodstock,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+N4V,ON,Woodstock,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+N4W,ON,Listowel,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+N4X,ON,St Marys,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+N4Z,ON,Stratford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+N5A,ON,Stratford,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=63
+N5C,ON,Ingersoll,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+N5H,ON,Aylmer,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+N5L,ON,Port Stanley,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+N5P,ON,St Thomas,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+N5R,ON,St Thomas,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+N5V,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+N5W,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+N5X,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+N5Y,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=81
+N5Z,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+N6A,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=111
+N6B,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=37
+N6C,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+N6E,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+N6G,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=43
+N6H,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=122
+N6J,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+N6K,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+N6L,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+N6M,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+N6N,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+N6P,ON,London,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+N7A,ON,Goderich,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+N7G,ON,Strathroy,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+N7L,ON,Chatham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=37
+N7M,ON,Chatham,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+N7S,ON,Sarnia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+N7T,ON,Sarnia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=79
+N7V,ON,Sarnia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+N7W,ON,Sarnia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+N7X,ON,Sarnia,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+N8A,ON,Wallaceburg,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+N8H,ON,Leamington,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=41
+N8M,ON,Essex,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+N8N,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+N8P,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+N8R,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+N8S,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+N8T,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+N8W,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+N8X,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+N8Y,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=22
+N9A,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=149
+N9B,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+N9C,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+N9E,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+N9G,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+N9H,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+N9J,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=30
+N9K,ON,Windsor,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+N9V,ON,Amherstburg,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+N9Y,ON,Kingsville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+P0A,ON,Sprucedale,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=44
+P0B,ON,Windermere,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=28
+P0C,ON,Mactier,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=9
+P0E,ON,Kilworthy,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=8
+P0G,ON,Nobel,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=7
+P0H,ON,Trout Creek,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=55
+P0J,ON,New Liskeard,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=28
+P0K,ON,Matheson,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=24
+P0L,ON,Driftwood,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=26
+P0M,ON,Chapleau,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=70
+P0N,ON,Porcupine,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=10
+P0P,ON,Little Current,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=42
+P0R,ON,Desbarats,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=24
+P0S,ON,Echo Bay,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=15
+P0T,ON,Kakabeka Falls,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=77
+P0V,ON,Red Lake,rural,central,ON_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=68
+P0W,ON,Emo,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=18
+P0X,ON,Nestor Falls,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=17
+P0Y,ON,Ingolf,rural,south,ON_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=1
+P1A,ON,North Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+P1B,ON,North Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=113
+P1C,ON,North Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+P1H,ON,Huntsville,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+P1L,ON,Bracebridge,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+P1P,ON,Gravenhurst,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+P2A,ON,Parry Sound,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+P2C,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+P2N,ON,Kirkland Lake,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+P3A,ON,Sudbury,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=72
+P3B,ON,Sudbury,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+P3C,ON,Sudbury,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=89
+P3E,ON,Sudbury,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=110
+P3L,ON,Garson,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+P3N,ON,Val Caron,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+P3P,ON,Hanmer,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+P3Y,ON,Lively,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+P4N,ON,Timmins,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+P4P,ON,Timmins,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+P4R,ON,Timmins,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+P5A,ON,Elliot Lake,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+P5E,ON,Espanola,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+P5N,ON,Kapuskasing,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+P6A,ON,Sault Ste. Marie,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=138
+P6B,ON,Sault Ste. Marie,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+P6C,ON,Sault Ste. Marie,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+P7A,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=78
+P7B,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=117
+P7C,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=79
+P7E,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=65
+P7G,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+P7J,ON,Thunder Bay,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+P8N,ON,Dryden,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+P8T,ON,Sioux Lookout,urban,central,ON_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=23
+P9A,ON,Fort Frances,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+P9N,ON,Kenora,urban,south,ON_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+R0A,MB,Steinbach,rural,south,MB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=71
+R0B,MB,Gillam,rural,central,MB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=52
+R0C,MB,Riverton,rural,central,MB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=81
+R0E,MB,Oakbank,rural,central,MB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=78
+R0G,MB,Morris,rural,south,MB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=73
+R0H,MB,High Bluff,rural,south,MB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=35
+R0J,MB,Russell,rural,central,MB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=54
+R0K,MB,Boissevain,rural,south,MB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=55
+R0L,MB,Swan River,rural,central,MB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=52
+R0M,MB,Virden,rural,south,MB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=49
+R1A,MB,Selkirk,urban,central,MB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=63
+R1N,MB,Portage La Prairie,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+R2C,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+R2E,MB,East St Paul,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+R2G,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=93
+R2H,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=70
+R2J,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+R2K,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+R2L,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+R2M,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=102
+R2N,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+R2P,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+R2R,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+R2V,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+R2W,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+R2X,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=32
+R2Y,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+R3A,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+R3B,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=122
+R3C,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=258
+R3E,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+R3G,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=68
+R3H,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+R3J,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=87
+R3K,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=37
+R3L,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=106
+R3M,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=75
+R3N,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+R3P,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+R3R,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=49
+R3S,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+R3T,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=88
+R3V,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+R3W,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+R3Y,MB,Winnipeg,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+R4H,MB,Headingley,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+R4K,MB,Cartier,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+R4L,MB,St Francois Xavier,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+R5A,MB,St Adolphe,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+R5G,MB,Mitchell,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+R5H,MB,Ste Anne,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+R6M,MB,Morden,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+R6W,MB,Winkler,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+R7A,MB,Brandon,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=64
+R7B,MB,Brandon,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+R7C,MB,Brandon,urban,south,MB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+R7N,MB,Dauphin,urban,central,MB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=37
+R8A,MB,Flin Flon,urban,central,MB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=22
+R8N,MB,Thompson,urban,central,MB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=41
+R9A,MB,The Pas,urban,central,MB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=35
+S0A,SK,Canora,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=112
+S0C,SK,Carnduff,rural,south,SK_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=64
+S0E,SK,Tisdale,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=44
+S0G,SK,Regina Beach,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=127
+S0H,SK,Bushell Park,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=91
+S0J,SK,La Ronge,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=78
+S0K,SK,Warman,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=128
+S0L,SK,Kindersley,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=75
+S0M,SK,Canoe Narrows,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=63
+S0N,SK,Maple Creek,rural,south,SK_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=57
+S0P,SK,Creighton,rural,central,SK_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=7
+S3N,SK,Yorkton,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=62
+S4A,SK,Estevan,urban,south,SK_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+S4H,SK,Weyburn,urban,south,SK_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=44
+S4L,SK,Emerald Park,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=2
+S4N,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=94
+S4P,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=211
+S4R,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=109
+S4S,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=86
+S4T,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=35
+S4V,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=32
+S4W,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+S4X,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=26
+S4Y,SK,Regina,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+S6H,SK,Moose Jaw,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=59
+S6J,SK,Moose Jaw,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=18
+S6V,SK,Prince Albert,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=83
+S7H,SK,Saskatoon,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=87
+S7J,SK,Saskatoon,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=48
+S7K,SK,Saskatoon,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=202
+S7L,SK,Saskatoon,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=61
+S7M,SK,Saskatoon,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=38
+S7N,SK,Saskatoon,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=61
+S9A,SK,North Battleford,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=54
+S9H,SK,Swift Current,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=37
+S9V,SK,Lloydminster,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=25
+S9X,SK,Meadow Lake,urban,central,SK_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=19
+T0A,AB,Waskatenau,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=39
+T0B,AB,Holden,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=86
+T0C,AB,Stettler,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=103
+T0E,AB,Mayerthorpe,rural,south,AB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=18
+T0G,AB,Tawatinaw,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=18
+T0H,AB,Bezanson,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=36
+T0J,AB,Drumheller,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=161
+T0K,AB,Pincher Creek,rural,south,AB_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=124
+T0L,AB,Okotoks,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=137
+T0M,AB,Rocky Mountain House,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=152
+T0P,AB,Chard,rural,central,AB_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=3
+T1A,AB,Medicine Hat,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=116
+T1B,AB,Medicine Hat,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=39
+T1C,AB,Medicine Hat,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T1G,AB,Taber,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+T1H,AB,Lethbridge,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+T1J,AB,Lethbridge,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=72
+T1K,AB,Lethbridge,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=57
+T1M,AB,Coaldale,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=25
+T1P,AB,Strathmore,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=19
+T1R,AB,Brooks,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=60
+T1V,AB,High River,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=27
+T1W,AB,Canmore,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=40
+T1Y,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=96
+T2A,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=113
+T2B,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=34
+T2C,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=45
+T2E,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=174
+T2G,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=117
+T2H,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=51
+T2J,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=100
+T2K,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=63
+T2L,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=34
+T2M,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=28
+T2N,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=95
+T2P,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=392
+T2R,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=120
+T2S,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=37
+T2T,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=25
+T2V,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=110
+T2W,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=51
+T2X,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=29
+T2Y,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=19
+T2Z,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=43
+T3A,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=62
+T3B,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=43
+T3C,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=56
+T3E,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=94
+T3G,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=41
+T3H,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=22
+T3J,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=15
+T3K,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=47
+T3L,AB,Calgary,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=9
+T3Z,AB,Redwood Meadows,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=4
+T4A,AB,Airdrie,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=19
+T4B,AB,Airdrie,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=26
+T4E,AB,Red Deer County,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T4G,AB,Innisfail,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=28
+T4H,AB,Olds,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=28
+T4J,AB,Ponoka,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=21
+T4L,AB,Lacombe,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=27
+T4N,AB,Red Deer,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=138
+T4P,AB,Red Deer,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=42
+T4R,AB,Red Deer,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=17
+T4S,AB,Sylvan Lake,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=23
+T4V,AB,Camrose,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=25
+T5K,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=18
+T5M,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T5N,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=3
+T5P,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=2
+T5R,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=4
+T5S,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=2
+T5T,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=11
+T5Z,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T6A,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T6E,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=11
+T6G,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=11
+T6H,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=5
+T6J,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=4
+T6K,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=8
+T6L,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=12
+T6M,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=2
+T6N,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T6R,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=3
+T6W,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=5
+T6X,AB,Edmonton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=4
+T7A,AB,Drayton Valley,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+T7E,AB,Edson,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=37
+T7P,AB,Westlock,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=3
+T7S,AB,Whitecourt,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=10
+T7V,AB,Hinton,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=4
+T7X,AB,Spruce Grove,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+T8C,AB,Sherwood Park,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T8E,AB,Sherwood Park,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=2
+T8G,AB,Sherwood Park,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=7
+T8S,AB,Peace River,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=14
+T8V,AB,Grande Prairie,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=68
+T8W,AB,Grande Prairie,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T9A,AB,Wetaskiwin,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=23
+T9C,AB,Vegreville,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+T9E,AB,Leduc,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=7
+T9H,AB,Fort Mcmurray,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=2
+T9N,AB,Bonnyville,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=16
+T9S,AB,Athabasca,urban,south,AB_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=2
+T9V,AB,Lloydminster,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=18
+T9W,AB,Wainwright,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=1
+T9X,AB,Vermilion,urban,central,AB_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=3
+V0A,BC,Golden,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=17
+V0B,BC,Creston,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=137
+V0C,BC,Jade City,rural,north,BC_NORTH_RURAL,true,source=postal-codes-canada.csv;records=56
+V0D,BC,Armstrong,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=1
+V0E,BC,Enderby,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=53
+V0G,BC,Kaslo,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=37
+V0H,BC,Grand Forks,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=34
+V0J,BC,Burns Lake,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=57
+V0K,BC,100 Mile House,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=47
+V0L,BC,Horsefly,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=18
+V0M,BC,Agassiz,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=5
+V0N,BC,Whistler,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=118
+V0P,BC,Gold River,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=13
+V0R,BC,Chemainus,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=60
+V0S,BC,Victoria,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=11
+V0T,BC,Queen Charlotte,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=23
+V0V,BC,Port Edward,rural,central,BC_CENTRAL_RURAL,true,source=postal-codes-canada.csv;records=6
+V0W,BC,Atlin,rural,north,BC_NORTH_RURAL,true,source=postal-codes-canada.csv;records=1
+V0X,BC,Hedley,rural,south,BC_SOUTH_RURAL,true,source=postal-codes-canada.csv;records=12
+V1A,BC,Kimberley,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+V1B,BC,Coldstream,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=10
+V1C,BC,Cranbrook,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+V1E,BC,Salmon Arm,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=55
+V1G,BC,Dawson Creek,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=42
+V1H,BC,Vernon,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=6
+V1J,BC,Fort St. John,urban,north,BC_NORTH_URBAN,true,source=postal-codes-canada.csv;records=78
+V1K,BC,Merritt,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=18
+V1L,BC,Nelson,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=59
+V1M,BC,Langley,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+V1N,BC,Castlegar,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=23
+V1P,BC,Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+V1R,BC,Trail,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+V1S,BC,Kamloops,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=23
+V1T,BC,Vernon,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=98
+V1V,BC,Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=14
+V1W,BC,Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+V1X,BC,Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=58
+V1Y,BC,Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=90
+V1Z,BC,West Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=19
+V2A,BC,Penticton,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=110
+V2B,BC,Kamloops,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=66
+V2C,BC,Kamloops,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=80
+V2E,BC,Kamloops,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=23
+V2G,BC,Williams Lake,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=58
+V2H,BC,Kamloops,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=27
+V2J,BC,Quesnel,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=65
+V2K,BC,Prince George,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=19
+V2L,BC,Prince George,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=50
+V2M,BC,Prince George,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=60
+V2N,BC,Prince George,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=93
+V2P,BC,Chilliwack,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+V2R,BC,Chilliwack,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=66
+V2S,BC,Abbotsford,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+V2T,BC,Abbotsford,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=102
+V2V,BC,Mission,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+V2W,BC,Maple Ridge,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+V2X,BC,Maple Ridge,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=69
+V2Y,BC,Langley,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+V2Z,BC,Langley,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+V3A,BC,Langley,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=86
+V3B,BC,Coquitlam,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=85
+V3C,BC,Port Coquitlam,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=56
+V3E,BC,Coquitlam,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=15
+V3G,BC,Abbotsford,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+V3H,BC,Port Moody,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+V3J,BC,Coquitlam,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=98
+V3K,BC,Coquitlam,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+V3L,BC,New Westminster,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+V3M,BC,New Westminster,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=98
+V3N,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+V3R,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=88
+V3S,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=73
+V3T,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=98
+V3V,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+V3W,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=107
+V3X,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+V3Y,BC,Pitt Meadows,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+V4A,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=57
+V4B,BC,White Rock,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=36
+V4C,BC,Delta,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=35
+V4E,BC,Delta,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+V4G,BC,Delta,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+V4K,BC,Delta,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=50
+V4L,BC,Delta,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+V4M,BC,Delta,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+V4N,BC,Surrey,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=33
+V4P,BC,White Rock,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=30
+V4R,BC,Maple Ridge,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+V4S,BC,Mission,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+V4T,BC,West Kelowna,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+V4V,BC,Oyama,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=38
+V4W,BC,Aldergrove,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+V4X,BC,Abbotsford,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=5
+V4Z,BC,Chilliwack,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=1
+V5A,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+V5B,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+V5C,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=90
+V5E,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=42
+V5G,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+V5H,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=213
+V5J,BC,Burnaby,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=13
+V5K,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+V5L,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+V5M,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=27
+V5N,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=55
+V5P,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+V5R,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=29
+V5S,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+V5T,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=84
+V5V,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=16
+V5W,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=28
+V5X,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+V5Y,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+V5Z,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=121
+V6A,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=64
+V6B,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=125
+V6C,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=85
+V6E,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=152
+V6G,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=99
+V6H,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=68
+V6J,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=76
+V6K,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+V6L,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=8
+V6M,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+V6N,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=6
+V6P,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=95
+V6R,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+V6T,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=51
+V6V,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+V6W,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+V6X,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+V6Y,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=126
+V6Z,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=71
+V7A,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=46
+V7B,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+V7C,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=68
+V7E,BC,Richmond,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+V7G,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=18
+V7H,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+V7J,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+V7K,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+V7L,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+V7M,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=60
+V7N,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+V7P,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+V7R,BC,North Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=3
+V7S,BC,West Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=9
+V7T,BC,West Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+V7V,BC,West Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=26
+V7W,BC,West Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+V7X,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=10
+V7Y,BC,Vancouver,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+V8A,BC,Powell River,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=47
+V8C,BC,Kitimat,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=40
+V8G,BC,Terrace,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=49
+V8J,BC,Prince Rupert,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=40
+V8K,BC,Salt Spring Island,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=39
+V8L,BC,Sidney,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=45
+V8M,BC,Saanichton,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=34
+V8N,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=40
+V8P,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=31
+V8R,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+V8S,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=24
+V8T,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=54
+V8V,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=105
+V8W,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=88
+V8X,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=90
+V8Y,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=12
+V8Z,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=52
+V9A,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=96
+V9B,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=62
+V9C,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=17
+V9E,BC,Victoria,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=4
+V9H,BC,Campbell River,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=12
+V9J,BC,Black Creek,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=20
+V9K,BC,Qualicum Beach,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+V9L,BC,Duncan,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=69
+V9M,BC,Comox,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=38
+V9N,BC,Courtenay,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=75
+V9P,BC,Parksville,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=37
+V9R,BC,Nanaimo,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=86
+V9S,BC,Nanaimo,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=48
+V9T,BC,Nanaimo,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=64
+V9V,BC,Nanaimo,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=21
+V9W,BC,Campbell River,urban,central,BC_CENTRAL_URBAN,true,source=postal-codes-canada.csv;records=74
+V9X,BC,Nanaimo,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=7
+V9Y,BC,Port Alberni,urban,south,BC_SOUTH_URBAN,true,source=postal-codes-canada.csv;records=53
+X0A,NU,Iqaluit,remote,remote,NU_REMOTE,true,source=postal-codes-canada.csv;records=21
+X0C,NU,Repulse Bay,remote,remote,NU_REMOTE,true,source=postal-codes-canada.csv;records=10
+X0E,NT,Hay River,remote,remote,NT_REMOTE,true,source=postal-codes-canada.csv;records=83
+X0G,NT,Fort Liard,remote,remote,NT_REMOTE,true,source=postal-codes-canada.csv;records=2
+X1A,NT,Yellowknife,far_north,far_north,NT_STANDARD,true,source=postal-codes-canada.csv;records=121
+Y0A,YT,Teslin,remote,remote,YT_REMOTE,true,source=postal-codes-canada.csv;records=5
+Y0B,YT,Carcross,remote,remote,YT_REMOTE,true,source=postal-codes-canada.csv;records=26
+Y1A,YT,Whitehorse,far_north,far_north,YT_STANDARD,true,source=postal-codes-canada.csv;records=141
