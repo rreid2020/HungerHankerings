@@ -14,7 +14,7 @@ import {
   normalizeHostname,
 } from "./lib/ops-host"
 
-const isOpsSignInRoute = createRouteMatcher(["/ops/sign-in(.*)"])
+const isOpsAuthRoute = createRouteMatcher(["/ops/sign-in(.*)", "/ops/sign-up(.*)"])
 
 function isInternalNextHostname(hostname: string): boolean {
   const h = hostname.toLowerCase()
@@ -174,7 +174,7 @@ const opsClerkMiddleware = clerkMiddleware(
       return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
     }
 
-    if (pathname.startsWith("/ops") && !isOpsSignInRoute(request) && clerkOk) {
+    if (pathname.startsWith("/ops") && !isOpsAuthRoute(request) && clerkOk) {
       await auth.protect()
     }
 
