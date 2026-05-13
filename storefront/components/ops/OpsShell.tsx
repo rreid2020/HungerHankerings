@@ -88,7 +88,7 @@ export default function OpsShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
         <div className="flex min-w-0 flex-1 flex-col overflow-auto">
-          <div className="mx-auto w-full max-w-5xl min-w-0 flex-1 px-4 py-8 sm:px-6">
+          <div className="mx-auto w-full max-w-[96rem] min-w-0 flex-1 px-4 py-8 sm:px-6">
             {children}
           </div>
         </div>
