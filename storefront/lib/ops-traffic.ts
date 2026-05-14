@@ -6,22 +6,42 @@ type HogqlResponse = {
 
 type TrafficPoint = {
   label: string
-  value: number
+  views: number
+  visitors: number
+}
+
+type TrafficTrendPoint = {
+  day: string
+  visitors: number
+  sessions: number
+  pageviews: number
+  leads: number
+  purchases: number
 }
 
 export type OpsTrafficDashboardData = {
   configured: boolean
   requires: string[]
-  visitors30d: number
-  sessions30d: number
-  pageviews30d: number
-  beginCheckout30d: number
-  purchases30d: number
-  leads30d: number
+  periodDays: 7 | 30 | 90
+  visitors: number
+  sessions: number
+  pageviews: number
+  beginCheckout: number
+  purchases: number
+  leads: number
+  pagesPerSession: number
   checkoutToPurchaseRatePct: number
   visitorToLeadRatePct: number
+  prevVisitors: number
+  prevSessions: number
+  prevPageviews: number
+  prevLeads: number
+  prevPurchases: number
   topPages: TrafficPoint[]
   topSources: TrafficPoint[]
+  topBrowsers: TrafficPoint[]
+  topDevices: TrafficPoint[]
+  trend: TrafficTrendPoint[]
   error?: string
 }
 
@@ -43,6 +63,11 @@ function requiredConfigMissing(): string[] {
   if (!projectId) missing.push("POSTHOG_PROJECT_ID")
   if (!apiKey) missing.push("POSTHOG_PERSONAL_API_KEY")
   return missing
+}
+
+function clampDays(input?: number): 7 | 30 | 90 {
+  if (input === 7 || input === 30 || input === 90) return input
+  return 30
 }
 
 function toNumber(value: unknown): number {
@@ -96,120 +121,213 @@ async function runHogql(query: string): Promise<Record<string, unknown>[]> {
   return mapRows(payload)
 }
 
-export async function loadOpsTrafficDashboard(): Promise<OpsTrafficDashboardData> {
+function pct(value: number, total: number): number {
+  return total > 0 ? Number(((value / total) * 100).toFixed(1)) : 0
+}
+
+export async function loadOpsTrafficDashboard(periodDays?: number): Promise<OpsTrafficDashboardData> {
+  const days = clampDays(periodDays)
   const missing = requiredConfigMissing()
   if (missing.length > 0) {
     return {
       configured: false,
       requires: missing,
-      visitors30d: 0,
-      sessions30d: 0,
-      pageviews30d: 0,
-      beginCheckout30d: 0,
-      purchases30d: 0,
-      leads30d: 0,
+      periodDays: days,
+      visitors: 0,
+      sessions: 0,
+      pageviews: 0,
+      beginCheckout: 0,
+      purchases: 0,
+      leads: 0,
+      pagesPerSession: 0,
       checkoutToPurchaseRatePct: 0,
       visitorToLeadRatePct: 0,
+      prevVisitors: 0,
+      prevSessions: 0,
+      prevPageviews: 0,
+      prevLeads: 0,
+      prevPurchases: 0,
       topPages: [],
       topSources: [],
+      topBrowsers: [],
+      topDevices: [],
+      trend: [],
     }
   }
 
   try {
-    const [coreRows, pageRows, sourceRows, funnelRows] = await Promise.all([
+    const [coreRows, previousRows, pageRows, sourceRows, browserRows, deviceRows, trendRows] = await Promise.all([
       runHogql(`
         SELECT
-          countIf(event = '$pageview') AS pageviews_30d,
-          uniqIf(distinct_id, event = '$pageview') AS visitors_30d,
-          uniqIf(properties.$session_id, event = '$pageview' AND properties.$session_id IS NOT NULL) AS sessions_30d
+          countIf(event = '$pageview') AS pageviews,
+          uniqIf(distinct_id, event = '$pageview') AS visitors,
+          uniqIf(properties.$session_id, event = '$pageview' AND properties.$session_id IS NOT NULL) AS sessions,
+          countIf(event = 'begin_checkout') AS begin_checkout,
+          countIf(event = 'purchase_complete') AS purchases,
+          countIf(event = 'lead_submit') AS leads
         FROM events
-        WHERE timestamp >= now() - INTERVAL 30 DAY
+        WHERE timestamp >= now() - INTERVAL ${days} DAY
+      `),
+      runHogql(`
+        SELECT
+          countIf(event = '$pageview') AS pageviews,
+          uniqIf(distinct_id, event = '$pageview') AS visitors,
+          uniqIf(properties.$session_id, event = '$pageview' AND properties.$session_id IS NOT NULL) AS sessions,
+          countIf(event = 'purchase_complete') AS purchases,
+          countIf(event = 'lead_submit') AS leads
+        FROM events
+        WHERE timestamp >= now() - INTERVAL ${days * 2} DAY
+          AND timestamp < now() - INTERVAL ${days} DAY
       `),
       runHogql(`
         SELECT
           coalesce(
-            nullIf(properties.path, ''),
             nullIf(properties.$pathname, ''),
+            nullIf(properties.path, ''),
             nullIf(properties.$current_url, ''),
             '(unknown)'
-          ) AS page,
-          count() AS visits
+          ) AS label,
+          count() AS views,
+          uniq(distinct_id) AS visitors
         FROM events
         WHERE event = '$pageview'
-          AND timestamp >= now() - INTERVAL 30 DAY
-        GROUP BY page
-        ORDER BY visits DESC
+          AND timestamp >= now() - INTERVAL ${days} DAY
+        GROUP BY label
+        ORDER BY views DESC
+        LIMIT 10
+      `),
+      runHogql(`
+        SELECT
+          coalesce(nullIf(properties.$referring_domain, ''), 'direct') AS label,
+          count() AS views,
+          uniq(distinct_id) AS visitors
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= now() - INTERVAL ${days} DAY
+        GROUP BY label
+        ORDER BY views DESC
+        LIMIT 10
+      `),
+      runHogql(`
+        SELECT
+          coalesce(nullIf(properties.$browser, ''), 'Unknown') AS label,
+          count() AS views,
+          uniq(distinct_id) AS visitors
+        FROM events
+        WHERE event = '$pageview'
+          AND timestamp >= now() - INTERVAL ${days} DAY
+        GROUP BY label
+        ORDER BY views DESC
         LIMIT 8
       `),
       runHogql(`
         SELECT
-          coalesce(nullIf(properties.$referring_domain, ''), 'direct') AS source,
-          count() AS visits
+          coalesce(nullIf(properties.$device_type, ''), 'Unknown') AS label,
+          count() AS views,
+          uniq(distinct_id) AS visitors
         FROM events
         WHERE event = '$pageview'
-          AND timestamp >= now() - INTERVAL 30 DAY
-        GROUP BY source
-        ORDER BY visits DESC
+          AND timestamp >= now() - INTERVAL ${days} DAY
+        GROUP BY label
+        ORDER BY views DESC
         LIMIT 8
       `),
       runHogql(`
         SELECT
-          countIf(event = 'begin_checkout') AS begin_checkout_30d,
-          countIf(event = 'purchase_complete') AS purchases_30d,
-          countIf(event = 'lead_submit') AS leads_30d
+          toString(toDate(timestamp)) AS day,
+          countIf(event = '$pageview') AS pageviews,
+          uniqIf(distinct_id, event = '$pageview') AS visitors,
+          uniqIf(properties.$session_id, event = '$pageview' AND properties.$session_id IS NOT NULL) AS sessions,
+          countIf(event = 'lead_submit') AS leads,
+          countIf(event = 'purchase_complete') AS purchases
         FROM events
-        WHERE timestamp >= now() - INTERVAL 30 DAY
+        WHERE timestamp >= now() - INTERVAL ${days} DAY
+        GROUP BY day
+        ORDER BY day ASC
       `),
     ])
 
     const core = coreRows[0] ?? {}
-    const funnel = funnelRows[0] ?? {}
-    const visitors30d = toNumber(core.visitors_30d)
-    const sessions30d = toNumber(core.sessions_30d)
-    const pageviews30d = toNumber(core.pageviews_30d)
-    const beginCheckout30d = toNumber(funnel.begin_checkout_30d)
-    const purchases30d = toNumber(funnel.purchases_30d)
-    const leads30d = toNumber(funnel.leads_30d)
-
-    const checkoutToPurchaseRatePct =
-      beginCheckout30d > 0 ? Number(((purchases30d / beginCheckout30d) * 100).toFixed(1)) : 0
-    const visitorToLeadRatePct =
-      visitors30d > 0 ? Number(((leads30d / visitors30d) * 100).toFixed(1)) : 0
+    const prev = previousRows[0] ?? {}
+    const visitors = toNumber(core.visitors)
+    const sessions = toNumber(core.sessions)
+    const pageviews = toNumber(core.pageviews)
+    const beginCheckout = toNumber(core.begin_checkout)
+    const purchases = toNumber(core.purchases)
+    const leads = toNumber(core.leads)
 
     return {
       configured: true,
       requires: [],
-      visitors30d,
-      sessions30d,
-      pageviews30d,
-      beginCheckout30d,
-      purchases30d,
-      leads30d,
-      checkoutToPurchaseRatePct,
-      visitorToLeadRatePct,
+      periodDays: days,
+      visitors,
+      sessions,
+      pageviews,
+      beginCheckout,
+      purchases,
+      leads,
+      pagesPerSession: sessions > 0 ? Number((pageviews / sessions).toFixed(2)) : 0,
+      checkoutToPurchaseRatePct: pct(purchases, beginCheckout),
+      visitorToLeadRatePct: pct(leads, visitors),
+      prevVisitors: toNumber(prev.visitors),
+      prevSessions: toNumber(prev.sessions),
+      prevPageviews: toNumber(prev.pageviews),
+      prevLeads: toNumber(prev.leads),
+      prevPurchases: toNumber(prev.purchases),
       topPages: pageRows.map((row) => ({
-        label: String(row.page ?? "(unknown)"),
-        value: toNumber(row.visits),
+        label: String(row.label ?? "(unknown)"),
+        views: toNumber(row.views),
+        visitors: toNumber(row.visitors),
       })),
       topSources: sourceRows.map((row) => ({
-        label: String(row.source ?? "direct"),
-        value: toNumber(row.visits),
+        label: String(row.label ?? "direct"),
+        views: toNumber(row.views),
+        visitors: toNumber(row.visitors),
+      })),
+      topBrowsers: browserRows.map((row) => ({
+        label: String(row.label ?? "Unknown"),
+        views: toNumber(row.views),
+        visitors: toNumber(row.visitors),
+      })),
+      topDevices: deviceRows.map((row) => ({
+        label: String(row.label ?? "Unknown"),
+        views: toNumber(row.views),
+        visitors: toNumber(row.visitors),
+      })),
+      trend: trendRows.map((row) => ({
+        day: String(row.day ?? ""),
+        visitors: toNumber(row.visitors),
+        sessions: toNumber(row.sessions),
+        pageviews: toNumber(row.pageviews),
+        leads: toNumber(row.leads),
+        purchases: toNumber(row.purchases),
       })),
     }
   } catch (error) {
+    const days = clampDays(periodDays)
     return {
       configured: true,
       requires: [],
-      visitors30d: 0,
-      sessions30d: 0,
-      pageviews30d: 0,
-      beginCheckout30d: 0,
-      purchases30d: 0,
-      leads30d: 0,
+      periodDays: days,
+      visitors: 0,
+      sessions: 0,
+      pageviews: 0,
+      beginCheckout: 0,
+      purchases: 0,
+      leads: 0,
+      pagesPerSession: 0,
       checkoutToPurchaseRatePct: 0,
       visitorToLeadRatePct: 0,
+      prevVisitors: 0,
+      prevSessions: 0,
+      prevPageviews: 0,
+      prevLeads: 0,
+      prevPurchases: 0,
       topPages: [],
       topSources: [],
+      topBrowsers: [],
+      topDevices: [],
+      trend: [],
       error: error instanceof Error ? error.message : "PostHog query failed",
     }
   }
