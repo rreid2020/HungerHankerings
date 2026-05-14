@@ -4,22 +4,32 @@ import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import posthog from "posthog-js"
 
-const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim() ?? ""
-const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() ?? "https://us.i.posthog.com"
+type PostHogProviderProps = {
+  children: React.ReactNode
+  posthogKey?: string
+  posthogHost?: string
+}
 
-export default function PostHogProvider({ children }: { children: React.ReactNode }) {
+export default function PostHogProvider({
+  children,
+  posthogKey = "",
+  posthogHost = "https://us.i.posthog.com",
+}: PostHogProviderProps) {
   const pathname = usePathname()
   const lastPathRef = useRef<string>("")
+  const initializedRef = useRef(false)
 
   useEffect(() => {
-    if (!posthogKey || typeof window === "undefined") return
+    if (!posthogKey || typeof window === "undefined" || initializedRef.current) return
+    initializedRef.current = true
     posthog.init(posthogKey, {
       api_host: posthogHost,
       capture_pageview: false,
       persistence: "localStorage+cookie",
       person_profiles: "identified_only",
     })
-  }, [])
+    ;(window as Window & { __hhPosthogReady?: boolean }).__hhPosthogReady = true
+  }, [posthogHost, posthogKey])
 
   useEffect(() => {
     if (!posthogKey || typeof window === "undefined") return

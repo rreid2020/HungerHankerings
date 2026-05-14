@@ -78,6 +78,12 @@ export default async function RootLayout({
 }) {
   const h = await headers()
   const ops = isOpsRequestHeaders(h)
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim() ?? ""
+  const posthogHost = (
+    process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() ||
+    process.env.POSTHOG_HOST?.trim() ||
+    "https://us.i.posthog.com"
+  ).replace(/\/+$/, "")
 
   if (ops) {
     return (
@@ -99,7 +105,7 @@ export default async function RootLayout({
         <JsonLd data={orgLd} id="ld-org" />
         <JsonLd data={webLd} id="ld-website" />
         <ThemeInit>
-          <PostHogProvider>
+          <PostHogProvider posthogKey={posthogKey} posthogHost={posthogHost}>
             <AuthProvider>
               <CartProvider>
                 <SiteHeader />
