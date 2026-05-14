@@ -17,6 +17,7 @@ export default function PostHogProvider({
 }: PostHogProviderProps) {
   const pathname = usePathname()
   const lastPathRef = useRef<string>("")
+  const lastUrlRef = useRef<string>("")
   const initializedRef = useRef(false)
 
   useEffect(() => {
@@ -39,12 +40,27 @@ export default function PostHogProvider({
     if (lastPathRef.current === fullPath) return
     lastPathRef.current = fullPath
 
+    const currentUrl = window.location.href
+    const referrer = lastUrlRef.current || document.referrer || ""
+    let referringDomain: string | undefined
+    if (referrer) {
+      try {
+        referringDomain = new URL(referrer).hostname
+      } catch {
+        referringDomain = undefined
+      }
+    }
+
     posthog.capture("$pageview", {
+      $current_url: currentUrl,
+      $pathname: window.location.pathname,
+      $host: window.location.host,
+      ...(referrer ? { $referrer: referrer } : {}),
+      ...(referringDomain ? { $referring_domain: referringDomain } : {}),
       path: pathname,
       full_path: fullPath,
-      url: window.location.href,
-      referrer: document.referrer || "direct",
     })
+    lastUrlRef.current = currentUrl
   }, [pathname])
 
   return <>{children}</>
