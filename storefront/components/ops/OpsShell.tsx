@@ -1,5 +1,6 @@
 import Link from "next/link"
 import {
+  BarChart3,
   ExternalLink,
   Inbox,
   LayoutDashboard,
@@ -12,6 +13,7 @@ import OpsUserMenu from "./OpsUserMenu"
 const nav = [
   { href: "/ops", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ops/leads", label: "Leads", icon: Inbox },
+  { href: "/ops/traffic", label: "Traffic", icon: BarChart3 },
   { href: "/ops/shipping-rates", label: "Shipping Rates", icon: Truck },
 ] as const
 

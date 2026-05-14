@@ -9,6 +9,7 @@ import {
   isInquiryReason,
   normalizeInquiryReason
 } from "../lib/contact-inquiry"
+import { captureEvent } from "../lib/analytics"
 
 declare global {
   interface Window {
@@ -111,6 +112,10 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
       window.turnstile.reset(turnstileWidgetId)
     }
     setStatus("sent")
+    captureEvent("lead_submit", {
+      reason: resolvedReason,
+      has_company: Boolean(company),
+    })
   }
 
   const inputClass =

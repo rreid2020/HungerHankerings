@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useCart } from "./CartContext"
+import { captureEvent } from "../lib/analytics"
 
 const CheckoutButton = () => {
   const { cart } = useCart()
@@ -17,6 +18,12 @@ const CheckoutButton = () => {
   return (
     <Link
       href="/checkout"
+      onClick={() =>
+        captureEvent("begin_checkout", {
+          cart_item_count: itemCount,
+          cart_subtotal: cart?.subtotal ?? 0,
+        })
+      }
       className="inline-flex max-w-full min-w-0 items-center justify-center whitespace-nowrap rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:px-4 sm:py-2.5 sm:text-sm"
     >
       {label}

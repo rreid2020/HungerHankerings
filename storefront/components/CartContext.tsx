@@ -16,6 +16,7 @@ import {
   createCheckout,
   getActiveOrder
 } from "../lib/vendure"
+import { captureEvent } from "../lib/analytics"
 
 type CartItem = {
   id: string
@@ -248,7 +249,14 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
           { variantId, quantity }
         ])
       }
-      setCart(mapCheckoutToCart(checkout))
+      const nextCart = mapCheckoutToCart(checkout)
+      setCart(nextCart)
+      captureEvent("add_to_cart", {
+        variant_id: variantId,
+        quantity,
+        cart_item_count: nextCart.items.reduce((sum, item) => sum + item.quantity, 0),
+        cart_subtotal: nextCart.subtotal,
+      })
     } finally {
       setUpdating(false)
     }

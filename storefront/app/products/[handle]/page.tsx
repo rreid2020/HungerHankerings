@@ -1,6 +1,7 @@
 import { cache } from "react"
 import type { Metadata } from "next"
 import JsonLd from "../../../components/JsonLd"
+import ProductViewTracker from "../../../components/ProductViewTracker"
 import ProductPurchase from "../../../components/ProductPurchase"
 import ProductRichDescription from "../../../components/ProductRichDescription"
 import { buildCatalogAttributeDefinitions } from "../../../lib/build-attribute-definitions"
@@ -120,6 +121,12 @@ export default async function ProductDetailPage({
     <>
       <JsonLd data={productLd} id="ld-product" />
       <JsonLd data={breadcrumbLd} id="ld-breadcrumb-product" />
+      <ProductViewTracker
+        productId={product.id}
+        productName={product.name}
+        productSlug={product.slug}
+        price={price}
+      />
       <div className="container-page grid min-w-0 gap-8 py-8 sm:gap-10 sm:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">

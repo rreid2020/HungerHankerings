@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { giftSurchargeNetMajorFromInclusiveGrossDollars } from "../../../lib/checkout-gift-surcharge"
+import { captureEvent } from "../../../lib/analytics"
 import { CANADIAN_PROVINCES } from "../../../lib/shippingTax"
 import { storefrontDisplayCurrency, type StorefrontOrder } from "../../../lib/vendure"
 
@@ -194,6 +195,33 @@ export default function OrderConfirmationClient({ orderCode }: { orderCode: stri
   const [fallback, setFallback] = useState<StoredCheckout | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const key = `ph_purchase_seen_${orderCode}`
+    if (window.sessionStorage.getItem(key) === "1") return
+
+    if (order) {
+      window.sessionStorage.setItem(key, "1")
+      captureEvent("purchase_complete", {
+        order_code: order.number,
+        total: order.amountPaid?.amount ?? order.total.gross.amount,
+        currency: order.currencyCode,
+        line_count: order.lines.length,
+      })
+      return
+    }
+
+    if (fallback?.orderSummary) {
+      window.sessionStorage.setItem(key, "1")
+      captureEvent("purchase_complete", {
+        order_code: fallback.orderNumber ?? orderCode,
+        total: fallback.orderSummary.amountPaid ?? fallback.orderSummary.total,
+        currency: fallback.orderSummary.currency,
+        line_count: fallback.orderSummary.lines.length,
+      })
+    }
+  }, [fallback, order, orderCode])
 
   useEffect(() => {
     let cancelled = false

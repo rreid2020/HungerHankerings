@@ -5,6 +5,7 @@ import { Suspense } from "react"
 import SiteHeader from "../components/SiteHeader"
 import SiteFooter from "../components/SiteFooter"
 import ThemeInit from "../components/ThemeInit"
+import PostHogProvider from "../components/PostHogProvider"
 import { CartProvider } from "../components/CartContext"
 import { AuthProvider } from "../components/AuthContext"
 import JsonLd from "../components/JsonLd"
@@ -98,13 +99,15 @@ export default async function RootLayout({
         <JsonLd data={orgLd} id="ld-org" />
         <JsonLd data={webLd} id="ld-website" />
         <ThemeInit>
-          <AuthProvider>
-            <CartProvider>
-              <SiteHeader />
-              <main className="min-w-0">{children}</main>
-              <SiteFooter />
-            </CartProvider>
-          </AuthProvider>
+          <PostHogProvider>
+            <AuthProvider>
+              <CartProvider>
+                <SiteHeader />
+                <main className="min-w-0">{children}</main>
+                <SiteFooter />
+              </CartProvider>
+            </AuthProvider>
+          </PostHogProvider>
         </ThemeInit>
       </body>
     </html>
