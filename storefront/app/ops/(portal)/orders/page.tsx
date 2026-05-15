@@ -17,13 +17,14 @@ function singleParam(value: string | string[] | undefined): string {
 export default async function OpsOrdersPage({
   searchParams,
 }: {
-  searchParams?: SearchParams
+  searchParams?: Promise<SearchParams>
 }) {
+  const resolvedSearchParams = (await searchParams) ?? {}
   const snapshot = await loadOpsOrdersCenter()
-  const stateFilter = singleParam(searchParams?.state).trim()
-  const paymentFilter = singleParam(searchParams?.payment).trim()
-  const daysFilter = Number(singleParam(searchParams?.days) || "0")
-  const highValueOnly = singleParam(searchParams?.highValue) === "1"
+  const stateFilter = singleParam(resolvedSearchParams.state).trim()
+  const paymentFilter = singleParam(resolvedSearchParams.payment).trim()
+  const daysFilter = Number(singleParam(resolvedSearchParams.days) || "0")
+  const highValueOnly = singleParam(resolvedSearchParams.highValue) === "1"
 
   if (!snapshot.ok) {
     return (
