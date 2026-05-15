@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, BarChart3, Inbox, Shield } from "lucide-react"
+import { ArrowRight, BarChart3, Inbox, Shield, ShoppingBag } from "lucide-react"
 import { getVendureAdminUrl } from "../../../lib/ops-host"
 
 export default function OpsDashboardPage() {
@@ -42,6 +42,22 @@ export default function OpsDashboardPage() {
             <span className="mt-3 text-lg font-medium text-slate-900">Traffic</span>
             <span className="mt-1 text-sm text-slate-600">
               Website traffic, top pages, and conversion events from PostHog.
+            </span>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+              Open
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/ops/commerce"
+            className="group flex flex-col rounded-lg border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:bg-slate-50"
+          >
+            <ShoppingBag className="h-8 w-8 text-brand-400" aria-hidden />
+            <span className="mt-3 text-lg font-medium text-slate-900">Commerce</span>
+            <span className="mt-1 text-sm text-slate-600">
+              Orders snapshot, product count, and customer count from Vendure.
             </span>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-400">
               Open

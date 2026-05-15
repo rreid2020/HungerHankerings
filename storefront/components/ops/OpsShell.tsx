@@ -5,6 +5,7 @@ import {
   Inbox,
   LayoutDashboard,
   PanelLeft,
+  ShoppingBag,
   Truck,
 } from "lucide-react"
 import { getVendureAdminUrl } from "../../lib/ops-host"
@@ -14,6 +15,7 @@ const nav = [
   { href: "/ops", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ops/leads", label: "Leads", icon: Inbox },
   { href: "/ops/traffic", label: "Traffic", icon: BarChart3 },
+  { href: "/ops/commerce", label: "Commerce", icon: ShoppingBag },
   { href: "/ops/shipping-rates", label: "Shipping Rates", icon: Truck },
 ] as const
 
