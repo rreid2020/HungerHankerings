@@ -1,5 +1,14 @@
 import Link from "next/link"
-import { ArrowRight, BarChart3, Inbox, Shield, ShoppingBag } from "lucide-react"
+import {
+  ArrowRight,
+  BarChart3,
+  Boxes,
+  ClipboardList,
+  Inbox,
+  Shield,
+  ShoppingBag,
+  Users,
+} from "lucide-react"
 import { getVendureAdminUrl } from "../../../lib/ops-host"
 
 export default function OpsDashboardPage() {
@@ -58,6 +67,54 @@ export default function OpsDashboardPage() {
             <span className="mt-3 text-lg font-medium text-slate-900">Commerce</span>
             <span className="mt-1 text-sm text-slate-600">
               Orders snapshot, product count, and customer count from Vendure.
+            </span>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+              Open
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/ops/orders"
+            className="group flex flex-col rounded-lg border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:bg-slate-50"
+          >
+            <ClipboardList className="h-8 w-8 text-brand-400" aria-hidden />
+            <span className="mt-3 text-lg font-medium text-slate-900">Orders</span>
+            <span className="mt-1 text-sm text-slate-600">
+              Operations queue with delayed, unpaid, and high-value order flags.
+            </span>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+              Open
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/ops/customers"
+            className="group flex flex-col rounded-lg border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:bg-slate-50"
+          >
+            <Users className="h-8 w-8 text-brand-400" aria-hidden />
+            <span className="mt-3 text-lg font-medium text-slate-900">Customers</span>
+            <span className="mt-1 text-sm text-slate-600">
+              Read-only customer 360 with order count and sample lifetime value.
+            </span>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+              Open
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/ops/products"
+            className="group flex flex-col rounded-lg border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:bg-slate-50"
+          >
+            <Boxes className="h-8 w-8 text-brand-400" aria-hidden />
+            <span className="mt-3 text-lg font-medium text-slate-900">Products</span>
+            <span className="mt-1 text-sm text-slate-600">
+              Product performance, low-stock risks, and zero-sales sample view.
             </span>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-400">
               Open

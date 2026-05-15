@@ -1,12 +1,15 @@
 import Link from "next/link"
 import {
   BarChart3,
+  Boxes,
+  ClipboardList,
   ExternalLink,
   Inbox,
   LayoutDashboard,
   PanelLeft,
   ShoppingBag,
   Truck,
+  Users,
 } from "lucide-react"
 import { getVendureAdminUrl } from "../../lib/ops-host"
 import OpsUserMenu from "./OpsUserMenu"
@@ -16,6 +19,9 @@ const nav = [
   { href: "/ops/leads", label: "Leads", icon: Inbox },
   { href: "/ops/traffic", label: "Traffic", icon: BarChart3 },
   { href: "/ops/commerce", label: "Commerce", icon: ShoppingBag },
+  { href: "/ops/orders", label: "Orders", icon: ClipboardList },
+  { href: "/ops/customers", label: "Customers", icon: Users },
+  { href: "/ops/products", label: "Products", icon: Boxes },
   { href: "/ops/shipping-rates", label: "Shipping Rates", icon: Truck },
 ] as const
 
