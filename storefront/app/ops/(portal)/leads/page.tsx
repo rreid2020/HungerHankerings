@@ -12,17 +12,17 @@ export default async function OpsLeadsPage() {
     <div className="space-y-6">
       <Link
         href="/ops"
-        className="inline-flex items-center gap-1 text-sm text-zinc-400 transition hover:text-white"
+        className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Dashboard
       </Link>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Leads</h1>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-          Contact form submissions from <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-200">POST /api/leads</code>
-          . Row details live in the <code className="text-zinc-300">payload</code> JSON column (
-          <span className="text-zinc-500">reason, name, email, company, phone, message</span> for inquiries).
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Leads</h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">
+          Contact form submissions from <code className="rounded bg-slate-200 px-1.5 py-0.5 text-slate-800">POST /api/leads</code>
+          . Row details live in the <code className="text-slate-700">payload</code> JSON column (
+          <span className="text-slate-500">reason, name, email, company, phone, message</span> for inquiries).
         </p>
       </div>
 
@@ -47,13 +47,13 @@ export default async function OpsLeadsPage() {
       ) : null}
 
       {result.ok === true && result.leads.length === 0 ? (
-        <div className="rounded-lg border border-zinc-700 bg-zinc-900/40 px-4 py-6 text-sm text-zinc-400">
-          <p className="font-medium text-zinc-300">No rows yet.</p>
+        <div className="rounded-lg border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600">
+          <p className="font-medium text-slate-900">No lead messages yet.</p>
           <p className="mt-2">
-            If submissions should appear here, confirm production uses the <strong>same</strong> database you opened in
-            pgAdmin (<code className="rounded bg-zinc-800 px-1 text-zinc-200">hungerhankeringsadmin</code>), not{" "}
-            <code className="rounded bg-zinc-800 px-1 text-zinc-200">vendure</code>. Check runtime logs for{" "}
-            <code className="text-zinc-300">Lead submission: database error</code> or connection timeouts.
+            This inbox is currently empty. If you expected messages, confirm production uses the <strong>same</strong>{" "}
+            database you opened in pgAdmin (
+            <code className="rounded bg-slate-200 px-1 text-slate-800">hungerhankeringsadmin</code>), not{" "}
+            <code className="rounded bg-slate-200 px-1 text-slate-800">vendure</code>.
           </p>
         </div>
       ) : null}
