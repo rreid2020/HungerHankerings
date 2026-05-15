@@ -357,7 +357,7 @@ export async function loadOpsVendureSnapshot(): Promise<OpsVendureSnapshot> {
 
     return {
       ok: true,
-      endpoint,
+      endpoint: config.endpoint,
       summary: {
         ordersTotal: data.orders.totalItems,
         productsTotal: data.products.totalItems,
@@ -377,7 +377,7 @@ export async function loadOpsVendureSnapshot(): Promise<OpsVendureSnapshot> {
   } catch (error) {
     return {
       ok: false,
-      endpoint,
+      endpoint: config.endpoint,
       reason: "query_failed",
       message: error instanceof Error ? error.message : "Vendure query failed",
     }
