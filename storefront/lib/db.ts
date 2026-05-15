@@ -283,3 +283,44 @@ export async function deleteLeadForPortal(
     return { ok: false, error: "delete_failed", message }
   }
 }
+
+export async function deleteLeadsForPortal(
+  ids: string[],
+): Promise<
+  | { ok: true; deletedCount: number }
+  | { ok: false; error: "not_configured" | "not_found" | "delete_failed"; message?: string }
+> {
+  const prisma = getLeadsPrisma()
+  if (!prisma) {
+    return { ok: false, error: "not_configured" }
+  }
+
+  const normalizedIds = Array.from(
+    new Set(
+      ids
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0),
+    ),
+  )
+  if (normalizedIds.length === 0) {
+    return { ok: false, error: "not_found" }
+  }
+
+  try {
+    const deleted = await runWithLeadRetries(async () => {
+      const p = getLeadsPrisma()
+      if (!p) throw new Error("Leads DB pool not available")
+      return p.lead.deleteMany({
+        where: { id: { in: normalizedIds } },
+      })
+    })
+    if (deleted.count < 1) {
+      return { ok: false, error: "not_found" }
+    }
+    return { ok: true, deletedCount: deleted.count }
+  } catch (err) {
+    console.error("deleteLeadsForPortal:", err)
+    const message = err instanceof Error ? err.message : undefined
+    return { ok: false, error: "delete_failed", message }
+  }
+}
