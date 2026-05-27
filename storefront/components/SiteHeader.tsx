@@ -134,6 +134,15 @@ const SiteHeader = () => {
               {link.label}
             </Link>
           ))}
+          <Link href="/login" className="font-medium transition hover:text-cherry_blossom">
+            Sign in
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground transition hover:opacity-90"
+          >
+            Create Account
+          </Link>
         </nav>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button
@@ -207,6 +216,20 @@ const SiteHeader = () => {
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <Link href="/login" className={mobileNavLinkClass} onClick={closeMobile}>
+                    Sign in
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/register"
+                    className="block rounded-lg bg-primary px-3 py-3.5 text-base font-semibold text-primary-foreground transition hover:opacity-90"
+                    onClick={closeMobile}
+                  >
+                    Create Account
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

@@ -30,9 +30,9 @@ export default async function LoginPage({ searchParams }: Props) {
     <div className="container-page flex flex-col items-center justify-center py-24">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">Customer Login</h1>
+          <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to your account to view orders and manage your profile
+            Sign in to access your company portal
           </p>
         </div>
 
