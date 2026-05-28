@@ -193,6 +193,7 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
 export const config = {
   matcher: [
     "/",
+    "/_clerk/:path*",
     "/ops",
     "/ops/:path*",
     "/api/ops/:path*",
