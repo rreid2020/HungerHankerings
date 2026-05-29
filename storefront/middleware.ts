@@ -194,6 +194,7 @@ export const config = {
   matcher: [
     "/",
     "/_clerk/:path*",
+    "/__clerk/:path*",
     "/ops",
     "/ops/:path*",
     "/api/ops/:path*",
