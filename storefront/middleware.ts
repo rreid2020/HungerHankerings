@@ -100,11 +100,14 @@ function opsClerkMiddlewareOptions(): ClerkMiddlewareOptions {
     (opsHost
       ? `${opsHost === "localhost" || opsHost === "127.0.0.1" ? "http" : "https"}://${opsHost}/ops/sign-in`
       : undefined)
+  const useFrontendApiProxy =
+    process.env.CLERK_FRONTEND_API_PROXY === "1" ||
+    process.env.CLERK_FRONTEND_API_PROXY === "true"
 
   return {
     contentSecurityPolicy: {},
-    // Same-origin FAPI proxy: avoids third-party / cross-site cookie issues and fixes many handshake failures.
-    frontendApiProxy: { enabled: true },
+    // Default off: direct Clerk domain is more robust for host-validation errors.
+    ...(useFrontendApiProxy ? { frontendApiProxy: { enabled: true } } : {}),
     ...(signInUrl ? { signInUrl } : {}),
   }
 }
