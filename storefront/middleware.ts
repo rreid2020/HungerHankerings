@@ -187,6 +187,11 @@ const opsClerkMiddleware = clerkMiddleware(
 )
 
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  const pathname = request.nextUrl.pathname
+  if (pathname.startsWith("/__clerk") || pathname.startsWith("/_clerk")) {
+    return opsClerkMiddleware(normalizeProxyRequestUrl(request), event)
+  }
+
   if (!isOpsRequestHeaders(request.headers)) {
     return storefrontMiddleware(request)
   }
