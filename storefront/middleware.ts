@@ -100,13 +100,14 @@ function opsClerkMiddlewareOptions(): ClerkMiddlewareOptions {
     (opsHost
       ? `${opsHost === "localhost" || opsHost === "127.0.0.1" ? "http" : "https"}://${opsHost}/ops/sign-in`
       : undefined)
-  const useFrontendApiProxy =
-    process.env.CLERK_FRONTEND_API_PROXY === "1" ||
-    process.env.CLERK_FRONTEND_API_PROXY === "true"
+  const useFrontendApiProxy = !(
+    process.env.CLERK_FRONTEND_API_PROXY === "0" ||
+    process.env.CLERK_FRONTEND_API_PROXY === "false"
+  )
 
   return {
     contentSecurityPolicy: {},
-    // Default off: direct Clerk domain is more robust for host-validation errors.
+    // Default on for ops host so /__clerk handshake endpoints resolve correctly.
     ...(useFrontendApiProxy ? { frontendApiProxy: { enabled: true } } : {}),
     ...(signInUrl ? { signInUrl } : {}),
   }
