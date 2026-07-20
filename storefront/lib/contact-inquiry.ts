@@ -7,7 +7,6 @@ export const INQUIRY_REASON_OPTIONS = [
   { value: "office-pantry-plan", label: "Office pantry — request a plan" },
   { value: "bulk-pallet", label: "Bulk / pallet orders" },
   { value: "corporate-programs", label: "Corporate programs" },
-  { value: "fundraising", label: "Fundraising" },
   { value: "gift-a-box", label: "Gift a box" },
   { value: "shop", label: "Shop / themed snack boxes" }
 ] as const

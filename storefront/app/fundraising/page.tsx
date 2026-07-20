@@ -27,7 +27,7 @@ const FundraisingPage = () => {
           Earn up to 25% while delivering curated snack boxes across Canada.
         </p>
         <div className="mt-6">
-          <Button href={contactQuoteHref("fundraising")} variant="primary">
+          <Button href={contactQuoteHref("corporate-programs")} variant="primary">
             Get in touch
           </Button>
         </div>
