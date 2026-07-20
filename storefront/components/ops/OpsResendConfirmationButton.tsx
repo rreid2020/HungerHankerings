@@ -41,7 +41,7 @@ export default function OpsResendConfirmationButton({
       if (!res.ok || !data.ok) {
         throw new Error(data.error || data.message || `Resend failed (${res.status})`)
       }
-      setMessage(data.message || `Queued for ${data.recipientEmail || customerEmail}`)
+          setMessage(data.message || `Sent to ${data.recipientEmail || customerEmail}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not resend confirmation")
     } finally {
