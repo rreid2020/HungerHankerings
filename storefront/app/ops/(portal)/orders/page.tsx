@@ -1,4 +1,5 @@
-import { loadOpsOrdersCenter } from "../../../../lib/vendure-admin"
+import { canResendOrderConfirmation, loadOpsOrdersCenter } from "../../../../lib/vendure-admin"
+import OpsResendConfirmationButton from "../../../../components/ops/OpsResendConfirmationButton"
 
 function formatMoney(amount: number, currencyCode: string): string {
   return new Intl.NumberFormat("en-CA", {
@@ -149,6 +150,7 @@ export default async function OpsOrdersPage({
                 <th className="px-4 py-2 font-medium">Fulfillment</th>
                 <th className="px-4 py-2 font-medium">Flags</th>
                 <th className="px-4 py-2 text-right font-medium">Total</th>
+                <th className="px-4 py-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -190,11 +192,18 @@ export default async function OpsOrdersPage({
                   <td className="px-4 py-2 text-right text-slate-900">
                     {formatMoney(order.totalWithTax, order.currencyCode)}
                   </td>
+                  <td className="px-4 py-2">
+                    <OpsResendConfirmationButton
+                      orderCode={order.code}
+                      customerEmail={order.customerEmail}
+                      enabled={canResendOrderConfirmation(order)}
+                    />
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
                     No orders match the current filters.
                   </td>
                 </tr>

@@ -25,6 +25,7 @@ import { ordersInboxNotificationHandler } from "./orders-inbox-email-handler";
 import { RelaxedOrderByCodeAccessStrategy } from "./relaxed-order-by-code-access-strategy";
 import { canadianProvinceTaxZoneStrategy } from "./plugins/tax/canadian-province-tax-zone-strategy";
 import { PostalZonePlugin } from "./plugins/shipping-plugin/postal-zone.plugin";
+import { OrderEmailPlugin } from "./plugins/order-email-plugin";
 import {
   postalShippingCalculator,
   postalShippingEligibilityChecker,
@@ -384,6 +385,7 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
   },
   plugins: [
     PostalZonePlugin,
+    OrderEmailPlugin,
     jobQueuePlugin,
     DefaultSearchPlugin.init({}),
     StripePlugin.init({

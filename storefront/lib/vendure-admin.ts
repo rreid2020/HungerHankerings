@@ -790,3 +790,105 @@ export async function loadOpsProductPerformance(): Promise<OpsProductPerformance
     }
   }
 }
+
+export type ResendOrderConfirmationResult =
+  | {
+      ok: true
+      message: string
+      orderCode: string
+      recipientEmail: string
+    }
+  | {
+      ok: false
+      message: string
+      orderCode?: string
+      recipientEmail?: string
+      reason?: "not_configured" | "mutation_failed" | "not_eligible"
+    }
+
+/** Whether the ops UI should offer confirmation resend for this row. */
+export function canResendOrderConfirmation(order: {
+  state: string
+  paymentState: string
+  customerEmail: string
+}): boolean {
+  const email = order.customerEmail.trim()
+  if (!email || email === "N/A") return false
+  const state = order.state.toLowerCase()
+  if (state.includes("cancel")) return false
+  if (state === "paymentsettled") return true
+  if (state.includes("shipped") || state.includes("delivered") || state.includes("fulfill")) {
+    return true
+  }
+  return isOrderSettled(order.paymentState)
+}
+
+/**
+ * Queue a customer order confirmation resend via Vendure Admin mutation.
+ * Does not change order state; relies on vendure-worker SMTP.
+ */
+export async function resendOrderConfirmationEmail(
+  orderCode: string,
+): Promise<ResendOrderConfirmationResult> {
+  const code = orderCode.trim()
+  if (!code) {
+    return { ok: false, message: "Order code is required", reason: "mutation_failed" }
+  }
+
+  const config = isVendureConfigured()
+  if (!config.ok) {
+    return {
+      ok: false,
+      message: config.message ?? "Vendure configuration is missing.",
+      reason: "not_configured",
+    }
+  }
+
+  try {
+    const data = await fetchVendureAdmin<{
+      resendOrderConfirmationEmail: {
+        success: boolean
+        message: string
+        orderCode: string | null
+        recipientEmail: string | null
+      }
+    }>(
+      `
+      mutation ResendOrderConfirmation($orderCode: String!) {
+        resendOrderConfirmationEmail(orderCode: $orderCode) {
+          success
+          message
+          orderCode
+          recipientEmail
+        }
+      }
+      `,
+      { orderCode: code },
+    )
+
+    const result = data.resendOrderConfirmationEmail
+    if (!result?.success) {
+      return {
+        ok: false,
+        message: result?.message || "Could not resend confirmation",
+        orderCode: result?.orderCode ?? code,
+        recipientEmail: result?.recipientEmail ?? undefined,
+        reason: "not_eligible",
+      }
+    }
+
+    return {
+      ok: true,
+      message: result.message,
+      orderCode: result.orderCode || code,
+      recipientEmail: result.recipientEmail || "",
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Vendure mutation failed",
+      orderCode: code,
+      reason: "mutation_failed",
+    }
+  }
+}
