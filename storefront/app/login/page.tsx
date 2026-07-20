@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: Props) {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to access your company portal
+            Sign in to your account to view orders and manage your profile
           </p>
         </div>
 
