@@ -80,7 +80,7 @@ export const orderConfirmationEmailHandler = new EmailEventListener("order-confi
   .setFrom("{{ fromAddress }}")
   .setSubject("Order confirmation for #{{ order.code }}")
   .setTemplateVars((event: EventWithAsyncData<OrderStateTransitionEvent, OrderConfirmationLoadData>) => ({
-    order: toPlainOrderForEmail(event.order),
+    order: toPlainOrderForEmail(event.order, String(event.ctx.languageCode ?? "")),
     shippingLines: event.data.shippingLines,
     giftLines: event.data.giftLines,
     giftFeeMinor: event.data.giftFeeMinor,

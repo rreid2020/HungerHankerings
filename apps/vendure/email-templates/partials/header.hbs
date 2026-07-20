@@ -23,9 +23,19 @@
     <mj-body background-color="#ffffff">
         <mj-section background-color="#eeeeee" padding="28px 20px">
             <mj-column>
+                {{#if storeLogoUrl}}
+                <mj-image
+                    src="{{ storeLogoUrl }}"
+                    alt="{{ storeDisplayName }}"
+                    width="180px"
+                    align="center"
+                    padding="0"
+                />
+                {{else}}
                 <mj-text align="center" padding="0">
                     <span class="brand-name">{{ storeDisplayName }}</span>
                 </mj-text>
+                {{/if}}
                 <mj-text align="center" padding="10px 0 0 0" css-class="brand-tagline">
                     {{ storeTagline }}
                 </mj-text>

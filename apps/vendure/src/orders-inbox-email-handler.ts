@@ -49,7 +49,7 @@ export const ordersInboxNotificationHandler = new EmailEventListener("orders-inb
     return `[New order] #${o.code} — ${suffix}`;
   })
   .setTemplateVars((event: EventWithAsyncData<OrderStateTransitionEvent, OrdersInboxLoadData>) => ({
-    order: toPlainOrderForEmail(event.order),
+    order: toPlainOrderForEmail(event.order, String(event.ctx.languageCode ?? "")),
     shippingLines: event.data.shippingLines,
     giftLines: event.data.giftLines,
     giftFeeMinor: event.data.giftFeeMinor,

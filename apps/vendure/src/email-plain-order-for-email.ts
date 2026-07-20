@@ -5,6 +5,8 @@ export type PlainOrderLineForEmail = {
   quantity: number;
   discountedLinePriceWithTax: number;
   featuredAsset: { preview: string } | null;
+  /** Customer-facing label: product name + size/variant when distinct. */
+  displayLabel: string;
   productVariant: {
     name: string;
     sku: string;
@@ -46,6 +48,51 @@ function localeToDisplayString(value: unknown): string {
   return "";
 }
 
+type NamedWithTranslations = {
+  name?: unknown;
+  translations?: Array<{ languageCode?: string; name?: unknown }> | null;
+};
+
+/**
+ * Prefer the active language translation, then any translation, then the entity `name` field.
+ * Without `translations` hydrated, product names often fall back empty and emails show size-only labels.
+ */
+export function resolveTranslatedName(
+  entity: NamedWithTranslations | null | undefined,
+  languageCode?: string,
+): string {
+  if (!entity) return "";
+  const translations = entity.translations;
+  if (Array.isArray(translations) && translations.length > 0) {
+    const lang = (languageCode || "").trim();
+    const preferred =
+      (lang
+        ? translations.find((t) => String(t.languageCode || "") === lang)
+        : undefined) ?? translations[0];
+    const fromTranslation = localeToDisplayString(preferred?.name);
+    if (fromTranslation) return fromTranslation;
+  }
+  return localeToDisplayString(entity.name);
+}
+
+/**
+ * Build "Product — Size" without duplicating when names are the same or already combined.
+ */
+export function formatLineDisplayLabel(productName: string, variantName: string): string {
+  const product = productName.trim();
+  const variant = variantName.trim();
+  if (!product && !variant) return "Item";
+  if (!product) return variant;
+  if (!variant) return product;
+
+  const productLower = product.toLowerCase();
+  const variantLower = variant.toLowerCase();
+  if (productLower === variantLower) return product;
+  if (variantLower.startsWith(productLower)) return variant;
+  if (productLower.endsWith(variantLower) && product.length > variant.length) return product;
+  return `${product} — ${variant}`;
+}
+
 function plainAddress(addr: Order["shippingAddress"] | null | undefined): Record<string, string> | null {
   if (!addr) return null;
   return {
@@ -71,12 +118,18 @@ function plainDiscounts(
   }));
 }
 
-function plainLines(order: Order): PlainOrderLineForEmail[] {
+function plainLines(order: Order, languageCode?: string): PlainOrderLineForEmail[] {
   const lines = order.lines ?? [];
   return lines.map((line) => {
-    const pv = line.productVariant;
-    const variantName = localeToDisplayString(pv?.name);
-    const productName = localeToDisplayString(pv?.product?.name);
+    const pv = line.productVariant as
+      | (NamedWithTranslations & {
+          sku?: unknown;
+          product?: NamedWithTranslations | null;
+        })
+      | null
+      | undefined;
+    const variantName = resolveTranslatedName(pv, languageCode);
+    const productName = resolveTranslatedName(pv?.product, languageCode);
     const preview =
       line.featuredAsset && typeof line.featuredAsset.preview === "string"
         ? line.featuredAsset.preview
@@ -89,15 +142,18 @@ function plainLines(order: Order): PlainOrderLineForEmail[] {
     } catch {
       lineTotalTax = 0;
     }
+    const resolvedProduct = productName || variantName;
+    const resolvedVariant = variantName;
     return {
       quantity: qty,
       discountedLinePriceWithTax: lineTotalTax,
       featuredAsset: preview ? { preview } : null,
+      displayLabel: formatLineDisplayLabel(resolvedProduct, resolvedVariant),
       productVariant: {
-        name: variantName,
+        name: resolvedVariant,
         sku: String(pv?.sku ?? ""),
         quantity: qty,
-        product: { name: productName || variantName },
+        product: { name: resolvedProduct },
       },
     };
   });
@@ -116,7 +172,7 @@ function plainPayments(order: Order): { state: string; method: string; amount: n
  * Builds a JSON-friendly order snapshot for email templates so `send-email` jobs do not embed
  * TypeORM graphs (cycles, huge payloads, serialization failures).
  */
-export function toPlainOrderForEmail(order: Order): PlainOrderForEmail {
+export function toPlainOrderForEmail(order: Order, languageCode?: string): PlainOrderForEmail {
   const cust = order.customer;
   const customer =
     cust &&
@@ -166,7 +222,7 @@ export function toPlainOrderForEmail(order: Order): PlainOrderForEmail {
     customer,
     shippingAddress: plainAddress(order.shippingAddress),
     billingAddress: plainAddress(order.billingAddress),
-    lines: plainLines(order),
+    lines: plainLines(order, languageCode),
     discounts: plainDiscounts(discountsInput),
     couponCodes,
     taxSummary,

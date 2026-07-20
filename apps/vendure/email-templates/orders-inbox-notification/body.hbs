@@ -32,7 +32,7 @@
     <mj-text font-size="16px" font-weight="bold">Line items</mj-text>
     {{#each order.lines}}
     <mj-text padding-top="4px">
-      {{ productVariant.product.name }} — {{ productVariant.name }} × {{ quantity }}
+      {{ displayLabel }} × {{ quantity }}
       {{#if productVariant.sku}}<br/><span style="color:#666">SKU: {{ productVariant.sku }}</span>{{/if}}
       <br/><span style="color:#666">Line total (incl. tax): {{ formatMoney discountedLinePriceWithTax order.currencyCode 'en-CA' }}</span>
     </mj-text>

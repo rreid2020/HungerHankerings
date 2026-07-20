@@ -257,12 +257,11 @@ const ordersAndDefaultEmailHandlers = [
   ...(ordersInboxSeparateEmailJob ? [ordersInboxNotificationHandler] : []),
 ];
 const emailOutputPath = path.join(assetDir, "test-emails");
+const emailBaseUrl = process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
 const emailGlobalTemplateVars = {
-  baseUrl: process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000",
-  passwordResetUrl:
-    (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/reset-password",
-  verifyEmailAddressUrl:
-    (process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000") + "/account/confirm",
+  baseUrl: emailBaseUrl,
+  passwordResetUrl: emailBaseUrl + "/reset-password",
+  verifyEmailAddressUrl: emailBaseUrl + "/account/confirm",
   fromAddress:
     process.env.SMTP_FROM?.trim() || "Hunger Hankerings <onboarding@resend.dev>",
   /** Header/footer branding (override via env for white-label) */
@@ -270,6 +269,9 @@ const emailGlobalTemplateVars = {
   storeTagline:
     process.env.STORE_EMAIL_TAGLINE?.trim() ||
     "Artisan treats and gifts delivered across Canada",
+  /** Absolute logo URL for email clients (defaults to storefront /logo.png). */
+  storeLogoUrl:
+    process.env.STORE_EMAIL_LOGO_URL?.trim() || `${emailBaseUrl}/logo.png`,
   emailCopyrightYear: new Date().getFullYear(),
 };
 
