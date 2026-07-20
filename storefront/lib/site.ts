@@ -10,10 +10,11 @@ function trimTrailingSlashes(s: string): string {
 }
 
 /**
- * Canonical public origin (no trailing slash). Uses `NEXT_PUBLIC_SITE_URL`, then Vercel, else localhost.
+ * Canonical public origin (no trailing slash). Uses `NEXT_PUBLIC_SITE_URL`,
+ * then `APP_URL`, then Vercel, else localhost.
  */
 export function getSiteOrigin(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const explicit = (process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || "").trim();
   if (explicit) {
     const t = trimTrailingSlashes(explicit);
     if (/^https?:\/\//i.test(t)) return t;
