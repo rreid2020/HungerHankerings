@@ -9,8 +9,8 @@ import {
 } from "@vendure/core";
 import { EmailProcessor } from "@vendure/email-plugin/lib/src/email-processor";
 import { EMAIL_PLUGIN_OPTIONS } from "@vendure/email-plugin/lib/src/constants";
-import { orderConfirmationResendEmailHandler } from "./order-confirmation-resend-email-handler";
-import { ResendOrderConfirmationEvent } from "./resend-order-confirmation.event";
+import { toPlainOrderForEmail } from "../../email-plain-order-for-email";
+import { loadOrderConfirmationEmailData } from "./order-confirmation-resend-email-handler";
 
 const loggerCtx = "OrderEmailResend";
 
@@ -30,9 +30,20 @@ type EmailPluginOptionsShape = {
       ) => Promise<Record<string, unknown>> | Record<string, unknown>);
 };
 
+function ordersInboxEmail(): string {
+  return (process.env.ORDERS_INBOX_EMAIL?.trim() || "orders@hungerhankerings.com").trim();
+}
+
+function ordersInboxUsesSeparateEmailJob(): boolean {
+  return (
+    process.env.ORDERS_INBOX_SEPARATE_EMAIL === "true" ||
+    process.env.ORDERS_INBOX_SEPARATE_EMAIL === "1"
+  );
+}
+
 /**
- * Sends the customer order confirmation immediately via EmailProcessor (same renderer/SMTP
- * path as the worker), so ops gets a real success/failure instead of fire-and-forget EventBus.
+ * Builds IntermediateEmailDetails and sends via EmailProcessor immediately.
+ * Avoids EmailEventHandler.handle()'s silent `return` when filters/loadData fail.
  */
 @Injectable()
 export class OrderEmailResendService {
@@ -108,22 +119,37 @@ export class OrderEmailResendService {
         globals = options.globalTemplateVars;
       }
 
-      const event = new ResendOrderConfirmationEvent(ctx, order);
-      const details = await orderConfirmationResendEmailHandler.handle(
-        event as Parameters<typeof orderConfirmationResendEmailHandler.handle>[0],
-        globals,
-        injector,
-      );
-      if (!details) {
-        return {
-          success: false,
-          message: "Email handler did not produce a message (check customer/email filters)",
-          orderCode: order.code,
-          recipientEmail: email,
-        };
+      const data = await loadOrderConfirmationEmailData(ctx, order, injector);
+      const templateVars = {
+        ...globals,
+        order: toPlainOrderForEmail(order, String(ctx.languageCode ?? "")),
+        shippingLines: data.shippingLines,
+        giftLines: data.giftLines,
+        giftFeeMinor: data.giftFeeMinor,
+        grandTotalChargedMinor: data.grandTotalChargedMinor,
+      };
+
+      const optionalAddressFields: { bcc?: string } = {};
+      if (!ordersInboxUsesSeparateEmailJob()) {
+        const inbox = ordersInboxEmail();
+        if (inbox && inbox.toLowerCase() !== email.toLowerCase()) {
+          optionalAddressFields.bcc = inbox;
+        }
       }
 
-      await emailProcessor.process(details);
+      const details = {
+        ctx: ctx.serialize(),
+        type: "order-confirmation",
+        recipient: email,
+        from: "{{ fromAddress }}",
+        subject: `Order confirmation for #${order.code}`,
+        templateFile: "body.hbs",
+        templateVars,
+        attachments: [],
+        ...optionalAddressFields,
+      };
+
+      await emailProcessor.process(details as Parameters<EmailProcessor["process"]>[0]);
 
       Logger.info(`Sent order confirmation resend for ${order.code} → ${email} (ops admin)`, loggerCtx);
 
