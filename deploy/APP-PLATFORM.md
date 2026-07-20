@@ -62,6 +62,8 @@ You can reuse **names and values** from `deploy/env.production.example` / your D
 | Variable | Notes |
 |----------|--------|
 | `VENDURE_SHOP_API_URL` | **`http://127.0.0.1:3000/shop-api`** (storefront server-side calls inside the container). |
+| `VENDURE_ADMIN_API_URL` | **`http://127.0.0.1:3000/admin-api`** (ops Orders Center / Admin GraphQL). If unset, derived from `VENDURE_SHOP_API_URL`. Do **not** use the public `https://…/admin-api` from inside the container — the edge proxy often strips `vendure-auth-token`. |
+| `SUPERADMIN_USERNAME` / `SUPERADMIN_PASSWORD` | Required for ops to log into the Admin API when `VENDURE_ADMIN_API_TOKEN` is not set. Same secrets Vendure uses for `/admin`. |
 | `APP_URL` | Public site URL with **`https://`** (same hostname visitors use). |
 | `NEXT_PUBLIC_VENDURE_SHOP_API_URL` | **`BUILD_TIME`** — must be the public URL, e.g. `https://your-domain/shop-api`. Changing it requires a **redeploy/rebuild**. |
 | `NEXT_PUBLIC_SITE_URL` | **`BUILD_TIME`** — public storefront origin (often same as `APP_URL`). |

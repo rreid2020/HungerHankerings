@@ -141,8 +141,15 @@ export type OpsProductPerformanceResult =
 function adminApiEndpoint(): string {
   const explicit = process.env.VENDURE_ADMIN_API_URL?.trim()
   if (explicit) return explicit.replace(/\/+$/, "")
+
+  // Prefer in-container Vendure (App Platform / Docker). Calling the public
+  // https://…/admin-api from Next often drops the `vendure-auth-token` response
+  // header at the edge proxy, so login looks configured but never gets a token.
+  const fromShop = process.env.VENDURE_SHOP_API_URL?.trim().replace(/\/shop-api\/?$/i, "/admin-api")
+  if (fromShop && /^https?:\/\//i.test(fromShop)) return fromShop.replace(/\/+$/, "")
+
   const base = getStorefrontPublicOrigin()
-  return base ? `${base}/admin-api` : "http://localhost:3000/admin-api"
+  return base ? `${base}/admin-api` : "http://127.0.0.1:3000/admin-api"
 }
 
 function adminApiToken(): string {
@@ -167,40 +174,60 @@ function adminPassword(): string {
 
 const VENDURE_AUTH_HEADER = "vendure-auth-token"
 
-async function loginAdminToken(endpoint: string): Promise<string> {
+async function loginAdminToken(endpoint: string): Promise<{ token: string; error?: string }> {
   const username = adminUsername()
   const password = adminPassword()
-  if (!username || !password) return ""
+  if (!username || !password) {
+    return { token: "", error: "Missing VENDURE_ADMIN_USERNAME/PASSWORD or SUPERADMIN_USERNAME/PASSWORD" }
+  }
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: `
-        mutation Login($username: String!, $password: String!, $rememberMe: Boolean) {
-          login(username: $username, password: $password, rememberMe: $rememberMe) {
-            ... on CurrentUser { id identifier }
-            ... on InvalidCredentialsError { message errorCode }
-            ... on ErrorResult { message errorCode }
+  let res: Response
+  try {
+    res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `
+          mutation Login($username: String!, $password: String!, $rememberMe: Boolean) {
+            login(username: $username, password: $password, rememberMe: $rememberMe) {
+              ... on CurrentUser { id identifier }
+              ... on InvalidCredentialsError { message errorCode }
+              ... on ErrorResult { message errorCode }
+            }
           }
-        }
-      `,
-      variables: { username, password, rememberMe: true },
-    }),
-    cache: "no-store",
-  })
+        `,
+        variables: { username, password, rememberMe: true },
+      }),
+      cache: "no-store",
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { token: "", error: `Could not reach Admin API at ${endpoint}: ${msg}` }
+  }
 
-  if (!res.ok) return ""
+  if (!res.ok) {
+    return { token: "", error: `Admin API login HTTP ${res.status} from ${endpoint}` }
+  }
+
   const token = res.headers.get(VENDURE_AUTH_HEADER)?.trim() || ""
-  if (!token) return ""
+  if (!token) {
+    return {
+      token: "",
+      error: `Admin API login succeeded but no ${VENDURE_AUTH_HEADER} header from ${endpoint}. Set VENDURE_ADMIN_API_URL=http://127.0.0.1:3000/admin-api for in-container calls.`,
+    }
+  }
 
   const payload = (await res.json()) as AdminGraphqlResponse<{
     login?: { id?: string; message?: string }
   }>
   if (payload.errors?.length || payload.data?.login?.message || !payload.data?.login?.id) {
-    return ""
+    const detail =
+      payload.data?.login?.message ||
+      payload.errors?.map((e) => e.message).join("; ") ||
+      "invalid credentials"
+    return { token: "", error: `Admin API login failed: ${detail}` }
   }
-  return token
+  return { token }
 }
 
 async function fetchVendureAdmin<T>(
@@ -208,10 +235,19 @@ async function fetchVendureAdmin<T>(
   variables?: Record<string, unknown>,
 ): Promise<T> {
   const endpoint = adminApiEndpoint()
-  const token = adminApiToken() || (await loginAdminToken(endpoint))
+  let token = adminApiToken()
+  if (!token) {
+    const login = await loginAdminToken(endpoint)
+    token = login.token
+    if (!token) {
+      throw new Error(login.error || "Vendure Admin API login failed")
+    }
+  }
 
   if (!endpoint || !token) {
-    throw new Error("Vendure Admin API not configured")
+    throw new Error(
+      "Vendure Admin API not configured. Set VENDURE_ADMIN_API_TOKEN or SUPERADMIN_USERNAME/SUPERADMIN_PASSWORD, and VENDURE_ADMIN_API_URL=http://127.0.0.1:3000/admin-api on App Platform.",
+    )
   }
 
   const res = await fetch(endpoint, {
