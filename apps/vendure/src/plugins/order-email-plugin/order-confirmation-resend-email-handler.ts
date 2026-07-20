@@ -36,14 +36,20 @@ export async function loadOrderConfirmationEmailData(
   order: Order,
   injector: Injector,
 ): Promise<OrderConfirmationLoadData> {
-  await hydrateOrderForEmail(ctx, order, injector);
-  transformOrderLineAssetUrls(ctx, order, injector);
   try {
-    const shippingLines = await loadShippingLinesForEmailPlain(ctx, order, injector);
-    const giftFeeMinor = giftFeeCents(order);
-    const giftLines = buildGiftLinesForEmail(order);
-    const grandTotalChargedMinor = (order.totalWithTax ?? 0) + giftFeeMinor;
-    return { shippingLines, giftFeeMinor, giftLines, grandTotalChargedMinor };
+    await hydrateOrderForEmail(ctx, order, injector);
+    transformOrderLineAssetUrls(ctx, order, injector);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    Logger.warn(
+      `Order hydrate/assets for email failed for ${order.code}; continuing with loaded relations. ${msg}`,
+      loggerCtx,
+    );
+  }
+
+  let shippingLines: PlainShippingLineForEmail[] = [];
+  try {
+    shippingLines = await loadShippingLinesForEmailPlain(ctx, order, injector);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     Logger.warn(
@@ -51,10 +57,11 @@ export async function loadOrderConfirmationEmailData(
       loggerCtx,
     );
   }
+
   const giftFeeMinor = giftFeeCents(order);
   const giftLines = buildGiftLinesForEmail(order);
   const grandTotalChargedMinor = (order.totalWithTax ?? 0) + giftFeeMinor;
-  return { shippingLines: [], giftFeeMinor, giftLines, grandTotalChargedMinor };
+  return { shippingLines, giftFeeMinor, giftLines, grandTotalChargedMinor };
 }
 
 /**

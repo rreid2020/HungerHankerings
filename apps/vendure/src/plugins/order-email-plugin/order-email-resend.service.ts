@@ -66,7 +66,10 @@ export class OrderEmailResendService {
     const order = await this.orderService.findOneByCode(ctx, code, [
       "customer",
       "lines",
+      "lines.productVariant",
+      "lines.productVariant.product",
       "payments",
+      "shippingLines",
     ]);
     if (!order) {
       return {

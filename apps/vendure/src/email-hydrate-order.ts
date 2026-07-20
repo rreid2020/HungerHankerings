@@ -1,9 +1,14 @@
 import type { EntityRelationPaths, Injector, Order, RequestContext } from "@vendure/core";
-import { EntityHydrator } from "@vendure/core";
+import { EntityHydrator, Logger } from "@vendure/core";
+
+const loggerCtx = "EmailHydrateOrder";
 
 /**
- * Ensures relations needed for {@link Order.taxSummary}, line display names, assets, and shipping labels.
- * Nested `*.taxLines` paths are valid at runtime; generated relation paths omit some TaxLine joins.
+ * Ensures relations needed for {@link Order.taxSummary}, line display names, and assets.
+ *
+ * Do **not** hydrate `shippingLines.shippingMethod` / `shippingLines.taxLines` here — that path
+ * can make TypeORM look for unrelated columns (e.g. `last_name` on `ShippingLine`). Shipping
+ * labels are loaded separately via {@link loadShippingLinesForEmailPlain}.
  */
 export async function hydrateOrderForEmail(ctx: RequestContext, order: Order, injector: Injector): Promise<void> {
   const entityHydrator = injector.get(EntityHydrator);
@@ -16,8 +21,17 @@ export async function hydrateOrderForEmail(ctx: RequestContext, order: Order, in
     "lines.productVariant.product.translations",
     "lines.featuredAsset",
     "shippingLines",
-    "shippingLines.taxLines",
-    "shippingLines.shippingMethod",
   ] as unknown as Array<EntityRelationPaths<Order>>;
-  await entityHydrator.hydrate(ctx, order, { relations });
+
+  try {
+    await entityHydrator.hydrate(ctx, order, { relations });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    Logger.warn(
+      `Full order hydrate failed for ${order.code}; retrying without shippingLines. ${msg}`,
+      loggerCtx,
+    );
+    const withoutShipping = relations.filter((r) => !String(r).startsWith("shippingLines"));
+    await entityHydrator.hydrate(ctx, order, { relations: withoutShipping });
+  }
 }
