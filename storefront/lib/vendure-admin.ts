@@ -37,6 +37,7 @@ export type OpsOrderRow = {
   id: string
   code: string
   state: string
+  active: boolean
   placedAt: string | null
   totalWithTax: number
   subTotalWithTax: number
@@ -52,11 +53,13 @@ export type OpsOrdersCenterResult =
   | {
       ok: true
       endpoint: string
+      includeOpenCarts: boolean
       summary: {
         totalOrders: number
         delayedOrders: number
         unpaidOrders: number
         highValueOrders: number
+        openCartsInSample: number
       }
       orders: OpsOrderRow[]
     }
@@ -329,7 +332,7 @@ export async function loadOpsVendureSnapshot(): Promise<OpsVendureSnapshot> {
     }>(
       `
       query OpsVendureSnapshot {
-        orders(options: { take: 8, sort: { orderPlacedAt: DESC } }) {
+        orders(options: { take: 8, sort: { orderPlacedAt: DESC }, filter: { active: { eq: false } } }) {
           totalItems
           items {
             id
@@ -384,7 +387,13 @@ export async function loadOpsVendureSnapshot(): Promise<OpsVendureSnapshot> {
   }
 }
 
-export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
+export async function loadOpsOrdersCenter(options?: {
+  /** When true, include abandoned carts (Draft / AddingItems). Default: placed orders only. */
+  includeOpenCarts?: boolean
+  take?: number
+}): Promise<OpsOrdersCenterResult> {
+  const includeOpenCarts = options?.includeOpenCarts === true
+  const take = Math.min(Math.max(options?.take ?? 200, 1), 500)
   const config = isVendureConfigured()
   if (!config.ok) {
     return {
@@ -397,6 +406,9 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
   }
 
   try {
+    // Placed orders are `active: false`. Open carts / incomplete checkouts are `active: true`
+    // and were previously flooding this list (null orderPlacedAt sorts first).
+    const filterClause = includeOpenCarts ? "" : "filter: { active: { eq: false } }"
     const data = await fetchVendureAdmin<{
       orders: {
         totalItems: number
@@ -404,6 +416,7 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
           id: string
           code: string
           state: string
+          active: boolean
           orderPlacedAt: string | null
           totalWithTax: number
           subTotalWithTax: number
@@ -417,15 +430,23 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
           fulfillments?: Array<{ state?: string | null }> | null
         }>
       }
+      openCarts: { totalItems: number }
     }>(
       `
-      query OpsOrdersCenter {
-        orders(options: { take: 120, sort: { orderPlacedAt: DESC } }) {
+      query OpsOrdersCenter($take: Int!) {
+        orders(
+          options: {
+            take: $take
+            sort: { orderPlacedAt: DESC }
+            ${filterClause}
+          }
+        ) {
           totalItems
           items {
             id
             code
             state
+            active
             orderPlacedAt
             totalWithTax
             subTotalWithTax
@@ -443,8 +464,12 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
             }
           }
         }
+        openCarts: orders(options: { take: 0, filter: { active: { eq: true } } }) {
+          totalItems
+        }
       }
       `,
+      { take },
     )
 
     const now = Date.now()
@@ -455,11 +480,15 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
       const fulfillmentState = mostRelevantFulfillmentState(order.fulfillments)
       const placedMs = order.orderPlacedAt ? new Date(order.orderPlacedAt).getTime() : NaN
       const orderState = order.state.toLowerCase()
+      const isOpenCart = order.active === true
       const fulfilled =
         orderState.includes("delivered") ||
         orderState.includes("shipped") ||
-        fulfillmentState.toLowerCase().includes("delivered")
-      const delayed = Number.isFinite(placedMs) && !fulfilled && now - placedMs > delayedCutoffMs
+        fulfillmentState.toLowerCase().includes("delivered") ||
+        fulfillmentState.toLowerCase().includes("shipped")
+      const delayed =
+        !isOpenCart && Number.isFinite(placedMs) && !fulfilled && now - placedMs > delayedCutoffMs
+      // Only flag unpaid for incomplete checkouts / unpaid placed orders — not open-cart noise when mixed in.
       const unpaid = !isOrderSettled(paymentState)
       const highValue = order.totalWithTax >= 25_000
 
@@ -472,6 +501,7 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
         id: order.id,
         code: order.code,
         state: order.state,
+        active: order.active === true,
         placedAt: order.orderPlacedAt,
         totalWithTax: order.totalWithTax,
         subTotalWithTax: order.subTotalWithTax,
@@ -487,11 +517,13 @@ export async function loadOpsOrdersCenter(): Promise<OpsOrdersCenterResult> {
     return {
       ok: true,
       endpoint: config.endpoint,
+      includeOpenCarts,
       summary: {
         totalOrders: data.orders.totalItems,
         delayedOrders: orders.filter((o) => o.flags.includes("delayed")).length,
         unpaidOrders: orders.filter((o) => o.flags.includes("unpaid")).length,
         highValueOrders: orders.filter((o) => o.flags.includes("high_value")).length,
+        openCartsInSample: data.openCarts.totalItems,
       },
       orders,
     }

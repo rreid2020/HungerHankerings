@@ -21,7 +21,8 @@ export default async function OpsOrdersPage({
   searchParams?: Promise<SearchParams>
 }) {
   const resolvedSearchParams = (await searchParams) ?? {}
-  const snapshot = await loadOpsOrdersCenter()
+  const includeOpenCarts = singleParam(resolvedSearchParams.carts) === "1"
+  const snapshot = await loadOpsOrdersCenter({ includeOpenCarts })
   const stateFilter = singleParam(resolvedSearchParams.state).trim()
   const paymentFilter = singleParam(resolvedSearchParams.payment).trim()
   const daysFilter = Number(singleParam(resolvedSearchParams.days) || "0")
@@ -42,7 +43,8 @@ export default async function OpsOrdersPage({
     if (stateFilter && order.state !== stateFilter) return false
     if (paymentFilter && order.paymentState !== paymentFilter) return false
     if (highValueOnly && !order.flags.includes("high_value")) return false
-    if (daysFilter > 0 && order.placedAt) {
+    if (daysFilter > 0) {
+      if (!order.placedAt) return false
       const ageDays = (nowMs - new Date(order.placedAt).getTime()) / (1000 * 60 * 60 * 24)
       if (ageDays > daysFilter) return false
     }
@@ -57,19 +59,30 @@ export default async function OpsOrdersPage({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Order Operations Center</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Recent orders with operational flags for delayed, unpaid, and high-value orders.
+          {includeOpenCarts
+            ? "Showing placed orders and open carts. Open carts often dominate this view — turn them off to focus on real checkouts."
+            : "Placed orders only (PaymentSettled and later). Abandoned carts are hidden by default."}
         </p>
+        {snapshot.summary.openCartsInSample > 0 ? (
+          <p className="mt-1 text-xs text-slate-500">
+            {snapshot.summary.openCartsInSample.toLocaleString("en-CA")} open cart
+            {snapshot.summary.openCartsInSample === 1 ? "" : "s"} in Vendure
+            {includeOpenCarts ? " (included below)" : " (excluded from this list)"}.
+          </p>
+        ) : null}
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Total Orders</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">
+            {includeOpenCarts ? "Matching orders" : "Placed orders"}
+          </div>
           <div className="mt-1 text-2xl font-semibold text-slate-900">
             {snapshot.summary.totalOrders.toLocaleString("en-CA")}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Delayed</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">Delayed fulfillment</div>
           <div className="mt-1 text-2xl font-semibold text-amber-700">
             {snapshot.summary.delayedOrders.toLocaleString("en-CA")}
           </div>
@@ -89,7 +102,7 @@ export default async function OpsOrdersPage({
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <form className="grid gap-3 md:grid-cols-5">
+        <form className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
           <select
             name="state"
             defaultValue={stateFilter}
@@ -127,6 +140,10 @@ export default async function OpsOrdersPage({
           <label className="flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
             <input type="checkbox" name="highValue" value="1" defaultChecked={highValueOnly} />
             High-value only
+          </label>
+          <label className="flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
+            <input type="checkbox" name="carts" value="1" defaultChecked={includeOpenCarts} />
+            Include open carts
           </label>
           <button
             type="submit"
