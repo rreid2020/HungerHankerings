@@ -22,9 +22,7 @@ export default function OpsSignInPage() {
           variables: {
             colorPrimary: "#f97316",
             colorBackground: "#ffffff",
-            colorText: "#0f172a",
             colorInputBackground: "#ffffff",
-            colorInputText: "#0f172a",
             borderRadius: "0.5rem",
           },
           elements: {
