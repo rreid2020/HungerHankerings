@@ -1,4 +1,5 @@
 import type { Order } from "@vendure/core";
+import { toEmailLineImageUrl } from "./email-public-asset-url";
 
 /** Serializable subset used by `order-confirmation` and `orders-inbox-notification` templates. */
 export type PlainOrderLineForEmail = {
@@ -125,15 +126,20 @@ function plainLines(order: Order, languageCode?: string): PlainOrderLineForEmail
       | (NamedWithTranslations & {
           sku?: unknown;
           product?: NamedWithTranslations | null;
+          featuredAsset?: { preview?: string | null } | null;
         })
       | null
       | undefined;
     const variantName = resolveTranslatedName(pv, languageCode);
     const productName = resolveTranslatedName(pv?.product, languageCode);
-    const preview =
-      line.featuredAsset && typeof line.featuredAsset.preview === "string"
+    const rawPreview =
+      (line.featuredAsset && typeof line.featuredAsset.preview === "string"
         ? line.featuredAsset.preview
-        : "";
+        : "") ||
+      (pv?.featuredAsset && typeof pv.featuredAsset.preview === "string"
+        ? pv.featuredAsset.preview
+        : "");
+    const preview = toEmailLineImageUrl(rawPreview, 100);
     const qty = typeof line.quantity === "number" && Number.isFinite(line.quantity) ? line.quantity : 0;
     let lineTotalTax = 0;
     try {

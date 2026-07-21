@@ -110,8 +110,8 @@
                     <td style="width:56px;vertical-align:top;">
                         {{#if featuredAsset.preview}}
                         <img alt="{{ displayLabel }}"
-                             style="width: 50px; height: 50px;"
-                             src="{{ featuredAsset.preview }}?w=50&h=50" />
+                             style="width: 50px; height: 50px; object-fit: cover;"
+                             src="{{ featuredAsset.preview }}" />
                         {{else}}
                         <span style="display:inline-block;width:50px;height:50px;background:#eee;line-height:50px;text-align:center;font-size:11px;color:#888;">—</span>
                         {{/if}}

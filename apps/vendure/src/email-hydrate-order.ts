@@ -17,6 +17,7 @@ export async function hydrateOrderForEmail(ctx: RequestContext, order: Order, in
     "lines.taxLines",
     "lines.productVariant",
     "lines.productVariant.translations",
+    "lines.productVariant.featuredAsset",
     "lines.productVariant.product",
     "lines.productVariant.product.translations",
     "lines.featuredAsset",

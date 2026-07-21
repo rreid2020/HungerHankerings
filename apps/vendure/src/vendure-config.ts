@@ -188,6 +188,16 @@ function buildAdminUiConfigFromAppUrl():
 const adminUiPublicApi = buildAdminUiConfigFromAppUrl();
 
 /**
+ * Force absolute asset URLs onto the public storefront origin.
+ * Without this, emails and GraphQL use the inbound request Host (ops subdomain, Docker
+ * service name, or missing req → broken thumbnails in order confirmation emails).
+ */
+function assetUrlPrefixFromAppUrl(): string {
+  const origin = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+  return `${origin}/assets/`;
+}
+
+/**
  * DigitalOcean Spaces (S3-compatible). When all vars are set, binaries live in Spaces and survive droplet rebuilds.
  * @see https://docs.digitalocean.com/products/spaces/how-to/use-aws-sdks/
  * Region slug must match the Space (e.g. tor1, nyc3) — same as in the control panel URL.
@@ -198,7 +208,11 @@ function buildAssetServerPlugin() {
   const secretAccessKey = process.env.DO_SPACES_SECRET?.trim();
   const regionSlug = process.env.DO_SPACES_REGION?.trim();
 
-  const base = { route: "assets" as const, assetUploadDir: assetDir };
+  const base = {
+    route: "assets" as const,
+    assetUploadDir: assetDir,
+    assetUrlPrefix: assetUrlPrefixFromAppUrl(),
+  };
 
   if (bucket && accessKeyId && secretAccessKey && regionSlug) {
     const endpoint = `https://${regionSlug}.digitaloceanspaces.com`;
