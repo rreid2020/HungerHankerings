@@ -27,6 +27,7 @@ import {
   CHECKOUT_GIFT_BOX_FEE_DOLLARS,
   checkoutGiftSurchargeMinorUnits
 } from "../../../../lib/checkout-gift-surcharge"
+import { resolveShippingRate } from "../../../../lib/shipping-rates"
 
 // Vendure: active order is from session (cookie). Forward request cookie to all Vendure calls.
 
@@ -214,6 +215,38 @@ export async function POST(request: NextRequest) {
         )
       }
       await checkoutDeliveryMethodUpdate("", shippingMethods[0].id, opts)
+
+      // Guard: UI quotes ops zone rates; Vendure must charge the same net shipping.
+      // Past bug: postal calculator fell back to $12 "Canada" when admin DB/tax errors occurred.
+      try {
+        const preview = await getActiveOrder(opts)
+        const productSubtotalDollars = preview?.subtotalPrice?.net?.amount ?? 0
+        const ops = await resolveShippingRate({
+          postalCode: shipping.postal_code,
+          orderSubtotal: productSubtotalDollars,
+        })
+        const chargedDollars = preview?.shippingPrice?.net?.amount
+        if (
+          ops.success &&
+          typeof chargedDollars === "number" &&
+          Math.abs(chargedDollars - ops.finalRate) > 0.05
+        ) {
+          console.error(
+            `[checkout] Shipping mismatch: ops ${ops.zoneCode}=$${ops.finalRate} vs Vendure $${chargedDollars} (order ${preview?.code ?? preview?.id ?? "?"})`,
+          )
+          return NextResponse.json(
+            {
+              error: `Shipping rate mismatch: expected $${ops.finalRate.toFixed(2)} (${ops.zoneName}) but the order has $${chargedDollars.toFixed(2)}. Please refresh checkout and try again.`,
+            },
+            { status: 409 },
+          )
+        }
+      } catch (verifyErr) {
+        console.warn(
+          "[checkout] Could not verify shipping against ops rates:",
+          verifyErr instanceof Error ? verifyErr.message : verifyErr,
+        )
+      }
     }
 
     const metadata: { key: string; value: string }[] = []

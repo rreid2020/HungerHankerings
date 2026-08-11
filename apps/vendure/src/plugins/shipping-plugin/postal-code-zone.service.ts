@@ -1,6 +1,8 @@
-import { ID, RequestContext, TransactionalConnection } from "@vendure/core";
+import { ID, Logger, RequestContext, TransactionalConnection } from "@vendure/core";
 import { Pool, type PoolConfig } from "pg";
 import { PostalCodeZone } from "./entities/postal-code-zone.entity";
+
+const loggerCtx = "PostalCodeZoneService";
 
 const FALLBACK_ZONE_CODE = "FALLBACK_CANADA";
 const PROVINCIAL_FALLBACK_ZONE_PREFIX = "FALLBACK_";
@@ -109,7 +111,13 @@ export class PostalCodeZoneService {
       : null;
 
     const pool = getAdminShippingPool();
-    if (!pool) return null;
+    if (!pool) {
+      Logger.warn(
+        "Admin shipping DB pool unavailable (set LEADS_DATABASE_URL or DB_* + LEADS_DATABASE_NAME). Falling back to legacy rates.",
+        loggerCtx,
+      );
+      return null;
+    }
 
     const result = await pool.query<{
       source: string;
@@ -182,7 +190,7 @@ export class PostalCodeZoneService {
           z.flat_rate,
           z.free_shipping_threshold
         FROM shipping_zones z
-        WHERE z.zone_code = $2 AND z.active = true
+        WHERE z.zone_code = $3 AND z.active = true
       )
       SELECT * FROM matched ORDER BY priority LIMIT 1
       `,

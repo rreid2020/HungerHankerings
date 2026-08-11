@@ -74,3 +74,9 @@ POST /api/shipping/rate
 
 Vendure's final postal shipping calculator also reads the same admin DB tables first, then falls back to the older Vendure postal-zone table only as an emergency fallback. This keeps the checkout display and charged shipping aligned.
 
+**Required Vendure Admin setup:** the active Shipping Method must use calculator `postal-shipping-calculator` (and eligibility `postal-shipping-eligibility`). A method named "Canada" with the default flat-rate calculator will always charge that fixed amount (often $12) and ignore ops zone rates.
+
+Checkout also verifies the charged net shipping matches the ops quote before payment; a mismatch returns HTTP 409 so customers are not under/over-charged.
+
+Ensure Vendure can reach the admin DB (`LEADS_DATABASE_NAME=hungerhankeringsadmin` or `LEADS_DATABASE_URL`, plus `DB_SSL_REJECT_UNAUTHORIZED=false` when using managed Postgres SSL).
+

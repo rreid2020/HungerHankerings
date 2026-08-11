@@ -39,6 +39,11 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_FROM: ${SMTP_FROM:-}
       ORDERS_INBOX_EMAIL: ${ORDERS_INBOX_EMAIL:-orders@hungerhankerings.com}
+      # Ops shipping zones live in hungerhankeringsadmin — required for postal-shipping-calculator
+      LEADS_DATABASE_NAME: ${LEADS_DATABASE_NAME:-hungerhankeringsadmin}
+      LEADS_DATABASE_URL: ${LEADS_DATABASE_URL:-}
+      DB_SSL: ${DB_SSL:-}
+      DB_SSL_REJECT_UNAUTHORIZED: ${DB_SSL_REJECT_UNAUTHORIZED:-false}
     command: ["node", "dist/index.js"]
     depends_on:
       - redis
@@ -73,6 +78,10 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_FROM: ${SMTP_FROM:-}
       ORDERS_INBOX_EMAIL: ${ORDERS_INBOX_EMAIL:-orders@hungerhankerings.com}
+      LEADS_DATABASE_NAME: ${LEADS_DATABASE_NAME:-hungerhankeringsadmin}
+      LEADS_DATABASE_URL: ${LEADS_DATABASE_URL:-}
+      DB_SSL: ${DB_SSL:-}
+      DB_SSL_REJECT_UNAUTHORIZED: ${DB_SSL_REJECT_UNAUTHORIZED:-false}
     command: ["node", "dist/worker.js"]
     depends_on:
       - vendure
