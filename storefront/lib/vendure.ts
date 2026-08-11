@@ -1348,20 +1348,44 @@ export async function checkoutShippingAddressUpdate(
 }
 
 /**
- * Persists gift add-on amount (minor units, tax-inclusive) on the active order for StripePlugin to add to the PaymentIntent.
- * Pass 0 or clear with null to reset (avoids stale values on retry).
+ * Persists gift add-on amount (minor units, tax-inclusive) and optional gift card messages
+ * on the active order. Messages must be set before Stripe PaymentIntent so Admin + confirmation
+ * emails can read them (Stripe path never calls addPaymentToOrder with storefront metadata).
  */
 export async function setOrderCheckoutGiftSurchargeCents(
   cents: number | null,
-  opts?: VendureRequestOptions
+  opts?: VendureRequestOptions,
+  giftByLineUnit?: Record<string, { giftMessage?: string }> | null,
+  giftMessagesDisplay?: string | null,
 ): Promise<void> {
-  const customFields =
-    cents != null && cents > 0 ? { checkoutGiftSurchargeCents: Math.floor(cents) } : { checkoutGiftSurchargeCents: null }
+  const customFields: Record<string, unknown> = {
+    checkoutGiftSurchargeCents:
+      cents != null && cents > 0 ? Math.floor(cents) : null,
+  };
+
+  if (giftByLineUnit !== undefined) {
+    if (giftByLineUnit && Object.keys(giftByLineUnit).length > 0) {
+      try {
+        const json = JSON.stringify(giftByLineUnit);
+        customFields.giftByLineUnitJson = json.length < 12_000 ? json : null;
+      } catch {
+        customFields.giftByLineUnitJson = null;
+      }
+    } else {
+      customFields.giftByLineUnitJson = null;
+    }
+  }
+
+  if (giftMessagesDisplay !== undefined) {
+    const display = giftMessagesDisplay?.trim() || null;
+    customFields.giftMessages = display && display.length < 12_000 ? display : null;
+  }
+
   const data = await fetchVendure<{
     setOrderCustomFields: { id?: string; message?: string; errorCode?: string } | null;
   }>(
     `
-    mutation SetOrderCheckoutGiftSurcharge($input: UpdateOrderInput!) {
+    mutation SetOrderCheckoutGiftFields($input: UpdateOrderInput!) {
       setOrderCustomFields(input: $input) {
         ... on Order { id }
         ... on ErrorResult { message errorCode }
@@ -1370,8 +1394,8 @@ export async function setOrderCheckoutGiftSurchargeCents(
   `,
     { input: { customFields } },
     opts
-  )
-  assertShopOrderMutationPayload(data.setOrderCustomFields, "Set order gift surcharge")
+  );
+  assertShopOrderMutationPayload(data.setOrderCustomFields, "Set order gift fields");
 }
 
 export async function checkoutBillingAddressUpdate(

@@ -310,6 +310,37 @@ const vendureConfig: VendureConfig = mergeConfig(defaultConfig, {
           },
         ],
       },
+      {
+        name: "giftByLineUnitJson",
+        type: "text",
+        nullable: true,
+        public: true,
+        readonly: false,
+        internal: false,
+        label: [{ languageCode: LanguageCode.en, value: "Gift messages (JSON)" }],
+        description: [
+          {
+            languageCode: LanguageCode.en,
+            value: "Structured gift card messages from checkout (unit keys). Prefer Gift messages for reading.",
+          },
+        ],
+      },
+      {
+        name: "giftMessages",
+        type: "text",
+        nullable: true,
+        public: true,
+        readonly: false,
+        internal: false,
+        ui: { component: "textarea-form-input" },
+        label: [{ languageCode: LanguageCode.en, value: "Gift card messages" }],
+        description: [
+          {
+            languageCode: LanguageCode.en,
+            value: "Customer gift card notes from checkout — use for packing slips and fulfillment.",
+          },
+        ],
+      },
     ],
   },
   apiOptions: {

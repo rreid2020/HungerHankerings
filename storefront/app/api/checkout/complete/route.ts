@@ -265,22 +265,54 @@ export async function POST(request: NextRequest) {
       toCountryCode(shipping.country),
       (shipping.province ?? "").trim()
     )
-    await setOrderCheckoutGiftSurchargeCents(
-      giftSurchargeMinor > 0 ? giftSurchargeMinor : null,
-      opts
-    )
 
     const gbu = body.giftByLineUnit
+    let giftByLineUnitPayload: Record<string, { giftMessage: string }> | null = null
+    let giftMessagesDisplay: string | null = null
     if (gbu && typeof gbu === "object" && Object.keys(gbu).length > 0) {
-      try {
-        const json = JSON.stringify(gbu)
-        if (json.length < 12_000) {
-          metadata.push({ key: "gift_by_line_unit_json", value: json })
+      const cleaned: Record<string, { giftMessage: string }> = {}
+      const displayParts: string[] = []
+      for (const [unitKey, v] of Object.entries(gbu)) {
+        const msg =
+          v && typeof v === "object" && "giftMessage" in v
+            ? String((v as { giftMessage?: string }).giftMessage ?? "").trim()
+            : ""
+        if (!msg) continue
+        cleaned[unitKey] = { giftMessage: msg }
+        const lastDash = unitKey.lastIndexOf("-")
+        const lineId = lastDash > 0 ? unitKey.slice(0, lastDash) : ""
+        const unitIndex = lastDash > 0 ? Number.parseInt(unitKey.slice(lastDash + 1), 10) : 0
+        const line = previewForGift?.lines?.find((l) => l.id === lineId)
+        const productName = line?.variant.product.name?.trim() || "Item"
+        const variantName = line?.variant.name?.trim() || ""
+        const title = variantName ? `${productName} — ${variantName}` : productName
+        const qty = line?.quantity ?? 1
+        const label =
+          qty > 1 && Number.isFinite(unitIndex)
+            ? `${title} — Box ${unitIndex + 1} of ${qty}`
+            : title
+        displayParts.push(`${label}\n${msg}`)
+      }
+      if (Object.keys(cleaned).length > 0) {
+        giftByLineUnitPayload = cleaned
+        giftMessagesDisplay = displayParts.join("\n\n")
+        try {
+          const json = JSON.stringify(cleaned)
+          if (json.length < 12_000) {
+            metadata.push({ key: "gift_by_line_unit_json", value: json })
+          }
+        } catch {
+          /* ignore */
         }
-      } catch {
-        /* ignore */
       }
     }
+
+    await setOrderCheckoutGiftSurchargeCents(
+      giftSurchargeMinor > 0 ? giftSurchargeMinor : null,
+      opts,
+      giftByLineUnitPayload,
+      giftMessagesDisplay,
+    )
 
     if (typeof storefrontShippingAmount === "number") {
       metadata.push({ key: "storefront_shipping_amount", value: String(storefrontShippingAmount) })

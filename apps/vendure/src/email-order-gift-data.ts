@@ -27,7 +27,34 @@ export function giftLineLabel(order: Order, unitKey: string): string {
   return title;
 }
 
+function parseGiftJson(raw: string): { unitKey: string; message: string }[] {
+  const out: { unitKey: string; message: string }[] = [];
+  try {
+    const obj = JSON.parse(raw) as Record<string, { giftMessage?: string }>;
+    for (const [key, v] of Object.entries(obj)) {
+      const msg = v?.giftMessage?.trim();
+      if (msg) out.push({ unitKey: key, message: msg });
+    }
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
+
+/**
+ * Gift card messages from checkout.
+ * Prefer Order custom field (Stripe path); fall back to settled payment metadata (legacy/dummy).
+ */
 export function giftRowsFromOrder(order: Order): { unitKey: string; message: string }[] {
+  const fromCustom =
+    order.customFields && typeof order.customFields.giftByLineUnitJson === "string"
+      ? order.customFields.giftByLineUnitJson.trim()
+      : "";
+  if (fromCustom) {
+    const rows = parseGiftJson(fromCustom);
+    if (rows.length) return rows;
+  }
+
   const payments = order.payments ?? [];
   const out: { unitKey: string; message: string }[] = [];
   for (const p of payments) {
@@ -37,15 +64,7 @@ export function giftRowsFromOrder(order: Order): { unitKey: string; message: str
     const raw =
       meta && typeof meta.gift_by_line_unit_json === "string" ? meta.gift_by_line_unit_json : undefined;
     if (!raw?.trim()) continue;
-    try {
-      const obj = JSON.parse(raw) as Record<string, { giftMessage?: string }>;
-      for (const [key, v] of Object.entries(obj)) {
-        const msg = v?.giftMessage?.trim();
-        if (msg) out.push({ unitKey: key, message: msg });
-      }
-    } catch {
-      /* ignore */
-    }
+    out.push(...parseGiftJson(raw));
   }
   return out;
 }

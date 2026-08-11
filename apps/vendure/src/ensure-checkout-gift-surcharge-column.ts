@@ -1,21 +1,24 @@
 /**
- * Ensures the Order checkout gift surcharge custom field column exists (Postgres).
+ * Ensures Order custom-field columns for gift checkout (Postgres).
  * Run automatically before Vendure bootstrap so production (synchronize:false) self-heals.
  *
- * **Name must match TypeORM DefaultNamingStrategy** for embedded custom fields:
- * `camelCase(prefix) + titleCase(propertyName)` → for `checkoutGiftSurchargeCents` under `customFields`,
- * `titleCase` uppercases only the first character and lowercases the rest of the string, producing
- * `customFieldsCheckoutgiftsurchargecents` — NOT `customFieldsCheckoutGiftSurchargeCents`.
- * (See typeorm `DefaultNamingStrategy.columnName` + `StringUtils.titleCase`.)
+ * **Names must match TypeORM DefaultNamingStrategy** for embedded custom fields:
+ * `camelCase(prefix) + titleCase(propertyName)` → titleCase uppercases only the first character
+ * and lowercases the rest. Examples:
+ * - checkoutGiftSurchargeCents → customFieldsCheckoutgiftsurchargecents
+ * - giftByLineUnitJson → customFieldsGiftbylineunitjson
+ * - giftMessages → customFieldsGiftmessages
  *
  * CLI: node dist/ensure-checkout-gift-surcharge-column.js
  */
 import { Client } from "pg";
 import { config } from "./vendure-config";
 
-/** Exact DB identifier TypeORM uses for Order.customFields.checkoutGiftSurchargeCents */
-const COLUMN = "customFieldsCheckoutgiftsurchargecents";
-const COLUMN_DEF = `ADD COLUMN IF NOT EXISTS "${COLUMN}" integer NULL`;
+const COLUMNS: { name: string; sqlType: string }[] = [
+  { name: "customFieldsCheckoutgiftsurchargecents", sqlType: "integer NULL" },
+  { name: "customFieldsGiftbylineunitjson", sqlType: "text NULL" },
+  { name: "customFieldsGiftmessages", sqlType: "text NULL" },
+];
 
 /** Postgres double-quote for identifiers. */
 function quoteIdent(ident: string): string {
@@ -61,13 +64,53 @@ async function findOrderTables(client: Client): Promise<{ table_schema: string; 
   return r.rows as { table_schema: string; table_name: string }[];
 }
 
+async function ensureColumnOnTable(
+  client: Client,
+  table_schema: string,
+  table_name: string,
+  column: string,
+  sqlType: string,
+): Promise<void> {
+  const fullName = `"${table_schema}"."${table_name}"`;
+  const cols = await client.query(
+    `SELECT column_name FROM information_schema.columns
+     WHERE table_schema = $1 AND table_name = $2
+       AND LOWER(column_name) = LOWER($3)`,
+    [table_schema, table_name, column],
+  );
+  const colRows = cols.rows as { column_name: string }[];
+  const names = colRows.map((r) => r.column_name);
+  if (names.includes(column)) {
+    console.info(`[ensure-checkout-gift-fields] ${fullName}: "${column}" already present.`);
+    return;
+  }
+  if (names.length === 1 && names[0] !== column) {
+    const oldName = names[0];
+    await client.query(
+      `ALTER TABLE ${fullName} RENAME COLUMN ${quoteIdent(oldName)} TO ${quoteIdent(column)}`,
+    );
+    console.info(
+      `[ensure-checkout-gift-fields] ${fullName}: renamed "${oldName}" -> "${column}" (TypeORM naming).`,
+    );
+    return;
+  }
+  if (names.length > 1) {
+    console.warn(
+      `[ensure-checkout-gift-fields] ${fullName}: multiple columns matching ${column} (${names.join(", ")}); fix manually.`,
+    );
+    return;
+  }
+  await client.query(`ALTER TABLE ${fullName} ADD COLUMN IF NOT EXISTS ${quoteIdent(column)} ${sqlType}`);
+  console.info(`[ensure-checkout-gift-fields] ${fullName}: added "${column}".`);
+}
+
 export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
   if (process.env.SKIP_CHECKOUT_GIFT_SURCHARGE_ENSURE === "true") {
-    console.warn("[ensure-checkout-gift-surcharge] Skipped (SKIP_CHECKOUT_GIFT_SURCHARGE_ENSURE=true).");
+    console.warn("[ensure-checkout-gift-fields] Skipped (SKIP_CHECKOUT_GIFT_SURCHARGE_ENSURE=true).");
     return;
   }
   if (opts.type && opts.type !== "postgres" && opts.type !== "cockroachdb") {
-    console.info("[ensure-checkout-gift-surcharge] Skipping: DB is not Postgres.");
+    console.info("[ensure-checkout-gift-fields] Skipping: DB is not Postgres.");
     return;
   }
 
@@ -94,7 +137,7 @@ export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
         ? tables
         : (() => {
             console.warn(
-              "[ensure-checkout-gift-surcharge] Could not detect Order table by columns; trying public.order / public.order_order."
+              "[ensure-checkout-gift-fields] Could not detect Order table by columns; trying public.order / public.order_order.",
             );
             return fallback;
           })();
@@ -103,41 +146,13 @@ export async function ensureCheckoutGiftSurchargeColumn(): Promise<void> {
       const exists = await client.query(
         `SELECT 1 FROM information_schema.tables
          WHERE table_schema = $1 AND table_name = $2`,
-        [table_schema, table_name]
+        [table_schema, table_name],
       );
       if (exists.rows.length === 0) continue;
 
-      const fullName = `"${table_schema}"."${table_name}"`;
-      const cols = await client.query(
-        `SELECT column_name FROM information_schema.columns
-         WHERE table_schema = $1 AND table_name = $2
-           AND LOWER(column_name) = LOWER($3)`,
-        [table_schema, table_name, COLUMN]
-      );
-      const colRows = cols.rows as { column_name: string }[];
-      const names = colRows.map((r) => r.column_name);
-      if (names.includes(COLUMN)) {
-        console.info(`[ensure-checkout-gift-surcharge] ${fullName}: "${COLUMN}" already correct.`);
-        continue;
+      for (const col of COLUMNS) {
+        await ensureColumnOnTable(client, table_schema, table_name, col.name, col.sqlType);
       }
-      if (names.length === 1 && names[0] !== COLUMN) {
-        const oldName = names[0];
-        await client.query(
-          `ALTER TABLE ${fullName} RENAME COLUMN ${quoteIdent(oldName)} TO ${quoteIdent(COLUMN)}`
-        );
-        console.info(
-          `[ensure-checkout-gift-surcharge] ${fullName}: renamed "${oldName}" -> "${COLUMN}" (must match TypeORM DefaultNamingStrategy).`
-        );
-        continue;
-      }
-      if (names.length > 1) {
-        console.warn(
-          `[ensure-checkout-gift-surcharge] ${fullName}: multiple gift surcharge columns (${names.join(", ")}); drop/rename duplicates manually.`
-        );
-        continue;
-      }
-      await client.query(`ALTER TABLE ${fullName} ${COLUMN_DEF}`);
-      console.info(`[ensure-checkout-gift-surcharge] ${fullName}: added "${COLUMN}".`);
     }
   } finally {
     await client.end();
@@ -149,7 +164,7 @@ async function cliMain() {
     await ensureCheckoutGiftSurchargeColumn();
     process.exit(0);
   } catch (e) {
-    console.error("[ensure-checkout-gift-surcharge] Failed:", e);
+    console.error("[ensure-checkout-gift-fields] Failed:", e);
     process.exit(1);
   }
 }

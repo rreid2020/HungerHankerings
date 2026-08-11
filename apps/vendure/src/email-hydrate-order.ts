@@ -22,6 +22,7 @@ export async function hydrateOrderForEmail(ctx: RequestContext, order: Order, in
     "lines.productVariant.product.translations",
     "lines.featuredAsset",
     "shippingLines",
+    "payments",
   ] as unknown as Array<EntityRelationPaths<Order>>;
 
   try {
