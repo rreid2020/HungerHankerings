@@ -43,6 +43,11 @@
         <mj-text>
             Dear {{ order.customer.firstName }} {{ order.customer.lastName }},
         </mj-text>
+        {{#if order.customer.emailAddress}}
+        <mj-text padding-top="0">
+            Order confirmation for <strong>{{ order.customer.emailAddress }}</strong>
+        </mj-text>
+        {{/if}}
         <mj-text>
             Thank you for your order!
         </mj-text>
