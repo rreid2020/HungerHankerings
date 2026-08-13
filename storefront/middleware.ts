@@ -92,6 +92,11 @@ function clerkKeysPresent(): boolean {
  * Absolute sign-in URL Clerk uses for redirects / handshake. Required for stable auth behind reverse
  * proxies; if missing, Clerk can enter Handshake without Location → middleware throws (500).
  * Prefer NEXT_PUBLIC_CLERK_SIGN_IN_URL in dev (include port, e.g. http://localhost:3003/ops/sign-in).
+ *
+ * Frontend API proxy defaults **off**. Production ops uses the Clerk FAPI CNAME encoded in the
+ * publishable key (`clerk.ops.…`). Enabling `frontendApiProxy` without also setting the Dashboard
+ * proxy URL + `NEXT_PUBLIC_CLERK_PROXY_URL` causes handshake `host_invalid` on `/_clerk` / `/__clerk`.
+ * Opt in with `CLERK_FRONTEND_API_PROXY=1` only when that Dashboard config is complete.
  */
 function opsClerkMiddlewareOptions(): ClerkMiddlewareOptions {
   const opsHost = getConfiguredOpsHostname()
@@ -100,14 +105,12 @@ function opsClerkMiddlewareOptions(): ClerkMiddlewareOptions {
     (opsHost
       ? `${opsHost === "localhost" || opsHost === "127.0.0.1" ? "http" : "https"}://${opsHost}/ops/sign-in`
       : undefined)
-  const useFrontendApiProxy = !(
-    process.env.CLERK_FRONTEND_API_PROXY === "0" ||
-    process.env.CLERK_FRONTEND_API_PROXY === "false"
-  )
+  const useFrontendApiProxy =
+    process.env.CLERK_FRONTEND_API_PROXY === "1" ||
+    process.env.CLERK_FRONTEND_API_PROXY === "true"
 
   return {
     contentSecurityPolicy: {},
-    // Default on for ops host so /__clerk handshake endpoints resolve correctly.
     ...(useFrontendApiProxy ? { frontendApiProxy: { enabled: true } } : {}),
     ...(signInUrl ? { signInUrl } : {}),
   }
