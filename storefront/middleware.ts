@@ -158,7 +158,7 @@ const opsClerkMiddleware = clerkMiddleware(
     const clerkOk = clerkKeysPresent()
 
     if (process.env.NODE_ENV === "production" && !clerkOk) {
-      if (pathname === "/" || pathname.startsWith("/ops")) {
+      if (pathname === "/" || pathname.startsWith("/ops") || pathname.startsWith("/api/ops")) {
         return new NextResponse(
           "Ops portal requires Clerk. Set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY on this component.",
           { status: 503 },
@@ -178,8 +178,25 @@ const opsClerkMiddleware = clerkMiddleware(
       return NextResponse.redirect(new URL("/ops", opsRedirectOrigin(request)))
     }
 
-    if (pathname.startsWith("/ops") && !isOpsAuthRoute(request) && clerkOk) {
-      await auth.protect()
+    // Do not use auth.protect() here — with Clerk 7 + App Platform it does a
+    // "protect-rewrite" to /clerk_<timestamp>, which 404s instead of signing in.
+    const needsAuth =
+      clerkOk &&
+      ((pathname.startsWith("/ops") && !isOpsAuthRoute(request)) ||
+        pathname.startsWith("/api/ops"))
+    if (needsAuth) {
+      const { userId } = await auth()
+      if (!userId) {
+        if (pathname.startsWith("/api/ops")) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+        const signIn = new URL("/ops/sign-in", opsRedirectOrigin(request))
+        const returnTo = `${pathname}${request.nextUrl.search || ""}`
+        if (returnTo && returnTo !== "/ops/sign-in") {
+          signIn.searchParams.set("redirect_url", returnTo)
+        }
+        return NextResponse.redirect(signIn)
+      }
     }
 
     return NextResponse.next()
