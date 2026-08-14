@@ -90,7 +90,12 @@ export default async function RootLayout({
       <html lang="en-CA" suppressHydrationWarning>
         <body className="min-h-screen min-w-0 antialiased">
           <Suspense fallback={<div className="min-h-screen bg-zinc-950" aria-hidden />}>
-            <ClerkProvider dynamic afterSignOutUrl="/ops/sign-in">
+            <ClerkProvider
+              dynamic
+              afterSignOutUrl="/ops/sign-in"
+              signInUrl="/ops/sign-in"
+              signUpUrl="/ops/sign-up"
+            >
               <ThemeInit>{children}</ThemeInit>
             </ClerkProvider>
           </Suspense>

@@ -31,6 +31,12 @@ export default function OpsSignUpPage() {
           },
         }}
       />
+      <p className="mt-4 text-sm text-slate-600">
+        Already have an account?{" "}
+        <a href="/ops/sign-in" className="font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700">
+          Sign in
+        </a>
+      </p>
     </div>
   )
 }

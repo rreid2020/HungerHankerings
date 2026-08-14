@@ -17,6 +17,7 @@ export default function OpsSignInPage() {
       <SignIn
         routing="path"
         path="/ops/sign-in"
+        signUpUrl="/ops/sign-up"
         forceRedirectUrl="/ops"
         appearance={{
           variables: {
@@ -30,7 +31,13 @@ export default function OpsSignInPage() {
           },
         }}
       />
-      <form action="/api/ops/auth/reset-session" method="post" className="mt-4">
+      <p className="mt-4 text-sm text-slate-600">
+        Don&apos;t have an account?{" "}
+        <a href="/ops/sign-up" className="font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700">
+          Create an account
+        </a>
+      </p>
+      <form action="/api/ops/auth/reset-session" method="post" className="mt-3">
         <button
           type="submit"
           className="text-xs font-medium text-slate-600 underline underline-offset-2 transition hover:text-slate-900"
