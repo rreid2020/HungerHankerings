@@ -48,6 +48,8 @@ export type AddressFields = {
   province: string
   postal_code: string
   country: string
+  /** Required on checkout billing; optional elsewhere. */
+  phone?: string
 }
 
 /** Per unit: key = `${lineId}-${unitIndex}` -> gift card message (only when gift selected for that box) */

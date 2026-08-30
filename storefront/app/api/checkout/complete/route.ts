@@ -39,6 +39,8 @@ type AddressPayload = {
   city: string
   province: string
   postal_code: string
+  /** Required on billing; optional on shipping. */
+  phone?: string
   /** May be string "CA" or object { code: "CA", name: "Canada" } from form */
   country: string | { code?: string; name?: string }
 }
@@ -69,7 +71,7 @@ function toStorefrontAddressInput(a: AddressPayload): StorefrontAddressInput {
     postalCode: a.postal_code?.trim() ?? "",
     country: toCountryCode(a.country),
     countryArea: a.province?.trim() || null,
-    phone: null
+    phone: a.phone?.trim() || null,
   }
 }
 
@@ -101,6 +103,13 @@ export async function POST(request: NextRequest) {
     if (!email?.trim()) {
       return NextResponse.json(
         { error: "Email is required" },
+        { status: 400 }
+      )
+    }
+
+    if (!billing?.phone?.trim()) {
+      return NextResponse.json(
+        { error: "Billing phone number is required" },
         { status: 400 }
       )
     }

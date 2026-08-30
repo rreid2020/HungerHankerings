@@ -33,7 +33,8 @@ const emptyAddress: AddressFields = {
   city: "",
   province: "",
   postal_code: "",
-  country: "CA"
+  country: "CA",
+  phone: "",
 }
 
 const inputClass =
@@ -932,6 +933,7 @@ const CheckoutPage = () => {
       billing.first_name?.trim() &&
       billing.last_name?.trim() &&
       billing.email?.trim() &&
+      billing.phone?.trim() &&
       billing.address_1?.trim() &&
       billing.city?.trim() &&
       billing.province?.trim() &&
@@ -963,7 +965,7 @@ const CheckoutPage = () => {
     setStepHint(null)
     if (checkoutStep === 0) {
       if (!isBillingComplete()) {
-        setStepHint("Please complete all contact and billing fields.")
+        setStepHint("Please complete all contact and billing fields, including phone number.")
         return
       }
       setCheckoutStep(1)
@@ -1077,6 +1079,7 @@ const CheckoutPage = () => {
               billing_details: {
                 name: cardholderName,
                 email: billing.email?.trim() || undefined,
+                phone: billing.phone?.trim() || undefined,
                 address: {
                   line1: billing.address_1?.trim() || undefined,
                   city: billing.city?.trim() || undefined,
@@ -1361,6 +1364,16 @@ const CheckoutPage = () => {
                 required
                 value={billing.last_name}
                 onChange={(e) => setBilling((b) => ({ ...b, last_name: e.target.value }))}
+              />
+              <input
+                id="checkout-billing-phone"
+                className={inputClass + " md:col-span-2"}
+                type="tel"
+                autoComplete="tel"
+                placeholder="Phone number"
+                required
+                value={billing.phone ?? ""}
+                onChange={(e) => setBilling((b) => ({ ...b, phone: e.target.value }))}
               />
               {placesLoaded ? (
                 <AddressAutocomplete

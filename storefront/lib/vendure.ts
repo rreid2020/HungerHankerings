@@ -419,7 +419,11 @@ export type RawVendureOrderForStorefront = {
     taxBase: unknown;
     taxTotal: unknown;
   }>;
-  customFields?: { checkoutGiftSurchargeCents?: number | null } | null;
+  customFields?: {
+    checkoutGiftSurchargeCents?: number | null;
+    giftByLineUnitJson?: string | null;
+    giftMessages?: string | null;
+  } | null;
   payments?: Array<{
     state?: string;
     method?: string;
@@ -2301,17 +2305,72 @@ function parseGiftFromPaymentMetadata(payments: unknown): { unitKey: string; mes
       if (typeof v === "string") raw = v;
     }
     if (!raw?.trim()) continue;
-    try {
-      const obj = JSON.parse(raw) as Record<string, { giftMessage?: string }>;
-      for (const [key, v] of Object.entries(obj)) {
-        const msg = v?.giftMessage?.trim();
-        if (msg) out.push({ unitKey: key, message: msg });
-      }
-    } catch {
-      /* ignore */
-    }
+    out.push(...parseGiftUnitJson(raw));
   }
   return out;
+}
+
+function parseGiftUnitJson(raw: string): { unitKey: string; message: string }[] {
+  const out: { unitKey: string; message: string }[] = [];
+  try {
+    const obj = JSON.parse(raw) as Record<string, unknown>;
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return out;
+    for (const [key, v] of Object.entries(obj)) {
+      let msg = "";
+      if (typeof v === "string") {
+        const s = v.trim();
+        if (s && !s.startsWith("{") && !s.startsWith("[")) msg = s;
+      } else if (v && typeof v === "object") {
+        const o = v as Record<string, unknown>;
+        for (const candidate of [o.giftMessage, o.message, o.gift_message]) {
+          if (typeof candidate === "string") {
+            const s = candidate.trim();
+            if (s && !s.startsWith("{") && !s.startsWith("[")) {
+              msg = s;
+              break;
+            }
+          }
+        }
+      }
+      if (msg) out.push({ unitKey: key, message: msg });
+    }
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
+
+function giftLinesFromGiftMessagesDisplay(display: string): { unitKey: string; message: string }[] {
+  return display
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, i) => {
+      const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+      const message = lines.length >= 2 ? lines.slice(1).join("\n") : block;
+      return { unitKey: `display-${i}`, message };
+    })
+    .filter((row) => row.message.length > 0 && !row.message.startsWith("{"));
+}
+
+/** Prefer Admin-facing gift card text; never surface raw JSON as the message. */
+function resolveGiftLineMessages(order: {
+  customFields?: {
+    giftByLineUnitJson?: string | null;
+    giftMessages?: string | null;
+  } | null;
+  payments?: unknown;
+}): { unitKey: string; message: string }[] {
+  const display = order.customFields?.giftMessages?.trim() ?? "";
+  if (display && !display.startsWith("{") && !display.startsWith("[")) {
+    const fromDisplay = giftLinesFromGiftMessagesDisplay(display);
+    if (fromDisplay.length) return fromDisplay;
+  }
+  const fromJson = order.customFields?.giftByLineUnitJson?.trim()
+    ? parseGiftUnitJson(order.customFields.giftByLineUnitJson)
+    : [];
+  if (fromJson.length) return fromJson;
+  return parseGiftFromPaymentMetadata(order.payments);
 }
 
 /** Shop API `Address.country` is a `Country` object (`code`, `name`); `OrderAddress.country` is a string. */
@@ -2384,6 +2443,8 @@ const shopOrderFieldsForStorefront = `
   }
   customFields {
     checkoutGiftSurchargeCents
+    giftByLineUnitJson
+    giftMessages
   }
   payments {
     state
@@ -2512,7 +2573,7 @@ function mapVendureOrderToOrder(order: RawVendureOrderForStorefront): Storefront
     shippingWithTax: { gross: { amount: shipGross, currency } },
     taxSummary,
     giftPackaging,
-    giftLineMessages: parseGiftFromPaymentMetadata(order.payments),
+    giftLineMessages: resolveGiftLineMessages(order),
     totalExTax: { amount: totalExTaxAmount, currency },
     total: { gross: { amount: totalGross, currency } },
     amountPaid,

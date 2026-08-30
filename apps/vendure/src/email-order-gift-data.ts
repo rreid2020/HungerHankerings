@@ -27,18 +27,63 @@ export function giftLineLabel(order: Order, unitKey: string): string {
   return title;
 }
 
+function extractGiftMessage(value: unknown): string {
+  if (typeof value === "string") {
+    const s = value.trim();
+    // Never treat raw JSON blobs as the customer-facing message.
+    if (!s || s.startsWith("{") || s.startsWith("[")) return "";
+    return s;
+  }
+  if (value && typeof value === "object") {
+    const o = value as Record<string, unknown>;
+    const fromKeys = [o.giftMessage, o.message, o.gift_message];
+    for (const candidate of fromKeys) {
+      if (typeof candidate === "string") {
+        const s = candidate.trim();
+        if (s && !s.startsWith("{") && !s.startsWith("[")) return s;
+      }
+    }
+  }
+  return "";
+}
+
 function parseGiftJson(raw: string): { unitKey: string; message: string }[] {
   const out: { unitKey: string; message: string }[] = [];
   try {
-    const obj = JSON.parse(raw) as Record<string, { giftMessage?: string }>;
-    for (const [key, v] of Object.entries(obj)) {
-      const msg = v?.giftMessage?.trim();
+    const obj = JSON.parse(raw) as unknown;
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return out;
+    for (const [key, v] of Object.entries(obj as Record<string, unknown>)) {
+      const msg = extractGiftMessage(v);
       if (msg) out.push({ unitKey: key, message: msg });
     }
   } catch {
     /* ignore */
   }
   return out;
+}
+
+/** Split the Admin-facing `giftMessages` textarea into labelled blocks. */
+function rowsFromGiftMessagesDisplay(display: string): { unitKey: string; message: string; lineLabel: string }[] {
+  return display
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, i) => {
+      const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (lines.length >= 2) {
+        return {
+          unitKey: `display-${i}`,
+          lineLabel: lines[0],
+          message: lines.slice(1).join("\n"),
+        };
+      }
+      return {
+        unitKey: `display-${i}`,
+        lineLabel: "Gift message",
+        message: block,
+      };
+    })
+    .filter((row) => row.message.length > 0);
 }
 
 /**
@@ -77,9 +122,27 @@ export function giftFeeCents(order: Order): number {
 
 export type GiftLineForEmail = { unitKey: string; message: string; lineLabel: string };
 
+/**
+ * Customer-facing gift lines for confirmation emails.
+ * Prefer human-readable `giftMessages` (same as Admin "Gift card messages");
+ * otherwise parse structured JSON — never dump raw JSON into the email body.
+ */
 export function buildGiftLinesForEmail(order: Order): GiftLineForEmail[] {
-  return giftRowsFromOrder(order).map((row) => ({
-    ...row,
-    lineLabel: giftLineLabel(order, row.unitKey),
-  }));
+  const display =
+    order.customFields && typeof order.customFields.giftMessages === "string"
+      ? order.customFields.giftMessages.trim()
+      : "";
+  if (display && !display.startsWith("{") && !display.startsWith("[")) {
+    return rowsFromGiftMessagesDisplay(display);
+  }
+
+  const structured = giftRowsFromOrder(order);
+  if (structured.length) {
+    return structured.map((row) => ({
+      ...row,
+      lineLabel: giftLineLabel(order, row.unitKey),
+    }));
+  }
+
+  return [];
 }
