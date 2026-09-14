@@ -57,27 +57,64 @@ const MAX_TRACKED_KEYS = 20_000
 // --------------------------------------------------------------------------------------------
 
 /**
- * Client IP for throttling.
+ * Private, loopback, and link-local ranges. An address in one of these is a proxy hop (our own
+ * nginx, the App Platform load balancer), never a visitor, so it must never key a rate limit:
+ * every customer shares it.
+ */
+function isInternalAddress(ip: string): boolean {
+  const v = ip.trim().toLowerCase().replace(/^\[|\]$/g, "")
+  if (!v) return true
+  if (v === "::1" || v === "localhost" || v.startsWith("fc") || v.startsWith("fd")) return true
+  if (v.startsWith("::ffff:")) return isInternalAddress(v.slice(7))
+  const octets = v.split(".")
+  if (octets.length !== 4) return false
+  const [a, b] = octets.map((o) => Number(o))
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return true
+  if (a === 10 || a === 127 || a === 0) return true
+  if (a === 192 && b === 168) return true
+  if (a === 172 && b >= 16 && b <= 31) return true
+  if (a === 169 && b === 254) return true
+  if (a === 100 && b >= 64 && b <= 127) return true
+  return false
+}
+
+/**
+ * Client IP for throttling, or `"unknown"` when it cannot be established.
  *
- * `X-Forwarded-For` is client-appendable (nginx uses `$proxy_add_x_forwarded_for`), so a bot can
- * spoof its first entry. Prefer headers a proxy always overwrites: `CF-Connecting-IP` when the
- * request really came through Cloudflare (`CF-Ray` present), then `X-Real-IP` (nginx sets it from
- * `$remote_addr`), and only then fall back to the forwarded chain.
+ * `X-Forwarded-For` is client-appendable (nginx uses `$proxy_add_x_forwarded_for`), so the *first*
+ * entry is attacker-controlled and the *last* is whichever proxy spoke to us. Each proxy appends the
+ * peer it saw, so the right-most **public** address is the real visitor.
+ *
+ * `"unknown"` is deliberately safe rather than strict: it disables only the per-IP limits (the
+ * site-wide ceiling, duplicate suppression, content scoring, and Turnstile still apply). Keying a
+ * limit on a load-balancer address would instead throttle every customer at once — on App Platform
+ * `X-Real-IP` is the balancer, not the visitor.
+ *
+ * Set `LEADS_TRUSTED_PROXY_HOPS` to drop N trailing entries first if a platform appends a *public*
+ * proxy hop; the rate-limit logs print the resolved value so this is diagnosable.
  */
 export function getClientIp(request: Request): string {
   const h = request.headers
-  // Duplicate headers arrive comma-joined; never key a limit on the joined string.
-  const first = (name: string): string | null =>
-    h.get(name)?.split(",")[0]?.trim() || null
+
+  // Cloudflare overwrites CF-Connecting-IP, but only for traffic that truly passed through it.
   if (h.get("cf-ray")?.trim()) {
-    const cfIp = first("cf-connecting-ip")
-    if (cfIp) return cfIp
+    const cfIp = h.get("cf-connecting-ip")?.split(",")[0]?.trim()
+    if (cfIp && !isInternalAddress(cfIp)) return cfIp
   }
-  const realIp = first("x-real-ip")
-  if (realIp) return realIp
-  const forwarded = h.get("x-forwarded-for")?.split(",")
-  const lastHop = forwarded?.[forwarded.length - 1]?.trim()
-  if (lastHop) return lastHop
+
+  const hops = envInt("LEADS_TRUSTED_PROXY_HOPS", 0, 0, 8)
+  const chain = (h.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean)
+  const candidates = hops > 0 ? chain.slice(0, Math.max(chain.length - hops, 0)) : chain
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    if (!isInternalAddress(candidates[i])) return candidates[i]
+  }
+
+  const realIp = h.get("x-real-ip")?.split(",")[0]?.trim()
+  if (realIp && !isInternalAddress(realIp)) return realIp
+
   return "unknown"
 }
 
