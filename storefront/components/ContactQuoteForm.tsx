@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useEffect, useState } from "react"
+import Script from "next/script"
 import { useSearchParams } from "next/navigation"
 import Button from "./Button"
 import {
@@ -14,7 +15,15 @@ import { captureEvent } from "../lib/analytics"
 declare global {
   interface Window {
     turnstile?: {
-      render: (el: string | HTMLElement, opts: { sitekey: string; callback?: (token: string) => void }) => unknown
+      render: (
+        el: string | HTMLElement,
+        opts: {
+          sitekey: string
+          callback?: (token: string) => void
+          "expired-callback"?: () => void
+          "error-callback"?: () => void
+        },
+      ) => unknown
       remove?: (widgetId: unknown) => void
       reset?: (widgetId: unknown) => void
     }
@@ -33,6 +42,7 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
   const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState("")
   const [turnstileWidgetId, setTurnstileWidgetId] = useState<unknown>(null)
+  const [turnstileReady, setTurnstileReady] = useState(false)
   const [formStartedAt] = useState<number>(() => Date.now())
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? ""
 
@@ -42,12 +52,14 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
   }, [searchParams])
 
   useEffect(() => {
-    if (!turnstileSiteKey || !window.turnstile) return
+    if (!turnstileSiteKey || !turnstileReady || !window.turnstile) return
     const el = document.getElementById("contact-turnstile")
-    if (!el) return
+    if (!el || el.childElementCount > 0) return
     const widgetId = window.turnstile.render(el, {
       sitekey: turnstileSiteKey,
       callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
     })
     setTurnstileWidgetId(widgetId)
     return () => {
@@ -55,7 +67,7 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         window.turnstile.remove(widgetId)
       }
     }
-  }, [turnstileSiteKey])
+  }, [turnstileSiteKey, turnstileReady])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -75,6 +87,18 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         ? submittedReason
         : reason
 
+    if (turnstileSiteKey && !turnstileToken.trim()) {
+      setErrorDetail("Please complete the security check before sending.")
+      setStatus("error")
+      return
+    }
+
+    if (message.length < 8) {
+      setErrorDetail("Please include a short message (at least a sentence).")
+      setStatus("error")
+      return
+    }
+
     const response = await fetch("/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -87,20 +111,22 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         phone,
         message,
         website: String(formData.get("website") ?? ""),
+        company_url: String(formData.get("company_url") ?? ""),
+        fax: String(formData.get("fax") ?? ""),
         formStartedAt,
         turnstileToken,
       })
     })
 
     if (!response.ok) {
-      let message: string | null = null
+      let detail: string | null = null
       try {
         const data = (await response.json()) as { error?: string }
-        if (typeof data.error === "string" && data.error.trim()) message = data.error.trim()
+        if (typeof data.error === "string" && data.error.trim()) detail = data.error.trim()
       } catch {
         /* ignore */
       }
-      setErrorDetail(message)
+      setErrorDetail(detail)
       setStatus("error")
       return
     }
@@ -122,78 +148,99 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
     "mt-2 w-full rounded-md border border-dust_grey-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <label className="text-sm font-medium text-iron_grey">
-        Reason for contact
-        <select
-          name="reason"
-          required
-          value={reason}
-          onChange={(e) =>
-            setReason(isInquiryReason(e.target.value) ? e.target.value : "general")
-          }
-          className={inputClass}
-        >
-          {INQUIRY_REASON_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="text-sm font-medium text-iron_grey">
-        Name
-        <input name="name" required className={inputClass} autoComplete="name" />
-      </label>
-      <label className="text-sm font-medium text-iron_grey">
-        Email
-        <input
-          name="email"
-          type="email"
-          required
-          className={inputClass}
-          autoComplete="email"
-        />
-      </label>
-      <label className="text-sm font-medium text-iron_grey">
-        Company
-        <input name="company" className={inputClass} autoComplete="organization" />
-      </label>
-      <label className="text-sm font-medium text-iron_grey">
-        Phone <span className="font-normal text-iron_grey/70">(optional)</span>
-        <input name="phone" type="tel" className={inputClass} autoComplete="tel" />
-      </label>
-      <label className="text-sm font-medium text-iron_grey">
-        Message
-        <textarea name="message" rows={5} className={inputClass} />
-      </label>
-      {/* Honeypot for bots: real users never see/fill this field */}
-      <div className="hidden" aria-hidden>
-        <label>
-          Website
-          <input tabIndex={-1} autoComplete="off" name="website" />
-        </label>
-      </div>
+    <>
       {turnstileSiteKey ? (
-        <div>
-          <div id="contact-turnstile" />
-        </div>
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={() => setTurnstileReady(true)}
+        />
       ) : null}
-      <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" variant="secondary">
-          Send message
-        </Button>
-        {status === "sent" && (
-          <span className="text-sm text-cherry_blossom">Thanks — we will be in touch soon.</span>
-        )}
-        {status === "error" && (
-          <span className="text-sm text-light_coral-600">
-            {errorDetail ??
-              "Something went wrong. Please try again or email hello@hungerhankerings.com."}
-          </span>
-        )}
-      </div>
-    </form>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate={false}>
+        <label className="text-sm font-medium text-iron_grey">
+          Reason for contact
+          <select
+            name="reason"
+            required
+            value={reason}
+            onChange={(e) =>
+              setReason(isInquiryReason(e.target.value) ? e.target.value : "general")
+            }
+            className={inputClass}
+          >
+            {INQUIRY_REASON_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm font-medium text-iron_grey">
+          Name
+          <input name="name" required className={inputClass} autoComplete="name" />
+        </label>
+        <label className="text-sm font-medium text-iron_grey">
+          Email
+          <input
+            name="email"
+            type="email"
+            required
+            className={inputClass}
+            autoComplete="email"
+          />
+        </label>
+        <label className="text-sm font-medium text-iron_grey">
+          Company
+          <input name="company" className={inputClass} autoComplete="organization" />
+        </label>
+        <label className="text-sm font-medium text-iron_grey">
+          Phone <span className="font-normal text-iron_grey/70">(optional)</span>
+          <input name="phone" type="tel" className={inputClass} autoComplete="tel" />
+        </label>
+        <label className="text-sm font-medium text-iron_grey">
+          Message
+          <textarea name="message" rows={5} required minLength={8} className={inputClass} />
+        </label>
+        {/* Honeypots: off-screen, not display:none (bots often skip display:none fields) */}
+        <div
+          aria-hidden
+          className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
+          style={{ position: "absolute", left: "-10000px", height: 1, width: 1, overflow: "hidden" }}
+        >
+          <label>
+            Website
+            <input tabIndex={-1} autoComplete="off" name="website" defaultValue="" />
+          </label>
+          <label>
+            Company website
+            <input tabIndex={-1} autoComplete="off" name="company_url" defaultValue="" />
+          </label>
+          <label>
+            Fax
+            <input tabIndex={-1} autoComplete="off" name="fax" defaultValue="" />
+          </label>
+        </div>
+        {turnstileSiteKey ? (
+          <div>
+            <div id="contact-turnstile" />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-4">
+          <Button type="submit" variant="secondary" disabled={status === "loading"}>
+            {status === "loading" ? "Sending…" : "Send message"}
+          </Button>
+          {status === "sent" && (
+            <span className="text-sm text-cherry_blossom">Thanks — we will be in touch soon.</span>
+          )}
+          {status === "error" && (
+            <span className="text-sm text-light_coral-600">
+              {errorDetail ??
+                "Something went wrong. Please try again or email hello@hungerhankerings.com."}
+            </span>
+          )}
+        </div>
+      </form>
+    </>
   )
 }
 

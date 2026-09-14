@@ -48,6 +48,20 @@ If Resend fails, check runtime logs for `notification email failed (async)` (the
 - `LEAD_EMAIL_TO` – Comma-separated list of recipients for lead notifications (optional: defaults to **hello@hungerhankerings.com** when unset)
 - `LEAD_EMAIL_FROM` – Sender address (must use a verified domain in Resend)
 
+## Anti-spam (required for production)
+
+`/api/leads` uses honeypots, submit-timing checks, content heuristics, and per-IP / per-email rate limits. For bot waves, also enable **Cloudflare Turnstile**:
+
+1. Create a widget at [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile)
+2. Set on the **storefront** env (both required):
+
+   ```
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAA...
+   TURNSTILE_SECRET_KEY=0x4AAAA...
+   ```
+
+3. Redeploy the storefront so the widget script loads on `/contact`.
+
 ## Failure behavior
 
 - If no URL can be resolved (**`LEADS_DATABASE_URL`**, **`DATABASE_URL`**, or complete **`DB_*`** + password), the API returns **503** and the form shows an error (nothing is stored).

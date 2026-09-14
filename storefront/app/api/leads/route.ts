@@ -2,51 +2,30 @@ import { NextResponse } from "next/server"
 import { isInquiryReason } from "../../../lib/contact-inquiry"
 import { insertLead, isLeadsDatabaseConfigured } from "../../../lib/db"
 import { sendLeadNotification } from "../../../lib/email"
+import {
+  createRateLimiter,
+  getClientIp,
+  isAllowedRequestOrigin,
+  isHoneypotTripped,
+  isTimingTokenValid,
+  normalizeEmail,
+  scoreLeadContent,
+} from "../../../lib/lead-spam-guard"
+import { getSiteOrigin } from "../../../lib/site"
 
 export const runtime = "nodejs"
 
-const MAX_SUBMISSIONS_PER_WINDOW = 5
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
-const MIN_SUBMIT_DURATION_MS = 2000
-const rateLimitHits = new Map<string, number[]>()
+const rateLimiter = createRateLimiter()
 
-function getClientIp(request: Request): string {
-  const h = request.headers
-  const fromCf = h.get("cf-connecting-ip")?.trim()
-  if (fromCf) return fromCf
-  const fromForwarded = h.get("x-forwarded-for")?.split(",")[0]?.trim()
-  if (fromForwarded) return fromForwarded
-  return "unknown"
+/** Pretend success so bots do not adapt. */
+function silentOk() {
+  return NextResponse.json({ ok: true })
 }
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const recent = (rateLimitHits.get(ip) ?? []).filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= MAX_SUBMISSIONS_PER_WINDOW) {
-    rateLimitHits.set(ip, recent)
-    return false
-  }
-  recent.push(now)
-  rateLimitHits.set(ip, recent)
-  return true
-}
-
-function hasTooManyUrls(input: string): boolean {
-  const hits = input.match(/https?:\/\/|www\./gi)
-  return (hits?.length ?? 0) > 2
-}
-
-function isLikelySpamName(input: string): boolean {
-  const cleaned = input.trim()
-  if (cleaned.length < 2 || cleaned.length > 80) return true
-  if (!/^[\p{L}\p{N} .,'-]+$/u.test(cleaned)) return true
-  return /[!@#$%^&*_=+<>]{2,}/.test(cleaned)
-}
-
-async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<boolean> {
+async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<"skip" | "ok" | "fail"> {
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim()
-  if (!secret) return true
-  if (typeof token !== "string" || !token.trim()) return false
+  if (!secret) return "skip"
+  if (typeof token !== "string" || !token.trim()) return "fail"
   try {
     const body = new URLSearchParams({
       secret,
@@ -59,22 +38,47 @@ async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<
       body,
       cache: "no-store",
     })
-    if (!res.ok) return false
+    if (!res.ok) return "fail"
     const data = (await res.json()) as { success?: boolean }
-    return data.success === true
+    return data.success === true ? "ok" : "fail"
   } catch {
-    return false
+    return "fail"
   }
+}
+
+function allowedOrigins(): string[] {
+  const origins = new Set<string>()
+  const site = getSiteOrigin().replace(/\/$/, "")
+  if (site) origins.add(site)
+  for (const key of ["NEXT_PUBLIC_SITE_URL", "APP_URL", "STOREFRONT_URL"]) {
+    const raw = process.env[key]?.trim()
+    if (!raw) continue
+    try {
+      const u = new URL(raw.includes("://") ? raw : `https://${raw}`)
+      origins.add(`${u.protocol}//${u.host}`)
+    } catch {
+      /* ignore */
+    }
+  }
+  origins.add("https://hungerhankerings.com")
+  origins.add("https://www.hungerhankerings.com")
+  return [...origins]
 }
 
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
-    if (!checkRateLimit(ip)) {
+
+    if (!rateLimiter.allowIp(ip)) {
       return NextResponse.json(
         { ok: false, error: "Too many submissions. Please try again in a few minutes." },
         { status: 429 },
       )
+    }
+
+    if (!isAllowedRequestOrigin(request, allowedOrigins())) {
+      console.warn("Lead submission: blocked bad origin/referer ip=", ip)
+      return silentOk()
     }
 
     if (!isLeadsDatabaseConfigured()) {
@@ -96,20 +100,21 @@ export async function POST(request: Request) {
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
     }
-    const { type, formStartedAt, turnstileToken, website, ...payload } = body as Record<string, unknown>
+    const raw = body as Record<string, unknown>
+    const { type, formStartedAt, turnstileToken, ...payload } = raw
 
-    if (typeof website === "string" && website.trim()) {
-      // Honeypot hit; pretend success to avoid bot retries.
-      return NextResponse.json({ ok: true })
+    if (isHoneypotTripped(raw)) {
+      console.info("Lead submission: honeypot tripped ip=", ip)
+      return silentOk()
     }
-    if (typeof formStartedAt === "number") {
-      const elapsed = Date.now() - formStartedAt
-      if (elapsed < MIN_SUBMIT_DURATION_MS) {
-        return NextResponse.json({ ok: false, error: "Submission rejected. Please try again." }, { status: 400 })
-      }
+
+    if (!isTimingTokenValid(formStartedAt)) {
+      console.info("Lead submission: timing token rejected ip=", ip)
+      return silentOk()
     }
-    const turnstileOk = await verifyTurnstileIfConfigured(turnstileToken, ip)
-    if (!turnstileOk) {
+
+    const turnstile = await verifyTurnstileIfConfigured(turnstileToken, ip)
+    if (turnstile === "fail") {
       return NextResponse.json(
         { ok: false, error: "Security verification failed. Please try again." },
         { status: 400 },
@@ -117,30 +122,27 @@ export async function POST(request: Request) {
     }
 
     if (!type || typeof type !== "string") {
-      return NextResponse.json(
-        { ok: false, error: "Missing or invalid type" },
-        { status: 400 }
-      )
+      return NextResponse.json({ ok: false, error: "Missing or invalid type" }, { status: 400 })
     }
 
     if (type !== "inquiry") {
-      return NextResponse.json(
-        { ok: false, error: "Unsupported submission type" },
-        { status: 400 }
-      )
+      return NextResponse.json({ ok: false, error: "Unsupported submission type" }, { status: 400 })
     }
 
     const normalizedPayload = Object.fromEntries(
-      Object.entries(payload).filter(
-        ([, v]) => v != null && v !== ""
-      )
+      Object.entries(payload).filter(([, v]) => v != null && v !== ""),
     ) as Record<string, unknown>
+
+    // Never persist honeypot fields
+    delete normalizedPayload.website
+    delete normalizedPayload.company_url
+    delete normalizedPayload.fax
 
     const reason = normalizedPayload.reason
     if (typeof reason !== "string" || !isInquiryReason(reason)) {
       return NextResponse.json(
         { ok: false, error: "Missing or invalid reason for contact" },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -148,38 +150,38 @@ export async function POST(request: Request) {
     const email = normalizedPayload.email
     const message = normalizedPayload.message
     if (typeof name !== "string" || !name.trim()) {
-      return NextResponse.json(
-        { ok: false, error: "Name is required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ ok: false, error: "Name is required" }, { status: 400 })
     }
     if (typeof email !== "string" || !email.trim()) {
+      return NextResponse.json({ ok: false, error: "Email is required" }, { status: 400 })
+    }
+    if (typeof message !== "string" || !message.trim()) {
+      return NextResponse.json({ ok: false, error: "Message is required" }, { status: 400 })
+    }
+
+    const emailNorm = normalizeEmail(email)
+    if (!rateLimiter.allowEmail(emailNorm)) {
       return NextResponse.json(
-        { ok: false, error: "Email is required" },
-        { status: 400 }
+        { ok: false, error: "Too many submissions from this email. Please try again later." },
+        { status: 429 },
       )
     }
-    if (isLikelySpamName(name)) {
-      return NextResponse.json(
-        { ok: false, error: "Please enter a valid name." },
-        { status: 400 },
-      )
+
+    const verdict = scoreLeadContent({
+      name,
+      email: emailNorm,
+      message,
+      company: typeof normalizedPayload.company === "string" ? normalizedPayload.company : undefined,
+      phone: typeof normalizedPayload.phone === "string" ? normalizedPayload.phone : undefined,
+    })
+    if (verdict.spam) {
+      console.info("Lead submission: content rejected reason=", verdict.reason, "ip=", ip)
+      return silentOk()
     }
-    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { ok: false, error: "Please enter a valid email." },
-        { status: 400 },
-      )
-    }
-    if (typeof message === "string") {
-      const m = message.trim()
-      if (m.length > 4000 || hasTooManyUrls(m)) {
-        return NextResponse.json(
-          { ok: false, error: "Message looks invalid. Please edit and try again." },
-          { status: 400 },
-        )
-      }
-    }
+
+    normalizedPayload.email = emailNorm
+    normalizedPayload.name = name.trim()
+    normalizedPayload.message = message.trim()
 
     let saved
     try {
@@ -189,8 +191,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error:
-            "Could not save your message. Please try again or email hello@hungerhankerings.com.",
+          error: "Could not save your message. Please try again or email hello@hungerhankerings.com.",
         },
         { status: 503 },
       )
@@ -206,8 +207,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Do not await Resend (avoids 504). Avoid `after()` here — on self-hosted Docker, scheduling via the
-    // microtask queue is more reliable than Next’s post-response hook for outbound HTTP.
     const leadId = saved.id
     const payloadForMail = { ...normalizedPayload }
     void Promise.resolve()
