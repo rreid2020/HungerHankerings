@@ -1,46 +1,44 @@
 import { NextResponse } from "next/server"
-import { isInquiryReason } from "../../../lib/contact-inquiry"
+import {
+  INQUIRY_LEAD_TYPE,
+  SPAM_LEAD_TYPE,
+  isInquiryReason,
+} from "../../../lib/contact-inquiry"
 import { insertLead, isLeadsDatabaseConfigured } from "../../../lib/db"
 import { sendLeadNotification } from "../../../lib/email"
+import {
+  checkContentThrottle,
+  checkRequestThrottle,
+  checkSubmitTiming,
+  getClientIp,
+  isTrustedFormOrigin,
+  isValidEmailShape,
+  looksLikeSpamName,
+  recordAcceptedSubmission,
+  scoreInquiryContent,
+  submissionFingerprint,
+  type OriginTrust,
+} from "../../../lib/spam-guard"
 
 export const runtime = "nodejs"
 
-const MAX_SUBMISSIONS_PER_WINDOW = 5
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
-const MIN_SUBMIT_DURATION_MS = 2000
-const rateLimitHits = new Map<string, number[]>()
+/** Our form posts ~1 KB; anything larger is a bot padding the body. */
+const MAX_BODY_BYTES = 20_000
+const MAX_COMPANY_LENGTH = 120
+const MAX_PHONE_LENGTH = 40
+const MIN_MESSAGE_LENGTH = 10
+const MAX_MESSAGE_LENGTH = 4000
 
-function getClientIp(request: Request): string {
-  const h = request.headers
-  const fromCf = h.get("cf-connecting-ip")?.trim()
-  if (fromCf) return fromCf
-  const fromForwarded = h.get("x-forwarded-for")?.split(",")[0]?.trim()
-  if (fromForwarded) return fromForwarded
-  return "unknown"
+/** Bots see the same response as a happy submission so they do not tune their payload and retry. */
+function silentOk(): NextResponse {
+  return NextResponse.json({ ok: true })
 }
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const recent = (rateLimitHits.get(ip) ?? []).filter((ts) => now - ts < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= MAX_SUBMISSIONS_PER_WINDOW) {
-    rateLimitHits.set(ip, recent)
-    return false
-  }
-  recent.push(now)
-  rateLimitHits.set(ip, recent)
-  return true
-}
-
-function hasTooManyUrls(input: string): boolean {
-  const hits = input.match(/https?:\/\/|www\./gi)
-  return (hits?.length ?? 0) > 2
-}
-
-function isLikelySpamName(input: string): boolean {
-  const cleaned = input.trim()
-  if (cleaned.length < 2 || cleaned.length > 80) return true
-  if (!/^[\p{L}\p{N} .,'-]+$/u.test(cleaned)) return true
-  return /[!@#$%^&*_=+<>]{2,}/.test(cleaned)
+function rateLimited(retryAfterSeconds: number): NextResponse {
+  return NextResponse.json(
+    { ok: false, error: "Too many submissions. Please try again in a few minutes." },
+    { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
+  )
 }
 
 async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<boolean> {
@@ -51,7 +49,7 @@ async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<
     const body = new URLSearchParams({
       secret,
       response: token.trim(),
-      remoteip: ip,
+      ...(ip && ip !== "unknown" ? { remoteip: ip } : {}),
     })
     const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
@@ -67,14 +65,36 @@ async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<
   }
 }
 
+function logRejection(reason: string, ip: string, extra?: Record<string, unknown>): void {
+  console.warn(
+    "[leads] rejected submission:",
+    reason,
+    "ip=",
+    ip,
+    extra ? JSON.stringify(extra) : "",
+  )
+}
+
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { ok: false, error: "Too many submissions. Please try again in a few minutes." },
-        { status: 429 },
-      )
+
+    const throttle = checkRequestThrottle(ip)
+    if (!throttle.ok && throttle.kind === "rate_limited") {
+      logRejection(`rate_limited:${throttle.scope}`, ip)
+      return rateLimited(throttle.retryAfterSeconds)
+    }
+
+    const originTrust: OriginTrust = isTrustedFormOrigin(request)
+    if (originTrust === "mismatch") {
+      logRejection("origin_mismatch", ip, { origin: request.headers.get("origin") })
+      return NextResponse.json({ ok: false, error: "Submission rejected." }, { status: 403 })
+    }
+
+    const declaredLength = Number(request.headers.get("content-length") ?? "0")
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+      logRejection("body_too_large", ip, { declaredLength })
+      return NextResponse.json({ ok: false, error: "Submission too large." }, { status: 413 })
     }
 
     if (!isLeadsDatabaseConfigured()) {
@@ -87,103 +107,134 @@ export async function POST(request: Request) {
       )
     }
 
+    const rawBody = await request.text()
+    if (rawBody.length > MAX_BODY_BYTES) {
+      logRejection("body_too_large", ip, { bytes: rawBody.length })
+      return NextResponse.json({ ok: false, error: "Submission too large." }, { status: 413 })
+    }
+
     let body: unknown
     try {
-      body = await request.json()
+      body = JSON.parse(rawBody)
     } catch {
       return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
     }
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
     }
-    const { type, formStartedAt, turnstileToken, website, ...payload } = body as Record<string, unknown>
 
-    if (typeof website === "string" && website.trim()) {
-      // Honeypot hit; pretend success to avoid bot retries.
-      return NextResponse.json({ ok: true })
+    const fields = body as Record<string, unknown>
+
+    // Honeypot: hidden in the form, so any value at all means a bot filled every input it found.
+    if (typeof fields.website === "string" && fields.website.trim()) {
+      logRejection("honeypot", ip)
+      return silentOk()
     }
-    if (typeof formStartedAt === "number") {
-      const elapsed = Date.now() - formStartedAt
-      if (elapsed < MIN_SUBMIT_DURATION_MS) {
-        return NextResponse.json({ ok: false, error: "Submission rejected. Please try again." }, { status: 400 })
+
+    const timing = checkSubmitTiming(fields.formStartedAt)
+    if (timing !== "ok") {
+      logRejection(`timing_${timing}`, ip)
+      if (timing === "missing") {
+        // Our form always sends this, so the caller is not the form.
+        return silentOk()
       }
+      return NextResponse.json(
+        { ok: false, error: "Submission rejected. Please reload the page and try again." },
+        { status: 400 },
+      )
     }
-    const turnstileOk = await verifyTurnstileIfConfigured(turnstileToken, ip)
-    if (!turnstileOk) {
+
+    if (!(await verifyTurnstileIfConfigured(fields.turnstileToken, ip))) {
+      logRejection("turnstile_failed", ip)
       return NextResponse.json(
         { ok: false, error: "Security verification failed. Please try again." },
         { status: 400 },
       )
     }
 
-    if (!type || typeof type !== "string") {
-      return NextResponse.json(
-        { ok: false, error: "Missing or invalid type" },
-        { status: 400 }
-      )
-    }
-
-    if (type !== "inquiry") {
+    if (fields.type !== INQUIRY_LEAD_TYPE) {
+      logRejection("unsupported_type", ip, { type: fields.type })
       return NextResponse.json(
         { ok: false, error: "Unsupported submission type" },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    const normalizedPayload = Object.fromEntries(
-      Object.entries(payload).filter(
-        ([, v]) => v != null && v !== ""
-      )
-    ) as Record<string, unknown>
+    const str = (value: unknown): string => (typeof value === "string" ? value.trim() : "")
+    const reason = str(fields.reason)
+    const name = str(fields.name)
+    const email = str(fields.email)
+    const company = str(fields.company)
+    const phone = str(fields.phone)
+    const message = str(fields.message)
 
-    const reason = normalizedPayload.reason
-    if (typeof reason !== "string" || !isInquiryReason(reason)) {
+    if (!isInquiryReason(reason)) {
       return NextResponse.json(
         { ok: false, error: "Missing or invalid reason for contact" },
-        { status: 400 }
+        { status: 400 },
+      )
+    }
+    if (!name || looksLikeSpamName(name)) {
+      return NextResponse.json({ ok: false, error: "Please enter a valid name." }, { status: 400 })
+    }
+    if (!email || !isValidEmailShape(email)) {
+      return NextResponse.json({ ok: false, error: "Please enter a valid email." }, { status: 400 })
+    }
+    if (company.length > MAX_COMPANY_LENGTH) {
+      return NextResponse.json(
+        { ok: false, error: "Company name is too long." },
+        { status: 400 },
+      )
+    }
+    if (phone.length > MAX_PHONE_LENGTH) {
+      return NextResponse.json({ ok: false, error: "Please enter a valid phone number." }, { status: 400 })
+    }
+    if (message.length < MIN_MESSAGE_LENGTH || message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Please tell us a bit more (${MIN_MESSAGE_LENGTH}–${MAX_MESSAGE_LENGTH} characters).`,
+        },
+        { status: 400 },
       )
     }
 
-    const name = normalizedPayload.name
-    const email = normalizedPayload.email
-    const message = normalizedPayload.message
-    if (typeof name !== "string" || !name.trim()) {
-      return NextResponse.json(
-        { ok: false, error: "Name is required" },
-        { status: 400 }
-      )
-    }
-    if (typeof email !== "string" || !email.trim()) {
-      return NextResponse.json(
-        { ok: false, error: "Email is required" },
-        { status: 400 }
-      )
-    }
-    if (isLikelySpamName(name)) {
-      return NextResponse.json(
-        { ok: false, error: "Please enter a valid name." },
-        { status: 400 },
-      )
-    }
-    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { ok: false, error: "Please enter a valid email." },
-        { status: 400 },
-      )
-    }
-    if (typeof message === "string") {
-      const m = message.trim()
-      if (m.length > 4000 || hasTooManyUrls(m)) {
-        return NextResponse.json(
-          { ok: false, error: "Message looks invalid. Please edit and try again." },
-          { status: 400 },
-        )
+    const content = { name, email, company, phone, message }
+    const fingerprint = submissionFingerprint(content)
+
+    const contentThrottle = checkContentThrottle({ email, fingerprint })
+    if (!contentThrottle.ok) {
+      if (contentThrottle.kind === "duplicate") {
+        logRejection("duplicate_submission", ip, { email })
+        return silentOk()
       }
+      logRejection(`rate_limited:${contentThrottle.scope}`, ip, { email })
+      return rateLimited(contentThrottle.retryAfterSeconds)
     }
+
+    const verdict = scoreInquiryContent(content, { originTrust })
+    if (verdict.action === "drop") {
+      logRejection("spam_dropped", ip, { score: verdict.score, reasons: verdict.reasons })
+      return silentOk()
+    }
+
+    const isQuarantined = verdict.action === "quarantine"
+    const payload: Record<string, unknown> = {
+      reason,
+      name,
+      email,
+      ...(company ? { company } : {}),
+      ...(phone ? { phone } : {}),
+      message,
+      ...(isQuarantined
+        ? { _spam: { score: verdict.score, reasons: verdict.reasons, originTrust } }
+        : {}),
+    }
+    const leadType = isQuarantined ? SPAM_LEAD_TYPE : INQUIRY_LEAD_TYPE
 
     let saved
     try {
-      saved = await insertLead(type, { ...normalizedPayload })
+      saved = await insertLead(leadType, payload)
     } catch (dbErr) {
       console.error("Lead submission: database error:", dbErr)
       return NextResponse.json(
@@ -206,12 +257,27 @@ export async function POST(request: Request) {
       )
     }
 
+    recordAcceptedSubmission({ email, fingerprint })
+
+    if (isQuarantined) {
+      // Held for review in the ops inbox; never emailed, so a flood cannot bury real leads.
+      console.warn(
+        "[leads] quarantined as likely spam lead_id=",
+        saved.id,
+        "score=",
+        verdict.score,
+        "reasons=",
+        verdict.reasons.join(","),
+      )
+      return silentOk()
+    }
+
     // Do not await Resend (avoids 504). Avoid `after()` here — on self-hosted Docker, scheduling via the
     // microtask queue is more reliable than Next’s post-response hook for outbound HTTP.
     const leadId = saved.id
-    const payloadForMail = { ...normalizedPayload }
+    const payloadForMail = { ...payload }
     void Promise.resolve()
-      .then(() => sendLeadNotification(type, payloadForMail))
+      .then(() => sendLeadNotification(INQUIRY_LEAD_TYPE, payloadForMail))
       .then((emailed) => {
         if (!emailed.success) {
           console.error(

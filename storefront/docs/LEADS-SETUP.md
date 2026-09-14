@@ -48,6 +48,57 @@ If Resend fails, check runtime logs for `notification email failed (async)` (the
 - `LEAD_EMAIL_TO` – Comma-separated list of recipients for lead notifications (optional: defaults to **hello@hungerhankerings.com** when unset)
 - `LEAD_EMAIL_FROM` – Sender address (must use a verified domain in Resend)
 
+## Spam protection
+
+`lib/spam-guard.ts` guards `POST /api/leads` in three layers. Most bots skip the form and POST JSON
+straight at the API, so the request-shape checks catch the bulk of them:
+
+1. **Request shape** — the `Origin`/`Referer` host must belong to this site (**403** otherwise), the
+   hidden `website` honeypot must be empty, and the form must report a `formStartedAt` between 2.5 s
+   and 12 h old. Bodies over 20 KB are rejected (**413**) and only the known fields
+   (`reason, name, email, company, phone, message`) are stored — bots can no longer pad the JSONB
+   payload with arbitrary keys.
+2. **Throttling** — per IP (3 per 10 min, 10 per day), per email address (5 per day), a site-wide
+   flood ceiling (40 per 10 min), and duplicate-body suppression for 24 h. Client IP comes from
+   `CF-Connecting-IP` (only when `CF-Ray` is present) or nginx's `X-Real-IP`, never from the
+   client-appendable first entry of `X-Forwarded-For`. This state is per container and resets on
+   deploy, so `nginx/nginx.conf` also rate-limits `= /api/leads` (`zone=leads`, 6 r/m) as the
+   restart-proof layer.
+3. **Content scoring** — weighted heuristics (links, SEO/crypto/adult/loan pitches, markup or script
+   injection, non-Latin bodies, disposable email domains, shouting, duplicated fields). Score ≥ 4
+   **quarantines**, score ≥ 6 **drops**.
+
+Rejected and dropped requests get a **`200`** so bots do not learn which field tripped them; every
+decision is logged as `[leads] rejected submission: <reason>`.
+
+**Quarantined** submissions are saved with `type = "inquiry-spam"` and a `payload._spam`
+(`score`, `reasons`) and **never** send a notification email. Review them under
+**Ops → Leads → Quarantined spam** and delete them once checked — that tab is the place to look if a
+customer says their message never arrived. Tune the ceilings with the `LEADS_MAX_*` env vars in
+`.env.example`.
+
+### Cloudflare Turnstile (recommended)
+
+Turnstile is the only layer that survives a restart *and* stops a distributed bot, so enable it if
+spam continues:
+
+1. Create a widget at Cloudflare → **Turnstile** for `hungerhankerings.com`.
+2. Set **both** keys — the form only renders the widget when the site key is present, and the API
+   only enforces verification when the secret is present:
+
+   ```
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAA...
+   TURNSTILE_SECRET_KEY=0x4AAAA...
+   ```
+
+   `NEXT_PUBLIC_TURNSTILE_SITE_KEY` must be a **build-time** variable on DigitalOcean App Platform.
+3. The CSP in `nginx/nginx.conf` already allows `https://challenges.cloudflare.com` in `script-src`,
+   `frame-src`, and `connect-src`. Keep it there — without it the widget silently fails to load and
+   every submission is rejected as unverified.
+
+Cloudflare's test keys (`1x00000000000000000000AA` / `1x0000000000000000000000000000000AA`) always
+pass and are handy for verifying the wiring before switching to live keys.
+
 ## Failure behavior
 
 - If no URL can be resolved (**`LEADS_DATABASE_URL`**, **`DATABASE_URL`**, or complete **`DB_*`** + password), the API returns **503** and the form shows an error (nothing is stored).
