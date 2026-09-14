@@ -1,3 +1,11 @@
+/** `Lead.type` for a normal contact-form submission. */
+export const INQUIRY_LEAD_TYPE = "inquiry"
+/**
+ * `Lead.type` for a submission the spam guard quarantined: stored for review in the ops inbox,
+ * never emailed. See `lib/spam-guard.ts`.
+ */
+export const SPAM_LEAD_TYPE = "inquiry-spam"
+
 export const INQUIRY_REASON_OPTIONS = [
   { value: "general", label: "General inquiry" },
   { value: "other", label: "Other" },

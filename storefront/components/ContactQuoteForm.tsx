@@ -1,7 +1,8 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import Script from "next/script"
 import Button from "./Button"
 import {
   INQUIRY_REASON_OPTIONS,
@@ -11,10 +12,19 @@ import {
 } from "../lib/contact-inquiry"
 import { captureEvent } from "../lib/analytics"
 
+type TurnstileRenderOptions = {
+  sitekey: string
+  callback?: (token: string) => void
+  "expired-callback"?: () => void
+  "error-callback"?: () => void
+  "timeout-callback"?: () => void
+  action?: string
+}
+
 declare global {
   interface Window {
     turnstile?: {
-      render: (el: string | HTMLElement, opts: { sitekey: string; callback?: (token: string) => void }) => unknown
+      render: (el: string | HTMLElement, opts: TurnstileRenderOptions) => unknown
       remove?: (widgetId: unknown) => void
       reset?: (widgetId: unknown) => void
     }
@@ -26,13 +36,16 @@ type ContactQuoteFormProps = {
   initialReason?: InquiryReason
 }
 
+const MIN_MESSAGE_LENGTH = 10
+
 const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) => {
   const searchParams = useSearchParams()
   const [reason, setReason] = useState<InquiryReason>(initialReason)
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle")
   const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState("")
-  const [turnstileWidgetId, setTurnstileWidgetId] = useState<unknown>(null)
+  const [turnstileReady, setTurnstileReady] = useState(false)
+  const turnstileWidgetId = useRef<unknown>(null)
   const [formStartedAt] = useState<number>(() => Date.now())
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? ""
 
@@ -41,26 +54,36 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
     setReason(fromUrl)
   }, [searchParams])
 
-  useEffect(() => {
-    if (!turnstileSiteKey || !window.turnstile) return
+  /**
+   * Explicit render: the widget only exists once Cloudflare's `api.js` has loaded, so mounting it
+   * from a `Script` callback (not on first paint) is what makes the token available at submit time.
+   */
+  const renderTurnstile = useCallback(() => {
+    if (!turnstileSiteKey || !window.turnstile || turnstileWidgetId.current != null) return
     const el = document.getElementById("contact-turnstile")
     if (!el) return
-    const widgetId = window.turnstile.render(el, {
+    turnstileWidgetId.current = window.turnstile.render(el, {
       sitekey: turnstileSiteKey,
+      action: "contact-form",
       callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+      "timeout-callback": () => setTurnstileToken(""),
     })
-    setTurnstileWidgetId(widgetId)
+    setTurnstileReady(true)
+  }, [turnstileSiteKey])
+
+  useEffect(() => {
     return () => {
-      if (window.turnstile?.remove && widgetId != null) {
-        window.turnstile.remove(widgetId)
+      if (window.turnstile?.remove && turnstileWidgetId.current != null) {
+        window.turnstile.remove(turnstileWidgetId.current)
+        turnstileWidgetId.current = null
       }
     }
-  }, [turnstileSiteKey])
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setStatus("loading")
-    setErrorDetail(null)
 
     const form = event.currentTarget
     const formData = new FormData(form)
@@ -75,22 +98,43 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         ? submittedReason
         : reason
 
-    const response = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "inquiry",
-        reason: resolvedReason,
-        name,
-        email,
-        company,
-        phone,
-        message,
-        website: String(formData.get("website") ?? ""),
-        formStartedAt,
-        turnstileToken,
+    if (message.length < MIN_MESSAGE_LENGTH) {
+      setErrorDetail(`Please tell us a bit more (at least ${MIN_MESSAGE_LENGTH} characters).`)
+      setStatus("error")
+      return
+    }
+    if (turnstileSiteKey && !turnstileToken) {
+      setErrorDetail("Please complete the security check before sending.")
+      setStatus("error")
+      return
+    }
+
+    setStatus("loading")
+    setErrorDetail(null)
+
+    let response: Response
+    try {
+      response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "inquiry",
+          reason: resolvedReason,
+          name,
+          email,
+          company,
+          phone,
+          message,
+          website: String(formData.get("website") ?? ""),
+          formStartedAt,
+          turnstileToken
+        })
       })
-    })
+    } catch {
+      setErrorDetail("Network error. Please try again or email hello@hungerhankerings.com.")
+      setStatus("error")
+      return
+    }
 
     if (!response.ok) {
       let message: string | null = null
@@ -102,19 +146,24 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
       }
       setErrorDetail(message)
       setStatus("error")
+      // A stale/consumed token cannot be reused for the retry.
+      setTurnstileToken("")
+      if (turnstileWidgetId.current != null && window.turnstile?.reset) {
+        window.turnstile.reset(turnstileWidgetId.current)
+      }
       return
     }
 
     form.reset()
     setReason(resolvedReason)
     setTurnstileToken("")
-    if (turnstileWidgetId != null && window.turnstile?.reset) {
-      window.turnstile.reset(turnstileWidgetId)
+    if (turnstileWidgetId.current != null && window.turnstile?.reset) {
+      window.turnstile.reset(turnstileWidgetId.current)
     }
     setStatus("sent")
     captureEvent("lead_submit", {
       reason: resolvedReason,
-      has_company: Boolean(company),
+      has_company: Boolean(company)
     })
   }
 
@@ -123,6 +172,14 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {turnstileSiteKey ? (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onReady={renderTurnstile}
+          onLoad={renderTurnstile}
+        />
+      ) : null}
       <label className="text-sm font-medium text-iron_grey">
         Reason for contact
         <select
@@ -143,7 +200,7 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
       </label>
       <label className="text-sm font-medium text-iron_grey">
         Name
-        <input name="name" required className={inputClass} autoComplete="name" />
+        <input name="name" required maxLength={80} className={inputClass} autoComplete="name" />
       </label>
       <label className="text-sm font-medium text-iron_grey">
         Email
@@ -151,21 +208,29 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
           name="email"
           type="email"
           required
+          maxLength={254}
           className={inputClass}
           autoComplete="email"
         />
       </label>
       <label className="text-sm font-medium text-iron_grey">
         Company
-        <input name="company" className={inputClass} autoComplete="organization" />
+        <input name="company" maxLength={120} className={inputClass} autoComplete="organization" />
       </label>
       <label className="text-sm font-medium text-iron_grey">
         Phone <span className="font-normal text-iron_grey/70">(optional)</span>
-        <input name="phone" type="tel" className={inputClass} autoComplete="tel" />
+        <input name="phone" type="tel" maxLength={40} className={inputClass} autoComplete="tel" />
       </label>
       <label className="text-sm font-medium text-iron_grey">
         Message
-        <textarea name="message" rows={5} className={inputClass} />
+        <textarea
+          name="message"
+          rows={5}
+          required
+          minLength={MIN_MESSAGE_LENGTH}
+          maxLength={4000}
+          className={inputClass}
+        />
       </label>
       {/* Honeypot for bots: real users never see/fill this field */}
       <div className="hidden" aria-hidden>
@@ -177,11 +242,19 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
       {turnstileSiteKey ? (
         <div>
           <div id="contact-turnstile" />
+          {!turnstileReady ? (
+            <p className="mt-2 text-xs text-iron_grey/70">Loading security check…</p>
+          ) : null}
         </div>
       ) : null}
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" variant="secondary">
-          Send message
+        <Button
+          type="submit"
+          variant="secondary"
+          disabled={status === "loading"}
+          className="disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {status === "loading" ? "Sending…" : "Send message"}
         </Button>
         {status === "sent" && (
           <span className="text-sm text-cherry_blossom">Thanks — we will be in touch soon.</span>
