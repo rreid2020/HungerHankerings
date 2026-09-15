@@ -87,14 +87,8 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         ? submittedReason
         : reason
 
-    if (turnstileSiteKey && !turnstileToken.trim()) {
-      setErrorDetail("Please complete the security check before sending.")
-      setStatus("error")
-      return
-    }
-
-    if (message.length < 8) {
-      setErrorDetail("Please include a short message (at least a sentence).")
+    if (!message.trim()) {
+      setErrorDetail("Please include a message.")
       setStatus("error")
       return
     }
@@ -199,13 +193,19 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
         </label>
         <label className="text-sm font-medium text-iron_grey">
           Message
-          <textarea name="message" rows={5} required minLength={8} className={inputClass} />
+          <textarea name="message" rows={5} required className={inputClass} />
         </label>
-        {/* Honeypots: off-screen, not display:none (bots often skip display:none fields) */}
+        {/* Honeypots: off-screen; real users never fill these */}
         <div
-          aria-hidden
-          className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
-          style={{ position: "absolute", left: "-10000px", height: 1, width: 1, overflow: "hidden" }}
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: "-10000px",
+            top: "auto",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+          }}
         >
           <label>
             Website
@@ -221,8 +221,11 @@ const ContactQuoteForm = ({ initialReason = "general" }: ContactQuoteFormProps) 
           </label>
         </div>
         {turnstileSiteKey ? (
-          <div>
+          <div className="min-h-[65px]">
             <div id="contact-turnstile" />
+            <p className="mt-1 text-xs text-iron_grey/70">
+              Security check loads here when available — you can still send if it does not appear.
+            </p>
           </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-4">

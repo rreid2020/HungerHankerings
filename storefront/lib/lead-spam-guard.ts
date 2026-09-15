@@ -1,13 +1,11 @@
 /** Shared contact-form spam heuristics (no outbound I/O). */
 
-export const MAX_SUBMISSIONS_PER_IP = 3
-export const MAX_SUBMISSIONS_PER_EMAIL = 2
-export const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000
-export const MIN_SUBMIT_DURATION_MS = 3_000
-export const MAX_SUBMIT_AGE_MS = 2 * 60 * 60 * 1000
+export const MAX_SUBMISSIONS_PER_IP = 12
+export const MAX_SUBMISSIONS_PER_EMAIL = 8
+export const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000
 
 const SPAM_PHRASE_RE =
-  /\b(viagra|cialis|crypto\s*invest|forex|seo\s*service|backlinks?|guest\s*post|onlyfans|casino|porn|xxx|click\s*here|make\s*money\s*fast|weight\s*loss|nigerian\s*prince)\b/i
+  /\b(viagra|cialis|crypto\s*invest|forex|seo\s*service|backlinks?|guest\s*post|onlyfans|casino|porn|xxx|make\s*money\s*fast|nigerian\s*prince)\b/i
 
 export function getClientIp(request: Request): string {
   const h = request.headers
@@ -26,40 +24,20 @@ export function normalizeEmail(email: string): string {
 
 export function hasTooManyUrls(input: string): boolean {
   const hits = input.match(/https?:\/\/|www\./gi)
-  return (hits?.length ?? 0) > 1
+  return (hits?.length ?? 0) > 5
 }
 
 export function isLikelySpamName(input: string): boolean {
   const cleaned = input.trim()
-  if (cleaned.length < 2 || cleaned.length > 80) return true
-  if (!/^[\p{L}\p{N} .,'-]+$/u.test(cleaned)) return true
-  if (/[!@#$%^&*_=+<>]{2,}/.test(cleaned)) return true
-  // Long run of consonants / random keyboard spam
-  if (/[bcdfghjklmnpqrstvwxyz]{8,}/i.test(cleaned.replace(/\s+/g, ""))) return true
+  if (cleaned.length < 2 || cleaned.length > 120) return true
+  // Allow common name punctuation / accents via Unicode letters
+  if (!/^[\p{L}\p{N} .,'’\-]+$/u.test(cleaned)) return true
   return false
 }
 
 export function isValidEmailShape(email: string): boolean {
   if (email.length < 5 || email.length > 254) return false
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-export function isDisposableLikeEmail(email: string): boolean {
-  const domain = email.split("@")[1] ?? ""
-  return /^(mailinator\.|guerrillamail|tempmail|throwaway|yopmail|10minutemail|trashmail|sharklasers|getnada|temp-mail)/i.test(
-    domain,
-  )
-}
-
-/**
- * Timing token from the browser form. Missing/too-fast/stale → spam.
- */
-export function isTimingTokenValid(formStartedAt: unknown, now = Date.now()): boolean {
-  if (typeof formStartedAt !== "number" || !Number.isFinite(formStartedAt)) return false
-  const elapsed = now - formStartedAt
-  if (elapsed < MIN_SUBMIT_DURATION_MS) return false
-  if (elapsed > MAX_SUBMIT_AGE_MS) return false
-  return true
 }
 
 export function isHoneypotTripped(fields: Record<string, unknown>): boolean {
@@ -70,8 +48,11 @@ export function isHoneypotTripped(fields: Record<string, unknown>): boolean {
   return false
 }
 
-export type SpamContentVerdict = { spam: true; reason: string } | { spam: false }
+export type SpamContentVerdict =
+  | { spam: true; reason: string; userMessage?: string }
+  | { spam: false }
 
+/** Soft content checks — only reject clear junk, with user-visible messages when appropriate. */
 export function scoreLeadContent(input: {
   name: string
   email: string
@@ -85,11 +66,12 @@ export function scoreLeadContent(input: {
   const company = (input.company ?? "").trim()
   const blob = `${name}\n${email}\n${company}\n${message}`
 
-  if (message.length < 8) {
-    return { spam: true, reason: "message_too_short" }
-  }
-  if (message.length > 4000) {
-    return { spam: true, reason: "message_too_long" }
+  if (message.length > 8000) {
+    return {
+      spam: true,
+      reason: "message_too_long",
+      userMessage: "Message is too long. Please shorten it and try again.",
+    }
   }
   if (hasTooManyUrls(blob)) {
     return { spam: true, reason: "too_many_urls" }
@@ -98,37 +80,20 @@ export function scoreLeadContent(input: {
     return { spam: true, reason: "spam_phrase" }
   }
   if (isLikelySpamName(name)) {
-    return { spam: true, reason: "bad_name" }
-  }
-  if (!isValidEmailShape(email) || isDisposableLikeEmail(email)) {
-    return { spam: true, reason: "bad_email" }
-  }
-  // Message is mostly links / no letters
-  const letters = (message.match(/\p{L}/gu) ?? []).length
-  if (letters < 6) {
-    return { spam: true, reason: "low_letter_density" }
-  }
-  return { spam: false }
-}
-
-/** Soft Origin/Referer check — allow missing headers (some privacy browsers). */
-export function isAllowedRequestOrigin(request: Request, allowedOrigins: string[]): boolean {
-  const origin = request.headers.get("origin")?.trim()
-  if (origin) {
-    return allowedOrigins.some((o) => origin === o || origin.startsWith(`${o}/`))
-  }
-  const referer = request.headers.get("referer")?.trim()
-  if (referer) {
-    try {
-      const u = new URL(referer)
-      const base = `${u.protocol}//${u.host}`
-      return allowedOrigins.some((o) => base === o)
-    } catch {
-      return false
+    return {
+      spam: true,
+      reason: "bad_name",
+      userMessage: "Please enter a valid name.",
     }
   }
-  // No Origin/Referer: still allow (mobile/privacy), rely on other checks
-  return true
+  if (!isValidEmailShape(email)) {
+    return {
+      spam: true,
+      reason: "bad_email",
+      userMessage: "Please enter a valid email.",
+    }
+  }
+  return { spam: false }
 }
 
 export function createRateLimiter() {
@@ -143,7 +108,6 @@ export function createRateLimiter() {
     }
     recent.push(now)
     hits.set(key, recent)
-    // Opportunistic cleanup
     if (hits.size > 5_000) {
       for (const [k, times] of hits) {
         const kept = times.filter((ts) => now - ts < windowMs)

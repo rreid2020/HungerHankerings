@@ -5,27 +5,32 @@ import { sendLeadNotification } from "../../../lib/email"
 import {
   createRateLimiter,
   getClientIp,
-  isAllowedRequestOrigin,
   isHoneypotTripped,
-  isTimingTokenValid,
   normalizeEmail,
   scoreLeadContent,
 } from "../../../lib/lead-spam-guard"
-import { getSiteOrigin } from "../../../lib/site"
 
 export const runtime = "nodejs"
 
 const rateLimiter = createRateLimiter()
 
-/** Pretend success so bots do not adapt. */
+/** Pretend success so bots do not adapt (honeypot / clear spam only). */
 function silentOk() {
   return NextResponse.json({ ok: true })
 }
 
-async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<"skip" | "ok" | "fail"> {
+/**
+ * Verify Turnstile when a token is present.
+ * If the secret is configured but the browser sent no token (widget not loaded / build-time
+ * site key missing), allow the submit — honeypot + rate limits still apply.
+ */
+async function verifyTurnstileBestEffort(token: unknown, ip: string): Promise<"skip" | "ok" | "fail"> {
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim()
   if (!secret) return "skip"
-  if (typeof token !== "string" || !token.trim()) return "fail"
+  if (typeof token !== "string" || !token.trim()) {
+    console.warn("Lead submission: Turnstile secret set but no token; allowing submit ip=", ip)
+    return "skip"
+  }
   try {
     const body = new URLSearchParams({
       secret,
@@ -46,25 +51,6 @@ async function verifyTurnstileIfConfigured(token: unknown, ip: string): Promise<
   }
 }
 
-function allowedOrigins(): string[] {
-  const origins = new Set<string>()
-  const site = getSiteOrigin().replace(/\/$/, "")
-  if (site) origins.add(site)
-  for (const key of ["NEXT_PUBLIC_SITE_URL", "APP_URL", "STOREFRONT_URL"]) {
-    const raw = process.env[key]?.trim()
-    if (!raw) continue
-    try {
-      const u = new URL(raw.includes("://") ? raw : `https://${raw}`)
-      origins.add(`${u.protocol}//${u.host}`)
-    } catch {
-      /* ignore */
-    }
-  }
-  origins.add("https://hungerhankerings.com")
-  origins.add("https://www.hungerhankerings.com")
-  return [...origins]
-}
-
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
@@ -74,11 +60,6 @@ export async function POST(request: Request) {
         { ok: false, error: "Too many submissions. Please try again in a few minutes." },
         { status: 429 },
       )
-    }
-
-    if (!isAllowedRequestOrigin(request, allowedOrigins())) {
-      console.warn("Lead submission: blocked bad origin/referer ip=", ip)
-      return silentOk()
     }
 
     if (!isLeadsDatabaseConfigured()) {
@@ -101,22 +82,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 })
     }
     const raw = body as Record<string, unknown>
-    const { type, formStartedAt, turnstileToken, ...payload } = raw
+    const { type, formStartedAt: _formStartedAt, turnstileToken, ...payload } = raw
 
     if (isHoneypotTripped(raw)) {
       console.info("Lead submission: honeypot tripped ip=", ip)
       return silentOk()
     }
 
-    if (!isTimingTokenValid(formStartedAt)) {
-      console.info("Lead submission: timing token rejected ip=", ip)
-      return silentOk()
-    }
-
-    const turnstile = await verifyTurnstileIfConfigured(turnstileToken, ip)
+    const turnstile = await verifyTurnstileBestEffort(turnstileToken, ip)
     if (turnstile === "fail") {
       return NextResponse.json(
-        { ok: false, error: "Security verification failed. Please try again." },
+        { ok: false, error: "Security check expired. Please refresh the page and try again." },
         { status: 400 },
       )
     }
@@ -133,7 +109,6 @@ export async function POST(request: Request) {
       Object.entries(payload).filter(([, v]) => v != null && v !== ""),
     ) as Record<string, unknown>
 
-    // Never persist honeypot fields
     delete normalizedPayload.website
     delete normalizedPayload.company_url
     delete normalizedPayload.fax
@@ -176,6 +151,9 @@ export async function POST(request: Request) {
     })
     if (verdict.spam) {
       console.info("Lead submission: content rejected reason=", verdict.reason, "ip=", ip)
+      if (verdict.userMessage) {
+        return NextResponse.json({ ok: false, error: verdict.userMessage }, { status: 400 })
+      }
       return silentOk()
     }
 
